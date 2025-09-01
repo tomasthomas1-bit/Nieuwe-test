@@ -28,6 +28,10 @@ app.add_middleware(
 )
 
 # --- PostgreSQL Database Verbinding ---
+import psycopg2
+
+# Zorg ervoor dat psycopg2 is geïnstalleerd met 'pip install psycopg2-binary'
+
 try:
     conn_pg = psycopg2.connect(
         host=os.environ.get("PGHOST"),
@@ -41,8 +45,22 @@ try:
     logging.info("Verbonden met PostgreSQL database.")
 except Exception as e:
     logging.error(f"Fout bij het verbinden met de database: {e}")
-    # Hier kun je overwegen de app te laten crashen als de DB-verbinding mislukt
+    # Deze 'raise' zorgt ervoor dat de container stopt als de verbinding mislukt
     raise Exception("Databaseverbinding mislukt")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # --- Geheime Sleutels ophalen ---
@@ -739,4 +757,5 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="debug")
+
 
