@@ -1,3 +1,9 @@
+from fastapi import FastAPI
+
+app = FastAPI()
+
+# --- Start originele code ---
+
 import os
 import json
 import logging
@@ -757,5 +763,6 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="debug")
+
 
 
