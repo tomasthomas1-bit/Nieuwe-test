@@ -30,11 +30,11 @@ app.add_middleware(
 # --- PostgreSQL Database Verbinding ---
 try:
     conn_pg = psycopg2.connect(
-        host=os.environ.get("POSTGRES_HOST"),
-        database=os.environ.get("POSTGRES_DB"),
-        user=os.environ.get("POSTGRES_USER"),
-        password=os.environ.get("POSTGRES_PASSWORD"),
-        port=os.environ.get("POSTGRES_PORT")
+        host=os.environ.get("PGHOST"),
+        database=os.environ.get("PGDATABASE"),
+        user=os.environ.get("PGUSER"),
+        password=os.environ.get("PGPASSWORD"),
+        port=os.environ.get("PGPORT")
     )
     conn_pg.autocommit = True
     c_pg = conn_pg.cursor()
@@ -739,3 +739,4 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="debug")
+
