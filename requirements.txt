@@ -4,4 +4,6 @@ python-jose[cryptography]
 passlib[bcrypt]
 cryptography
 haversine
+
 pydantic
+psycopg2-binary
