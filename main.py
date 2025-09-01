@@ -1,9 +1,10 @@
-import sqlite3
+import os
 import json
+import logging
+import re
+import psycopg2
 from datetime import datetime, timedelta
 from typing import Optional
-import os
-import uvicorn
 from haversine import haversine, Unit
 from jose import JWTError, jwt
 from cryptography.fernet import Fernet
@@ -12,8 +13,7 @@ from fastapi import FastAPI, HTTPException, Depends, status, Response, Request, 
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator, HttpUrl
-import logging
-import re
+import uvicorn
 
 # --- Configuratie en Initialisatie ---
 
@@ -27,14 +27,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SQLite database verbinding
-conn = sqlite3.connect("app_data.db", check_same_thread=False)
-c = conn.cursor()
+# --- PostgreSQL Database Verbinding ---
+try:
+    conn_pg = psycopg2.connect(
+        host=os.environ.get("POSTGRES_HOST"),
+        database=os.environ.get("POSTGRES_DB"),
+        user=os.environ.get("POSTGRES_USER"),
+        password=os.environ.get("POSTGRES_PASSWORD"),
+        port=os.environ.get("POSTGRES_PORT")
+    )
+    conn_pg.autocommit = True
+    c_pg = conn_pg.cursor()
+    logging.info("Verbonden met PostgreSQL database.")
+except Exception as e:
+    logging.error(f"Fout bij het verbinden met de database: {e}")
+    # Hier kun je overwegen de app te laten crashen als de DB-verbinding mislukt
+    raise Exception("Databaseverbinding mislukt")
 
-# Haal de geheime sleutel op uit de omgevingsvariabelen
-SECRET_KEY = os.environ.get("SECRET_KEY", "jouw-super-geheime-standaard-sleutel")
-if SECRET_KEY == "jouw-super-geheime-standaard-sleutel":
-    logging.warning("Waarschuwing: SECRET_KEY is niet ingesteld als omgevingsvariabele. Gebruik een standaardwaarde.")
+
+# --- Geheime Sleutels ophalen ---
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY omgevingsvariabele is niet ingesteld!")
+
+ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
+if not ENCRYPTION_KEY:
+    raise RuntimeError("ENCRYPTION_KEY omgevingsvariabele is niet ingesteld!")
+cipher_suite = Fernet(ENCRYPTION_KEY.encode('utf-8'))
+
+# --- Rest van de Code (Zelfde, maar met PostgreSQL syntax) ---
+
+# De volledige, bijgewerkte code voor main.py volgt hieronder.
+# Let op: de SQL-query's zijn aangepast naar PostgreSQL-syntax.
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -42,32 +66,20 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Genereer of laad de encryptie sleutel
-try:
-    with open("encryption.key", "rb") as key_file:
-        ENCRYPTION_KEY = key_file.read()
-except FileNotFoundError:
-    ENCRYPTION_KEY = Fernet.generate_key()
-    with open("encryption.key", "wb") as key_file:
-        key_file.write(ENCRYPTION_KEY)
-
-cipher_suite = Fernet(ENCRYPTION_KEY)
-
 # --- Logging Configuratie ---
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("app.log"),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger("fastapi_app")
 logger.info("Applicatie wordt gestart...")
 
-# --- Database Tabellen aanmaken ---
-c.execute('''CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY,
+# --- Database Tabellen aanmaken in PostgreSQL ---
+c_pg.execute('''CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE,
                 password_hash TEXT,
                 name TEXT,
@@ -85,53 +97,52 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (
                 push_token TEXT,
                 deleted_at TIMESTAMP
             )''')
-conn.commit()
+conn_pg.commit()
 
-c.execute('''CREATE TABLE IF NOT EXISTS swipes (
+c_pg.execute('''CREATE TABLE IF NOT EXISTS swipes (
                 swiper_id INTEGER,
                 swipee_id INTEGER,
                 liked INTEGER,
                 PRIMARY KEY(swiper_id, swipee_id),
                 deleted_at TIMESTAMP
             )''')
-conn.commit()
+conn_pg.commit()
 
-c.execute('''CREATE TABLE IF NOT EXISTS chats (
-                id INTEGER PRIMARY KEY,
+c_pg.execute('''CREATE TABLE IF NOT EXISTS chats (
+                id SERIAL PRIMARY KEY,
                 match_id INTEGER,
                 sender_id INTEGER,
                 encrypted_message TEXT,
                 timestamp TEXT,
-                deleted_at TIMESTAMP,
-                FOREIGN KEY (match_id) REFERENCES swipes(rowid)
+                deleted_at TIMESTAMP
             )''')
-conn.commit()
+conn_pg.commit()
 
-c.execute('''CREATE TABLE IF NOT EXISTS user_photos (
-                id INTEGER PRIMARY KEY,
+c_pg.execute('''CREATE TABLE IF NOT EXISTS user_photos (
+                id SERIAL PRIMARY KEY,
                 user_id INTEGER,
                 photo_url TEXT,
                 is_profile_pic INTEGER DEFAULT 0,
                 FOREIGN KEY (user_id) REFERENCES users(id)
             )''')
-conn.commit()
+conn_pg.commit()
 
-c.execute('''CREATE TABLE IF NOT EXISTS user_blocks (
+c_pg.execute('''CREATE TABLE IF NOT EXISTS user_blocks (
                 blocker_id INTEGER,
                 blocked_id INTEGER,
                 timestamp TIMESTAMP,
                 PRIMARY KEY(blocker_id, blocked_id)
             )''')
-conn.commit()
+conn_pg.commit()
 
-c.execute('''CREATE TABLE IF NOT EXISTS user_reports (
-                id INTEGER PRIMARY KEY,
+c_pg.execute('''CREATE TABLE IF NOT EXISTS user_reports (
+                id SERIAL PRIMARY KEY,
                 reporter_id INTEGER,
                 reported_id INTEGER,
                 reason TEXT,
                 timestamp TIMESTAMP
             )''')
-conn.commit()
+conn_pg.commit()
 
 # --- Pydantic Modellen voor Datavalidatie ---
 class UserBase(BaseModel):
@@ -234,8 +245,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         logger.error(f"JWT Error: {credentials_exception.detail}")
         raise credentials_exception
     
-    c.execute("SELECT id, username, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, preferred_sport_type, preferred_min_age, preferred_max_age FROM users WHERE username = ? AND deleted_at IS NULL", (username,))
-    user = c.fetchone()
+    c_pg.execute("SELECT id, username, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, preferred_sport_type, preferred_min_age, preferred_max_age FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
+    user = c_pg.fetchone()
     if user is None:
         logger.warning(f"Gebruiker '{username}' niet gevonden of verwijderd tijdens authenticatie.")
         raise HTTPException(status_code=404, detail="Gebruiker niet gevonden of verwijderd")
@@ -256,8 +267,8 @@ def get_bounding_box(lat: float, lon: float, distance_in_km: float):
     return min_lat, max_lat, min_lon, max_lon
 
 def send_push_notification(user_id: int, message: str):
-    c.execute("SELECT push_token FROM users WHERE id = ?", (user_id,))
-    push_token = c.fetchone()
+    c_pg.execute("SELECT push_token FROM users WHERE id = %s", (user_id,))
+    push_token = c_pg.fetchone()
     if push_token and push_token[0]:
         logger.info(f"Stuur push melding naar gebruiker {user_id}: '{message}'")
     else:
@@ -287,22 +298,22 @@ manager = ConnectionManager()
 
 @app.post("/register", response_model=UserInDB)
 async def register(user_data: UserCreate):
-    c.execute("SELECT id FROM users WHERE username = ?", (user_data.username,))
-    if c.fetchone():
+    c_pg.execute("SELECT id FROM users WHERE username = %s", (user_data.username,))
+    if c_pg.fetchone():
         logger.warning(f"Registratiepoging mislukt: gebruikersnaam '{user_data.username}' bestaat al.")
         raise HTTPException(status_code=400, detail="Gebruikersnaam bestaat al")
     
     try:
         hashed_password = get_password_hash(user_data.password)
-        c.execute(
-            "INSERT INTO users (username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        c_pg.execute(
+            "INSERT INTO users (username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
             (user_data.username, hashed_password, user_data.name, user_data.age, user_data.bio, user_data.sport_type, user_data.avg_distance, user_data.last_lat, user_data.last_lng, user_data.availability, None, None, None, None)
         )
-        conn.commit()
+        conn_pg.commit()
         logger.info(f"Nieuwe gebruiker geregistreerd: '{user_data.username}'")
         
-        c.execute("SELECT id, username, name, password_hash, age, bio, sport_type, avg_distance, last_lat, last_lng, availability FROM users WHERE username = ?", (user_data.username,))
-        user = c.fetchone()
+        c_pg.execute("SELECT id, username, name, password_hash, age, bio, sport_type, avg_distance, last_lat, last_lng, availability FROM users WHERE username = %s", (user_data.username,))
+        user = c_pg.fetchone()
         
         return {
             "id": user[0], "username": user[1], "name": user[2], "password_hash": user[3],
@@ -315,8 +326,8 @@ async def register(user_data: UserCreate):
 
 @app.post("/token")
 async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
-    c.execute("SELECT password_hash FROM users WHERE username = ? AND deleted_at IS NULL", (form_data.username,))
-    user_hash = c.fetchone()
+    c_pg.execute("SELECT password_hash FROM users WHERE username = %s AND deleted_at IS NULL", (form_data.username,))
+    user_hash = c_pg.fetchone()
     if not user_hash or not verify_password(form_data.password, user_hash[0]):
         logger.warning(f"Mislukte inlogpoging voor gebruiker '{form_data.username}'.")
         raise HTTPException(
@@ -376,21 +387,21 @@ async def swipe(swipee_id: int, liked: int, current_user: dict = Depends(get_cur
     if swiper_id == swipee_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet swipen.")
 
-    c.execute("SELECT id FROM users WHERE id = ? AND deleted_at IS NULL", (swipee_id,))
-    if not c.fetchone():
+    c_pg.execute("SELECT id FROM users WHERE id = %s AND deleted_at IS NULL", (swipee_id,))
+    if not c_pg.fetchone():
         raise HTTPException(status_code=404, detail="Dit profiel bestaat niet meer.")
 
-    c.execute('INSERT OR REPLACE INTO swipes VALUES (?,?,?,?)', (swiper_id, swipee_id, liked, None))
-    conn.commit()
+    c_pg.execute('''INSERT INTO swipes (swiper_id, swipee_id, liked) VALUES (%s, %s, %s) ON CONFLICT (swiper_id, swipee_id) DO UPDATE SET liked = EXCLUDED.liked, deleted_at = NULL''', (swiper_id, swipee_id, liked))
+    conn_pg.commit()
     logger.info(f"Gebruiker {swiper_id} heeft geswipet op gebruiker {swipee_id} met liked={liked}.")
 
     if liked == 1:
-        c.execute('''
+        c_pg.execute('''
             SELECT 1 FROM swipes s1
             JOIN swipes s2 ON s1.swiper_id = s2.swipee_id AND s1.swipee_id = s2.swiper_id
-            WHERE s1.swiper_id=? AND s1.liked=1 AND s2.liked=1 AND s1.deleted_at IS NULL AND s2.deleted_at IS NULL
+            WHERE s1.swiper_id=%s AND s1.liked=1 AND s2.liked=1 AND s1.deleted_at IS NULL AND s2.deleted_at IS NULL
         ''', (swiper_id,))
-        if c.fetchone():
+        if c_pg.fetchone():
             send_push_notification(swipee_id, f"Je hebt een match met {current_user['name']}!")
             logger.info(f"Match gevonden tussen gebruiker {swiper_id} en {swipee_id}.")
             return {"status": "match_found", "message": "Gefeliciteerd! Je hebt een match!"}
@@ -406,18 +417,18 @@ async def get_matches(current_user: dict = Depends(get_current_user)):
         FROM swipes s1
         JOIN swipes s2 ON s1.swiper_id = s2.swipee_id AND s1.swipee_id = s2.swiper_id
         JOIN users u ON u.id = s1.swipee_id
-        WHERE s1.swiper_id = ? AND s1.liked = 1 AND s2.liked = 1 AND s1.deleted_at IS NULL
+        WHERE s1.swiper_id = %s AND s1.liked = 1 AND s2.liked = 1 AND s1.deleted_at IS NULL
     '''
-    c.execute(query, (user_id,))
-    pre_filtered_matches = c.fetchall()
+    c_pg.execute(query, (user_id,))
+    pre_filtered_matches = c_pg.fetchall()
     
     logger.info(f"Gebruiker {user_id} heeft zijn matches opgehaald.")
 
     final_matches = []
     for match in pre_filtered_matches:
         match_user_id = match[0]
-        c.execute("SELECT photo_url FROM user_photos WHERE user_id = ?", (match_user_id,))
-        photos = [row[0] for row in c.fetchall()]
+        c_pg.execute("SELECT photo_url FROM user_photos WHERE user_id = %s", (match_user_id,))
+        photos = [row[0] for row in c_pg.fetchall()]
         strava_token = match[8]
         strava_ytd_url = f"https://api.strava.com/ytd/{match_user_id}.jpg" if strava_token else None
         
@@ -432,17 +443,17 @@ async def get_matches(current_user: dict = Depends(get_current_user)):
 async def get_chat_history(match_id: int, current_user: dict = Depends(get_current_user)):
     user_id = current_user["id"]
 
-    c.execute('''SELECT 1 FROM swipes s1 JOIN swipes s2
+    c_pg.execute('''SELECT 1 FROM swipes s1 JOIN swipes s2
                  ON s1.swiper_id = s2.swipee_id AND s1.swipee_id = s2.swipee_id
-                 WHERE ((s1.swiper_id = ? AND s1.swipee_id = ?) OR (s1.swiper_id = ? AND s1.swipee_id = ?))
+                 WHERE ((s1.swiper_id = %s AND s1.swipee_id = %s) OR (s1.swiper_id = %s AND s1.swipee_id = %s))
                  AND s1.liked = 1 AND s2.liked = 1 AND s1.deleted_at IS NULL AND s2.deleted_at IS NULL
               ''', (user_id, match_id, match_id, user_id))
-    if not c.fetchone():
+    if not c_pg.fetchone():
         logger.warning(f"Gebruiker {user_id} probeerde toegang te krijgen tot chat {match_id} zonder toestemming.")
         raise HTTPException(status_code=403, detail="Je hebt geen toegang tot deze chat.")
 
-    c.execute('SELECT sender_id, encrypted_message, timestamp FROM chats WHERE match_id = ? AND deleted_at IS NULL ORDER BY timestamp ASC', (match_id,))
-    messages = c.fetchall()
+    c_pg.execute('SELECT sender_id, encrypted_message, timestamp FROM chats WHERE match_id = %s AND deleted_at IS NULL ORDER BY timestamp ASC', (match_id,))
+    messages = c_pg.fetchall()
     
     logger.info(f"Chatgeschiedenis opgehaald voor match {match_id} door gebruiker {user_id}.")
 
@@ -468,20 +479,20 @@ async def websocket_chat(websocket: WebSocket, match_id: int, token: str):
 
     user_id = current_user['id']
     
-    c.execute('''SELECT 1 FROM swipes s1 JOIN swipes s2
+    c_pg.execute('''SELECT 1 FROM swipes s1 JOIN swipes s2
                  ON s1.swiper_id = s2.swipee_id AND s1.swipee_id = s2.swipee_id
-                 WHERE ((s1.swiper_id = ? AND s1.swipee_id = ?) OR (s1.swiper_id = ? AND s1.swipee_id = ?))
+                 WHERE ((s1.swiper_id = %s AND s1.swipee_id = %s) OR (s1.swiper_id = %s AND s1.swipee_id = %s))
                  AND s1.liked = 1 AND s2.liked = 1
               ''', (user_id, match_id, match_id, user_id))
-    if not c.fetchone():
+    if not c_pg.fetchone():
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         logger.warning(f"WebSocket connectie geweigerd voor gebruiker {user_id} naar match {match_id} vanwege geen toestemming.")
         return
 
     await manager.connect(websocket, user_id)
     
-    c.execute("SELECT swipee_id FROM swipes WHERE swiper_id = ? AND liked = 1", (user_id,))
-    other_user_id = c.fetchone()[0]
+    c_pg.execute("SELECT swipee_id FROM swipes WHERE swiper_id = %s AND liked = 1", (user_id,))
+    other_user_id = c_pg.fetchone()[0]
 
     try:
         while True:
@@ -496,9 +507,9 @@ async def websocket_chat(websocket: WebSocket, match_id: int, token: str):
                 encrypted_message = cipher_suite.encrypt(message.encode('utf-8'))
                 timestamp = datetime.now().isoformat()
                 
-                c.execute('INSERT INTO chats (match_id, sender_id, encrypted_message, timestamp, deleted_at) VALUES (?,?,?,?,?)',
+                c_pg.execute('INSERT INTO chats (match_id, sender_id, encrypted_message, timestamp, deleted_at) VALUES (%s, %s, %s, %s, %s)',
                           (match_id, user_id, encrypted_message, timestamp, None))
-                conn.commit()
+                conn_pg.commit()
                 
                 chat_message = {
                     "type": "message",
@@ -540,25 +551,24 @@ async def discover_users(
     preferred_min_age = current_user.get("preferred_min_age")
     preferred_max_age = current_user.get("preferred_max_age")
 
-    c.execute("SELECT blocked_id FROM user_blocks WHERE blocker_id = ?", (user_id,))
-    blocked_by_me = [row[0] for row in c.fetchall()]
+    c_pg.execute("SELECT blocked_id FROM user_blocks WHERE blocker_id = %s", (user_id,))
+    blocked_by_me = [row[0] for row in c_pg.fetchall()]
 
-    c.execute("SELECT blocker_id FROM user_blocks WHERE blocked_id = ?", (user_id,))
-    blocked_me = [row[0] for row in c.fetchall()]
+    c_pg.execute("SELECT blocker_id FROM user_blocks WHERE blocked_id = %s", (user_id,))
+    blocked_me = [row[0] for row in c_pg.fetchall()]
 
     excluded_users = blocked_by_me + blocked_me + [user_id]
     
     query = '''
         SELECT u.id, u.name, u.age, u.bio, u.sport_type, u.avg_distance, u.last_lat, u.last_lng, u.strava_token
         FROM users u
-        LEFT JOIN swipes s ON u.id = s.swipee_id AND s.swiper_id = ?
-        WHERE s.swipee_id IS NULL AND u.deleted_at IS NULL AND u.id NOT IN ({seq})
-    '''.format(seq=','.join(['?'] * len(excluded_users)))
+        LEFT JOIN swipes s ON u.id = s.swipee_id AND s.swiper_id = %s
+        WHERE s.swipee_id IS NULL AND u.deleted_at IS NULL AND u.id NOT IN %s
+    '''
     
-    params = [user_id] + excluded_users
-
-    c.execute(query, tuple(params))
-    potential_users = c.fetchall()
+    params = tuple([user_id]) + (tuple(excluded_users),)
+    c_pg.execute(query, params)
+    potential_users = c_pg.fetchall()
 
     scored_users = []
     for user in potential_users:
@@ -576,8 +586,8 @@ async def discover_users(
             score += 50
 
         if score > 0:
-            c.execute("SELECT photo_url FROM user_photos WHERE user_id = ?", (other_user_id,))
-            photos = [row[0] for row in c.fetchall()]
+            c_pg.execute("SELECT photo_url FROM user_photos WHERE user_id = %s", (other_user_id,))
+            photos = [row[0] for row in c_pg.fetchall()]
             strava_ytd_url = f"https://api.strava.com/ytd/{other_user_id}.jpg" if strava_token else None
             
             scored_users.append({
@@ -600,21 +610,22 @@ async def upload_photo(photo_data: PhotoUpload, current_user: dict = Depends(get
     user_id = current_user["id"]
     is_profile_pic_int = 1 if photo_data.is_profile_pic else 0
 
-    c.execute("SELECT COUNT(*) FROM user_photos WHERE user_id = ?", (user_id,))
-    current_photo_count = c.fetchone()[0]
+    c_pg.execute("SELECT COUNT(*) FROM user_photos WHERE user_id = %s", (user_id,))
+    current_photo_count = c_pg.fetchone()[0]
     
     if current_photo_count >= 5:
         logger.warning(f"Gebruiker {user_id} probeerde meer dan 5 foto's te uploaden.")
         raise HTTPException(status_code=400, detail="Je kunt niet meer dan 5 foto's uploaden.")
     
     if is_profile_pic_int == 1:
-        c.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = ?", (user_id,))
+        c_pg.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
+        conn_pg.commit()
 
-    c.execute(
-        "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (?, ?, ?)",
+    c_pg.execute(
+        "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s, %s, %s)",
         (user_id, str(photo_data.photo_url), is_profile_pic_int)
     )
-    conn.commit()
+    conn_pg.commit()
     logger.info(f"Foto succesvol geüpload door gebruiker {user_id}.")
     return {"status": "success", "message": "Foto succesvol geüpload."}
 
@@ -622,8 +633,8 @@ async def upload_photo(photo_data: PhotoUpload, current_user: dict = Depends(get
 async def link_strava(strava_token: str, current_user: dict = Depends(get_current_user)):
     user_id = current_user["id"]
     
-    c.execute("UPDATE users SET strava_token = ? WHERE id = ?", (strava_token, user_id))
-    conn.commit()
+    c_pg.execute("UPDATE users SET strava_token = %s WHERE id = %s", (strava_token, user_id))
+    conn_pg.commit()
     logger.info(f"Strava-account succesvol gekoppeld voor gebruiker {user_id}.")
     return {"status": "success", "message": "Strava-account succesvol gekoppeld."}
 
@@ -635,13 +646,13 @@ async def update_profile(
 ):
     user_id = current_user["id"]
     
-    c.execute('''
+    c_pg.execute('''
         UPDATE users
-        SET bio = COALESCE(?, bio),
-            preferred_sport_type = COALESCE(?, preferred_sport_type),
-            preferred_min_age = COALESCE(?, preferred_min_age),
-            preferred_max_age = COALESCE(?, preferred_max_age)
-        WHERE id = ?
+        SET bio = COALESCE(%s, bio),
+            preferred_sport_type = COALESCE(%s, preferred_sport_type),
+            preferred_min_age = COALESCE(%s, preferred_min_age),
+            preferred_max_age = COALESCE(%s, preferred_max_age)
+        WHERE id = %s
     ''', (
         bio,
         preferences.preferred_sport_type,
@@ -649,7 +660,7 @@ async def update_profile(
         preferences.preferred_max_age,
         user_id
     ))
-    conn.commit()
+    conn_pg.commit()
     
     logger.info(f"Profiel succesvol bijgewerkt voor gebruiker {user_id}.")
     
@@ -662,9 +673,9 @@ async def block_user(blocked_id: int, current_user: dict = Depends(get_current_u
     if blocker_id == blocked_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet blokkeren.")
     
-    c.execute("INSERT OR IGNORE INTO user_blocks (blocker_id, blocked_id, timestamp) VALUES (?, ?, ?)",
+    c_pg.execute("INSERT INTO user_blocks (blocker_id, blocked_id, timestamp) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING",
               (blocker_id, blocked_id, datetime.utcnow().isoformat()))
-    conn.commit()
+    conn_pg.commit()
     logger.info(f"Gebruiker {blocker_id} heeft gebruiker {blocked_id} geblokkeerd.")
     return {"status": "success", "message": "Gebruiker succesvol geblokkeerd."}
 
@@ -674,9 +685,9 @@ async def report_user(report: ReportRequest, current_user: dict = Depends(get_cu
     if reporter_id == report.reported_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet rapporteren.")
     
-    c.execute("INSERT INTO user_reports (reporter_id, reported_id, reason, timestamp) VALUES (?, ?, ?, ?)",
+    c_pg.execute("INSERT INTO user_reports (reporter_id, reported_id, reason, timestamp) VALUES (%s, %s, %s, %s)",
               (reporter_id, report.reported_id, report.reason, datetime.utcnow().isoformat()))
-    conn.commit()
+    conn_pg.commit()
     logger.info(f"Gebruiker {reporter_id} heeft gebruiker {report.reported_id} gerapporteerd met reden: '{report.reason}'.")
     return {"status": "success", "message": "Rapport succesvol ingediend."}
 
@@ -686,10 +697,10 @@ async def delete_profile(current_user: dict = Depends(get_current_user)):
     
     timestamp = datetime.utcnow().isoformat()
     
-    c.execute("UPDATE users SET deleted_at = ? WHERE id = ?", (timestamp, user_id))
-    c.execute("UPDATE swipes SET deleted_at = ? WHERE swiper_id = ? OR swipee_id = ?", (timestamp, user_id, user_id))
-    c.execute("UPDATE chats SET deleted_at = ? WHERE sender_id = ?", (timestamp, user_id))
-    conn.commit()
+    c_pg.execute("UPDATE users SET deleted_at = %s WHERE id = %s", (timestamp, user_id))
+    c_pg.execute("UPDATE swipes SET deleted_at = %s WHERE swiper_id = %s OR swipee_id = %s", (timestamp, user_id, user_id))
+    c_pg.execute("UPDATE chats SET deleted_at = %s WHERE sender_id = %s", (timestamp, user_id))
+    conn_pg.commit()
     
     logger.info(f"Profiel en gerelateerde data van gebruiker {user_id} zijn soft-verwijderd.")
     
@@ -699,13 +710,13 @@ async def delete_profile(current_user: dict = Depends(get_current_user)):
 async def delete_match(match_id: int, current_user: dict = Depends(get_current_user)):
     user_id = current_user['id']
 
-    c.execute('''
+    c_pg.execute('''
         UPDATE swipes
-        SET deleted_at = ?
-        WHERE (swiper_id = ? AND swipee_id = ?) OR (swiper_id = ? AND swipee_id = ?)
+        SET deleted_at = %s
+        WHERE (swiper_id = %s AND swipee_id = %s) OR (swiper_id = %s AND swipee_id = %s)
     ''', (datetime.utcnow().isoformat(), user_id, match_id, match_id, user_id))
     
-    conn.commit()
+    conn_pg.commit()
     logger.info(f"Match met gebruiker {match_id} soft-verwijderd door gebruiker {user_id}.")
     return {"status": "success", "message": "Match succesvol soft-verwijderd."}
 
@@ -713,11 +724,11 @@ async def delete_match(match_id: int, current_user: dict = Depends(get_current_u
 async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_current_user)):
     user_id = current_user['id']
 
-    c.execute("UPDATE chats SET deleted_at = ? WHERE id = ? AND sender_id = ?",
+    c_pg.execute("UPDATE chats SET deleted_at = %s WHERE id = %s AND sender_id = %s",
               (datetime.utcnow().isoformat(), chat_id, user_id))
-    conn.commit()
+    conn_pg.commit()
 
-    if c.rowcount == 0:
+    if c_pg.rowcount == 0:
         logger.warning(f"Gebruiker {user_id} kon chatbericht {chat_id} niet vinden om te verwijderen.")
         raise HTTPException(status_code=404, detail="Bericht niet gevonden of je hebt geen toestemming het te verwijderen.")
     
@@ -726,27 +737,5 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
 
 # --- Start de applicatie ---
 if __name__ == "__main__":
-    logger.info("Dummy-gebruikers worden toegevoegd voor lokaal testen...")
-    c.execute('INSERT OR REPLACE INTO users (id, username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age, push_token) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (1, "alice", get_password_hash("Test#123"), "Alice", 28, "Hallo, ik ben Alice en ik houd van hardlopen!", "run", 5.0, 51.010, 4.010, "weekends", "dummy_token_123", "bike", 25, 35, "alice_push_token"))
-    c.execute('INSERT OR REPLACE INTO users (id, username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age, push_token) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (2, "bob", get_password_hash("Wachtwoord!23"), "Bob", 32, "Bob, hardloper op zoek naar trainingspartners.", "run", 4.5, 51.015, 4.020, "weekends", "dummy_token_456", "run", 28, 38, "bob_push_token"))
-    c.execute('INSERT OR REPLACE INTO users (id, username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age, push_token) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (3, "charlie", get_password_hash("VeiligPw?321"), "Charlie", 25, "Fietsen is mijn passie!", "bike", 20.0, 51.020, 4.030, "evenings", None, "run", 20, 30, None))
-    c.execute('INSERT OR REPLACE INTO users (id, username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age, push_token) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (4, "dana", get_password_hash("Secret#pw!99"), "Dana", 29, "Ik loop graag in het park.", "run", 5.2, 51.025, 4.015, "weekends", "dummy_token_789", "run", 25, 35, "dana_push_token"))
-    c.execute('INSERT OR REPLACE INTO users (id, username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token, preferred_sport_type, preferred_min_age, preferred_max_age, push_token) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-              (5, "eve", get_password_hash("MijnPW#567!"), "Eve", 31, "Op zoek naar een hardloopbuddy.", "run", 6.0, 51.012, 4.018, "weekends", None, "run", 30, 40, None))
-    conn.commit()
-
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (1, 1, "https://example.com/alice1.jpg", 1))
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (2, 1, "https://example.com/alice2.jpg", 0))
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (3, 2, "https://example.com/bob1.jpg", 1))
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (4, 3, "https://example.com/charlie1.jpg", 1))
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (5, 4, "https://example.com/dana1.jpg", 1))
-    c.execute('INSERT OR REPLACE INTO user_photos (id, user_id, photo_url, is_profile_pic) VALUES (?,?,?,?)', (6, 5, "https://example.com/eve1.jpg", 1))
-    conn.commit()
-    logger.info("Dummy-gegevens succesvol toegevoegd.")
-
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port, log_level="debug")
