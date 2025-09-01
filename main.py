@@ -233,7 +233,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="Kon validatiegegevens niet verifiëren.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -242,14 +242,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         if username is None:
             raise credentials_exception
     except JWTError:
-        logger.error(f"JWT Error: {credentials_exception.detail}")
         raise credentials_exception
+
     c_pg.execute("SELECT id, username, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, preferred_sport_type, preferred_min_age, preferred_max_age FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
     user = c_pg.fetchone()
+
     if user is None:
         logger.warning(f"Gebruiker {username} niet gevonden in de database of soft-verwijderd.")
         raise credentials_exception
-
+    
     user_data = {
         "id": user[0],
         "username": user[1],
@@ -273,73 +274,45 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
     try:
         c_pg.execute("SELECT password_hash FROM users WHERE username = %s AND deleted_at IS NULL", (form_data.username,))
         result = c_pg.fetchone()
+
         if not result or not verify_password(form_data.password, result[0]):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrecte gebruikersnaam of wachtwoord",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        refresh_token_expires = timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": form_data.username}, expires_delta=access_token_expires
         )
-        refresh_token = create_access_token(
-            data={"sub": form_data.username}, expires_delta=refresh_token_expires
-        )
 
-        # Set the refresh token as a cookie
-        response.set_cookie(key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="strict")
-        logger.info(f"Gebruiker {form_data.username} succesvol ingelogd.")
+        response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
-        logger.error(f"Fout bij inloggen voor gebruiker {form_data.username}: {e}")
-        raise HTTPException(status_code=500, detail="Interne serverfout bij inloggen")
+        logger.error(f"Fout bij het genereren van een token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Interne serverfout bij tokenaanmaak."
+        )
 
-@app.post("/refresh-token", response_model=Token)
-async def refresh_access_token(request: Request, response: Response):
-    refresh_token = request.cookies.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Geen refresh token gevonden")
-
-    try:
-        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        username = payload.get("sub")
-        if not username:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ongeldig refresh token")
-
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        new_access_token = create_access_token(data={"sub": username}, expires_delta=access_token_expires)
-        
-        logger.info(f"Access token vernieuwd voor gebruiker {username}.")
-        return {"access_token": new_access_token, "token_type": "bearer"}
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Ongeldig refresh token")
-
-@app.post("/users", response_model=UserProfile)
+@app.post("/register")
 async def create_user(user: UserCreate):
+    password_hash = get_password_hash(user.password)
     try:
-        # Check if the username already exists
-        c_pg.execute("SELECT id FROM users WHERE username = %s AND deleted_at IS NULL", (user.username,))
-        existing_user = c_pg.fetchone()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Gebruikersnaam bestaat al")
-
-        # Hash the password
-        hashed_password = get_password_hash(user.password)
-
-        # Insert new user into the database
         c_pg.execute("INSERT INTO users (username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                     (user.username, hashed_password, user.name, user.age, user.bio, user.sport_type, user.avg_distance, user.last_lat, user.last_lng, user.availability))
+                  (user.username, password_hash, user.name, user.age, user.bio, user.sport_type, user.avg_distance, user.last_lat, user.last_lng, user.availability))
         conn_pg.commit()
-
-        # Fetch the newly created user's ID
-        c_pg.execute("SELECT id FROM users WHERE username = %s AND deleted_at IS NULL", (user.username,))
+        logger.info(f"Nieuwe gebruiker aangemaakt: {user.username}")
+        
+        # Voeg een default profielfoto toe
+        default_photo_url = "https://example.com/default-profile.png"
+        c_pg.execute("SELECT id FROM users WHERE username = %s", (user.username,))
         user_id = c_pg.fetchone()[0]
-
-        logger.info(f"Nieuwe gebruiker {user.username} (ID: {user_id}) aangemaakt.")
-        return {**user.dict(exclude={'password'}), "id": user_id, "lat": user.last_lat, "lng": user.last_lng, "photos": []}
+        c_pg.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s, %s, %s)", (user_id, default_photo_url, 1))
+        conn_pg.commit()
+        
+        return {"status": "success", "user_id": user_id, "username": user.username, "profile_pic_url": default_photo_url}
     except psycopg2.Error as e:
         conn_pg.rollback()
         logger.error(f"Databasefout bij het aanmaken van gebruiker: {e}")
@@ -354,12 +327,15 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     user = c_pg.fetchone()
     if not user:
         raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
-    
+
     # Fetch user photos
     c_pg.execute("SELECT photo_url FROM user_photos WHERE user_id = %s", (user_id,))
     photos = [row[0] for row in c_pg.fetchall()]
+    
+    strava_ytd_url = f"https://www.strava.com/athletes/{user[9]}/ytd" if user[9] else None
 
     logger.info(f"Gebruiker {current_user['id']} bekijkt profiel van gebruiker {user_id}.")
+
     return {
         "id": user[0],
         "name": user[1],
@@ -370,70 +346,57 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
         "lat": user[6],
         "lng": user[7],
         "photos": photos,
-        "strava_ytd_url": user[9] if user[9] else None
+        "strava_ytd_url": strava_ytd_url
     }
 
-@app.put("/users/me", response_model=UserProfile)
-async def update_current_user(updated_user: UserBase, current_user: dict = Depends(get_current_user)):
-    user_id = current_user['id']
-    try:
-        # Update user data in the database
-        c_pg.execute("UPDATE users SET name = %s, age = %s, bio = %s, sport_type = %s, avg_distance = %s, last_lat = %s, last_lng = %s, availability = %s WHERE id = %s",
-                     (updated_user.name, updated_user.age, updated_user.bio, updated_user.sport_type, updated_user.avg_distance, updated_user.last_lat, updated_user.last_lng, updated_user.availability, user_id))
-        conn_pg.commit()
-        logger.info(f"Profiel van gebruiker {user_id} succesvol bijgewerkt.")
-        return {**updated_user.dict(), "id": user_id, "lat": updated_user.last_lat, "lng": updated_user.last_lng, "photos": []}
-    except psycopg2.Error as e:
-        conn_pg.rollback()
-        logger.error(f"Databasefout bij het bijwerken van gebruiker {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het bijwerken van gebruiker.")
+@app.post("/users/{user_id}/preferences")
+async def update_user_preferences(user_id: int, preferences: UserPreferences, current_user: dict = Depends(get_current_user)):
+    if user_id != current_user['id']:
+        raise HTTPException(status_code=403, detail="Geen toestemming om de voorkeuren van deze gebruiker bij te werken.")
 
-@app.put("/users/me/preferences")
-async def update_user_preferences(preferences: UserPreferences, current_user: dict = Depends(get_current_user)):
-    user_id = current_user['id']
     try:
         c_pg.execute("UPDATE users SET preferred_sport_type = %s, preferred_min_age = %s, preferred_max_age = %s WHERE id = %s",
-                     (preferences.preferred_sport_type, preferences.preferred_min_age, preferences.preferred_max_age, user_id))
+                  (preferences.preferred_sport_type, preferences.preferred_min_age, preferences.preferred_max_age, user_id))
         conn_pg.commit()
         logger.info(f"Voorkeuren van gebruiker {user_id} succesvol bijgewerkt.")
         return {"status": "success", "message": "Voorkeuren succesvol bijgewerkt."}
     except psycopg2.Error as e:
         conn_pg.rollback()
-        logger.error(f"Databasefout bij het bijwerken van voorkeuren voor gebruiker {user_id}: {e}")
+        logger.error(f"Databasefout bij het bijwerken van voorkeuren: {e}")
         raise HTTPException(status_code=500, detail="Databasefout bij het bijwerken van voorkeuren.")
 
 @app.get("/suggestions")
 async def get_suggestions(current_user: dict = Depends(get_current_user)):
     user_id = current_user['id']
-    lat, lng = current_user['last_lat'], current_user['last_lng']
+    lat = current_user['last_lat']
+    lng = current_user['last_lng']
     sport_type = current_user.get('preferred_sport_type')
     min_age = current_user.get('preferred_min_age')
     max_age = current_user.get('preferred_max_age')
 
-    # Base query to find potential matches
+    # De SQL-query is geoptimaliseerd om reeds gelikete of geswipete gebruikers uit te sluiten en te filteren op sport en leeftijd.
     query = """
-    SELECT id, name, age, bio, sport_type, avg_distance, last_lat, last_lng
-    FROM users
-    WHERE id != %s AND deleted_at IS NULL
-    AND id NOT IN (SELECT swipee_id FROM swipes WHERE swiper_id = %s)
+        SELECT id, name, age, bio, sport_type, avg_distance, last_lat, last_lng
+        FROM users
+        WHERE id != %s AND id NOT IN (
+            SELECT swipee_id FROM swipes WHERE swiper_id = %s
+        )
     """
     params = [user_id, user_id]
 
     if sport_type:
         query += " AND sport_type = %s"
         params.append(sport_type)
-    
     if min_age:
         query += " AND age >= %s"
         params.append(min_age)
-
     if max_age:
         query += " AND age <= %s"
         params.append(max_age)
 
     c_pg.execute(query, tuple(params))
     suggestions = c_pg.fetchall()
-
+    
     if not suggestions:
         return {"suggestions": []}
 
@@ -454,116 +417,135 @@ async def get_suggestions(current_user: dict = Depends(get_current_user)):
                 "lng": s[7],
                 "distance_km": round(distance, 2)
             })
-
+    
     # Sort based on distance (closest first)
     suggestions_with_distance.sort(key=lambda x: x['distance_km'])
 
-    logger.info(f"Suggesties gegenereerd voor gebruiker {user_id}.")
+    logger.info(f"Suggesties gegenereerd voor gebruiker {user_id}. Aantal: {len(suggestions_with_distance)}")
+    
     return {"suggestions": suggestions_with_distance}
 
 
-@app.post("/swipe")
-async def record_swipe(swipe_data: dict, current_user: dict = Depends(get_current_user)):
+@app.post("/swipe/{swipee_id}")
+async def swipe(swipee_id: int, liked: int, current_user: dict = Depends(get_current_user)):
     swiper_id = current_user['id']
-    swipee_id = swipe_data.get("swipee_id")
-    liked = swipe_data.get("liked")
 
-    if not swipee_id or liked is None:
-        raise HTTPException(status_code=400, detail="Ontbrekende gegevens: swipee_id en liked zijn verplicht")
+    if swiper_id == swipee_id:
+        raise HTTPException(status_code=400, detail="Je kunt niet op je eigen profiel swipen.")
 
     try:
-        # Record the swipe
-        c_pg.execute("INSERT INTO swipes (swiper_id, swipee_id, liked) VALUES (%s, %s, %s) ON CONFLICT (swiper_id, swipee_id) DO UPDATE SET liked = EXCLUDED.liked, deleted_at = NULL",
-                     (swiper_id, swipee_id, liked))
+        c_pg.execute("INSERT INTO swipes (swiper_id, swipee_id, liked) VALUES (%s, %s, %s) ON CONFLICT (swiper_id, swipee_id) DO UPDATE SET liked = EXCLUDED.liked",
+                  (swiper_id, swipee_id, liked))
         conn_pg.commit()
+        logger.info(f"Gebruiker {swiper_id} heeft op gebruiker {swipee_id} geswipet (liked: {liked}).")
 
-        if liked:
-            # Check for a match (the other user also liked this user)
-            c_pg.execute("SELECT liked FROM swipes WHERE swiper_id = %s AND swipee_id = %s", (swipee_id, swiper_id))
-            result = c_pg.fetchone()
-            
-            if result and result[0] == 1:
-                logger.info(f"Nieuwe match: {swiper_id} en {swipee_id}.")
-                return {"status": "match", "message": "Het is een match!"}
-            else:
-                logger.info(f"Gebruiker {swiper_id} veegt rechts op {swipee_id}.")
-                return {"status": "success", "message": "Swipe succesvol opgeslagen."}
-        else:
-            logger.info(f"Gebruiker {swiper_id} veegt links op {swipee_id}.")
-            return {"status": "success", "message": "Swipe succesvol opgeslagen."}
+        # Check for a match
+        if liked == 1:
+            c_pg.execute("SELECT 1 FROM swipes WHERE swiper_id = %s AND swipee_id = %s AND liked = 1", (swipee_id, swiper_id))
+            if c_pg.fetchone():
+                logger.info(f"Nieuwe match tussen gebruiker {swiper_id} en gebruiker {swipee_id}.")
+                return {"status": "success", "message": "Match!", "match": True}
 
+        return {"status": "success", "message": "Swipe geregistreerd.", "match": False}
     except psycopg2.Error as e:
         conn_pg.rollback()
-        logger.error(f"Databasefout bij het opslaan van swipe: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het opslaan van de swipe.")
+        logger.error(f"Databasefout bij het swipen: {e}")
+        raise HTTPException(status_code=500, detail="Databasefout bij het swipen.")
 
-@app.post("/chat")
-async def send_chat_message(message_data: MessageIn, current_user: dict = Depends(get_current_user)):
+
+@app.get("/matches")
+async def get_matches(current_user: dict = Depends(get_current_user)):
     user_id = current_user['id']
-    match_id = message_data.match_id
-    message = message_data.message
+    
+    # Haal alle gebruikers op die door de huidige gebruiker geliked zijn en die de huidige gebruiker ook geliked hebben.
+    c_pg.execute("""
+        SELECT DISTINCT ON (match.id) match.id, match.name, match.age, match.photo_url
+        FROM (
+            SELECT u.id, u.name, u.age, up.photo_url
+            FROM users u
+            JOIN swipes s1 ON u.id = s1.swipee_id
+            JOIN swipes s2 ON u.id = s2.swiper_id
+            LEFT JOIN user_photos up ON u.id = up.user_id AND up.is_profile_pic = 1
+            WHERE s1.swiper_id = %s AND s1.liked = 1 AND s2.swipee_id = %s AND s2.liked = 1
+            AND u.deleted_at IS NULL
+        ) AS match;
+    """, (user_id, user_id))
 
-    # Encrypt the message
-    encrypted_message = cipher_suite.encrypt(message.encode('utf-8')).decode('utf-8')
+    matches = c_pg.fetchall()
+
+    if not matches:
+        return {"matches": []}
+
+    match_list = [{"id": row[0], "name": row[1], "age": row[2], "photo_url": row[3]} for row in matches]
+    logger.info(f"Matches opgehaald voor gebruiker {user_id}. Aantal: {len(match_list)}")
+    
+    return {"matches": match_list}
+
+
+@app.post("/send_message")
+async def send_message(message: MessageIn, current_user: dict = Depends(get_current_user)):
+    user_id = current_user['id']
+    match_id = message.match_id
+    plain_message = message.message
     timestamp = datetime.utcnow().isoformat()
+    
+    # Encrypt the message
+    encrypted_message = cipher_suite.encrypt(plain_message.encode('utf-8')).decode('utf-8')
+    
+    # Check if the users are a match (bi-directional like)
+    c_pg.execute("""
+        SELECT 1 FROM swipes
+        WHERE (swiper_id = %s AND swipee_id = %s AND liked = 1)
+        AND EXISTS (SELECT 1 FROM swipes WHERE swiper_id = %s AND swipee_id = %s AND liked = 1)
+        AND deleted_at IS NULL
+    """, (user_id, match_id, match_id, user_id))
+    
+    if not c_pg.fetchone():
+        raise HTTPException(status_code=403, detail="Bericht kan niet worden verzonden aan een gebruiker waarmee u geen match hebt.")
 
-    try:
-        # Check if a match exists between the users
-        c_pg.execute("""
-            SELECT 1 FROM swipes WHERE
-            (swiper_id = %s AND swipee_id = %s AND liked = 1) OR
-            (swiper_id = %s AND swipee_id = %s AND liked = 1)
-        """, (user_id, match_id, match_id, user_id))
-        
-        if not c_pg.fetchone():
-            raise HTTPException(status_code=403, detail="Bericht kan niet worden verzonden aan een gebruiker waarmee u geen match hebt.")
-
-        # Save the message
-        c_pg.execute("INSERT INTO chats (match_id, sender_id, encrypted_message, timestamp) VALUES (%s, %s, %s, %s)",
-                     (match_id, user_id, encrypted_message, timestamp))
-        conn_pg.commit()
-        logger.info(f"Chatbericht van gebruiker {user_id} naar gebruiker {match_id} succesvol opgeslagen.")
-        return {"status": "success", "message": "Bericht verzonden."}
-    except psycopg2.Error as e:
-        conn_pg.rollback()
-        logger.error(f"Databasefout bij het verzenden van chatbericht: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het verzenden van chatbericht.")
-
+    # Save the message
+    c_pg.execute("INSERT INTO chats (match_id, sender_id, encrypted_message, timestamp) VALUES (%s, %s, %s, %s)", (match_id, user_id, encrypted_message, timestamp))
+    conn_pg.commit()
+    logger.info(f"Chatbericht van gebruiker {user_id} naar gebruiker {match_id} succesvol opgeslagen.")
+    
+    return {"status": "success", "message": "Bericht verzonden."}
 
 @app.get("/chat/{match_id}/messages")
 async def get_chat_messages(match_id: int, current_user: dict = Depends(get_current_user)):
     user_id = current_user['id']
-
+    
     # Check if the user is part of the match
     c_pg.execute("""
-        SELECT 1 FROM swipes WHERE
-        (swiper_id = %s AND swipee_id = %s AND liked = 1) OR
-        (swiper_id = %s AND swipee_id = %s AND liked = 1)
+        SELECT 1 FROM swipes
+        WHERE (swiper_id = %s AND swipee_id = %s AND liked = 1)
+        AND EXISTS (SELECT 1 FROM swipes WHERE swiper_id = %s AND swipee_id = %s AND liked = 1)
+        AND deleted_at IS NULL
     """, (user_id, match_id, match_id, user_id))
-    
+
     if not c_pg.fetchone():
-        raise HTTPException(status_code=403, detail="U bent geen onderdeel van deze chat.")
+        raise HTTPException(status_code=403, detail="Geen toegang tot deze chat.")
 
-    c_pg.execute("SELECT sender_id, encrypted_message, timestamp FROM chats WHERE match_id = %s ORDER BY timestamp", (match_id,))
+    # Retrieve and decrypt messages
+    c_pg.execute("SELECT sender_id, encrypted_message, timestamp FROM chats WHERE match_id = %s AND deleted_at IS NULL", (match_id,))
     messages = c_pg.fetchall()
-    
-    decrypted_messages = []
-    for sender_id, encrypted_msg, timestamp in messages:
-        decrypted_msg = cipher_suite.decrypt(encrypted_msg.encode('utf-8')).decode('utf-8')
-        decrypted_messages.append(ChatMessage(
-            sender_id=sender_id,
-            message=decrypted_msg,
-            timestamp=timestamp
-        ))
-    
-    logger.info(f"Chatgeschiedenis opgehaald voor match {match_id} door gebruiker {user_id}.")
-    return {"messages": decrypted_messages}
 
-@app.post("/report")
-async def report_user(report_request: ReportRequest, current_user: dict = Depends(get_current_user)):
+    chat_history = []
+    for sender_id, encrypted_message, timestamp in messages:
+        try:
+            decrypted_message = cipher_suite.decrypt(encrypted_message.encode('utf-8')).decode('utf-8')
+            chat_history.append(ChatMessage(sender_id=sender_id, message=decrypted_message, timestamp=timestamp))
+        except Exception as e:
+            logger.error(f"Fout bij het decoderen van bericht: {e}")
+            continue
+
+    return {"chat_history": chat_history}
+
+
+@app.post("/report_user")
+async def report_user(report: ReportRequest, current_user: dict = Depends(get_current_user)):
     reporter_id = current_user['id']
-    reported_id = report_request.reported_id
-    reason = report_request.reason
+    reported_id = report.reported_id
+    reason = report.reason
     timestamp = datetime.utcnow()
 
     if reporter_id == reported_id:
@@ -571,68 +553,37 @@ async def report_user(report_request: ReportRequest, current_user: dict = Depend
 
     try:
         c_pg.execute("INSERT INTO user_reports (reporter_id, reported_id, reason, timestamp) VALUES (%s, %s, %s, %s)",
-                     (reporter_id, reported_id, reason, timestamp))
+                  (reporter_id, reported_id, reason, timestamp))
         conn_pg.commit()
-        logger.info(f"Gebruiker {reporter_id} heeft gebruiker {reported_id} gerapporteerd om de volgende reden: {reason}.")
+        logger.info(f"Gebruiker {reported_id} succesvol gerapporteerd door gebruiker {reporter_id}.")
         return {"status": "success", "message": "Gebruiker succesvol gerapporteerd."}
     except psycopg2.Error as e:
         conn_pg.rollback()
-        logger.error(f"Databasefout bij het rapporteren van gebruiker {reported_id}: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het rapporteren van de gebruiker.")
+        logger.error(f"Databasefout bij het rapporteren van gebruiker: {e}")
+        raise HTTPException(status_code=500, detail="Databasefout bij het rapporteren van gebruiker.")
 
-@app.post("/block")
-async def block_user(block_data: dict, current_user: dict = Depends(get_current_user)):
+@app.post("/block_user")
+async def block_user(user_to_block_id: int, current_user: dict = Depends(get_current_user)):
     blocker_id = current_user['id']
-    blocked_id = block_data.get("blocked_id")
     timestamp = datetime.utcnow()
-
-    if blocker_id == blocked_id:
+    
+    if blocker_id == user_to_block_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet blokkeren.")
 
     try:
         c_pg.execute("INSERT INTO user_blocks (blocker_id, blocked_id, timestamp) VALUES (%s, %s, %s) ON CONFLICT (blocker_id, blocked_id) DO NOTHING",
-                     (blocker_id, blocked_id, timestamp))
+                  (blocker_id, user_to_block_id, timestamp))
         conn_pg.commit()
-        logger.info(f"Gebruiker {blocker_id} heeft gebruiker {blocked_id} geblokkeerd.")
+        if c_pg.rowcount == 0:
+            logger.warning(f"Gebruiker {user_to_block_id} was al geblokkeerd door gebruiker {blocker_id}.")
+            return {"status": "success", "message": "Gebruiker was al geblokkeerd."}
+            
+        logger.info(f"Gebruiker {user_to_block_id} succesvol geblokkeerd door gebruiker {blocker_id}.")
         return {"status": "success", "message": "Gebruiker succesvol geblokkeerd."}
     except psycopg2.Error as e:
         conn_pg.rollback()
-        logger.error(f"Databasefout bij het blokkeren van gebruiker {blocked_id}: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het blokkeren van de gebruiker.")
-    
-@app.post("/upload_photo")
-async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user)):
-    user_id = current_user['id']
-    photo_url = str(photo.photo_url)
-    is_profile_pic = photo.is_profile_pic
-
-    try:
-        # Handle profile picture logic
-        if is_profile_pic:
-            # Set all existing profile pictures for this user to is_profile_pic = 0
-            c_pg.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s AND is_profile_pic = 1", (user_id,))
-            conn_pg.commit()
-
-        c_pg.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s, %s, %s)",
-                     (user_id, photo_url, 1 if is_profile_pic else 0))
-        conn_pg.commit()
-
-        logger.info(f"Foto geüpload voor gebruiker {user_id}. URL: {photo_url}, Profielfoto: {is_profile_pic}")
-        return {"status": "success", "message": "Foto succesvol geüpload."}
-    except psycopg2.Error as e:
-        conn_pg.rollback()
-        logger.error(f"Databasefout bij het uploaden van foto voor gebruiker {user_id}: {e}")
-        raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van foto.")
-
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int):
-    await websocket.accept()
-    try:
-        while True:
-            data = await websocket.receive_text()
-            await websocket.send_text(f"Bericht ontvangen: {data}")
-    except WebSocketDisconnect:
-        print(f"Websocket met gebruiker {user_id} verbroken")
+        logger.error(f"Databasefout bij het blokkeren van gebruiker: {e}")
+        raise HTTPException(status_code=500, detail="Databasefout bij het blokkeren van gebruiker.")
 
 @app.delete("/delete/match/{match_id}")
 async def delete_match(match_id: int, current_user: dict = Depends(get_current_user)):
@@ -659,9 +610,95 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
     if c_pg.rowcount == 0:
         logger.warning(f"Gebruiker {user_id} kon chatbericht {chat_id} niet vinden om te verwijderen.")
         raise HTTPException(status_code=404, detail="Bericht niet gevonden of je hebt geen toestemming om het te verwijderen.")
+        
+    logger.info(f"Chatbericht {chat_id} van gebruiker {user_id} succesvol soft-verwijderd.")
+    return {"status": "success", "message": "Bericht succesvol soft-verwijderd."}
 
-    logger.info(f"Chatbericht {chat_id} succesvol soft-verwijderd door gebruiker {user_id}.")
-    return {"status": "success", "message": "Bericht succesvol verwijderd."}
+@app.post("/upload_photo")
+async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user)):
+    user_id = current_user['id']
+    photo_url = str(photo.photo_url)
+    is_profile_pic = photo.is_profile_pic
 
+    try:
+        # Handle profile picture logic
+        if is_profile_pic:
+            # Set all existing profile pictures for this user to is_profile_pic = 0
+            c_pg.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
+            conn_pg.commit()
+            logger.info(f"Oude profielfoto's van gebruiker {user_id} gereset.")
+
+        c_pg.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s, %s, %s)", (user_id, photo_url, int(is_profile_pic)))
+        conn_pg.commit()
+        logger.info(f"Nieuwe foto succesvol geüpload voor gebruiker {user_id}. URL: {photo_url}, Profielfoto: {is_profile_pic}")
+        
+        return {"status": "success", "message": "Foto succesvol geüpload."}
+    except psycopg2.Error as e:
+        conn_pg.rollback()
+        logger.error(f"Databasefout bij het uploaden van een foto: {e}")
+        raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van een foto.")
+    except Exception as e:
+        logger.error(f"Algemene fout bij het uploaden van een foto: {e}")
+        raise HTTPException(status_code=500, detail="Interne serverfout bij het uploaden van de foto.")
+
+@app.delete("/delete_photo/{photo_id}")
+async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_user)):
+    user_id = current_user['id']
+    
+    try:
+        # Check if the photo belongs to the current user and if it's the profile picture
+        c_pg.execute("SELECT is_profile_pic FROM user_photos WHERE id = %s AND user_id = %s", (photo_id, user_id))
+        result = c_pg.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Foto niet gevonden of je hebt geen toestemming om deze te verwijderen.")
+            
+        is_profile_pic = result[0]
+        
+        c_pg.execute("DELETE FROM user_photos WHERE id = %s AND user_id = %s", (photo_id, user_id))
+        conn_pg.commit()
+        
+        if c_pg.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Foto niet gevonden.")
+
+        logger.info(f"Foto {photo_id} succesvol verwijderd voor gebruiker {user_id}.")
+
+        # If the deleted photo was the profile picture, assign a new one or handle accordingly
+        if is_profile_pic == 1:
+            c_pg.execute("SELECT id FROM user_photos WHERE user_id = %s LIMIT 1", (user_id,))
+            new_profile_pic = c_pg.fetchone()
+            if new_profile_pic:
+                c_pg.execute("UPDATE user_photos SET is_profile_pic = 1 WHERE id = %s", (new_profile_pic[0],))
+                conn_pg.commit()
+                logger.info(f"Nieuwe profielfoto ({new_profile_pic[0]}) toegewezen na verwijdering van de vorige.")
+            else:
+                logger.warning(f"Alle foto's van gebruiker {user_id} zijn verwijderd. Geen profielfoto meer.")
+                
+        return {"status": "success", "message": "Foto succesvol verwijderd."}
+    except psycopg2.Error as e:
+        conn_pg.rollback()
+        logger.error(f"Databasefout bij het verwijderen van een foto: {e}")
+        raise HTTPException(status_code=500, detail="Databasefout bij het verwijderen van een foto.")
+
+# WebSocket Endpoint for Chat
+# Opmerking: Dit is een vereenvoudigde implementatie en vereist een WebSocket-client
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    await websocket.accept()
+    logger.info(f"WebSocket verbinding geaccepteerd voor gebruiker {user_id}.")
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Hier kun je de logica voor het verwerken van WebSocket-berichten implementeren
+            # Zoals het opslaan van berichten en het doorsturen naar de andere gebruiker
+            logger.info(f"Bericht ontvangen van gebruiker {user_id}: {data}")
+            await websocket.send_text(f"Bericht ontvangen: {data}")
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket verbinding gesloten voor gebruiker {user_id}.")
+    except Exception as e:
+        logger.error(f"WebSocket fout voor gebruiker {user_id}: {e}")
+
+# Om uvicorn te draaien bij het direct uitvoeren van dit bestand
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
