@@ -14,6 +14,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator, HttpUrl
 import uvicorn
+import httpx # Importeer de HTTP client
 
 # --- Configuratie en Initialisatie ---
 
@@ -56,6 +57,12 @@ ENCRYPTION_KEY = os.environ.get("ENCRYPTION_KEY")
 if not ENCRYPTION_KEY:
     raise RuntimeError("ENCRYPTION_KEY omgevingsvariabele is niet ingesteld!")
 cipher_suite = Fernet(ENCRYPTION_KEY.encode('utf-8'))
+
+# Voorbeeld API key, NIET DEZE GEBRUIKEN. Gebruik je eigen sleutel.
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
+if not GOOGLE_MAPS_API_KEY:
+    logging.warning("GOOGLE_MAPS_API_KEY omgevingsvariabele is niet ingesteld. Routevoorstellen zullen niet werken.")
+
 
 # --- Rest van de Code (Zelfde, maar met PostgreSQL syntax) ---
 
@@ -301,7 +308,7 @@ async def create_user(user: UserCreate):
     password_hash = get_password_hash(user.password)
     try:
         c_pg.execute("INSERT INTO users (username, password_hash, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                  (user.username, password_hash, user.name, user.age, user.bio, user.sport_type, user.avg_distance, user.last_lat, user.last_lng, user.availability))
+                     (user.username, password_hash, user.name, user.age, user.bio, user.sport_type, user.avg_distance, user.last_lat, user.last_lng, user.availability))
         conn_pg.commit()
         logger.info(f"Nieuwe gebruiker aangemaakt: {user.username}")
         
@@ -356,7 +363,7 @@ async def update_user_preferences(user_id: int, preferences: UserPreferences, cu
 
     try:
         c_pg.execute("UPDATE users SET preferred_sport_type = %s, preferred_min_age = %s, preferred_max_age = %s WHERE id = %s",
-                  (preferences.preferred_sport_type, preferences.preferred_min_age, preferences.preferred_max_age, user_id))
+                     (preferences.preferred_sport_type, preferences.preferred_min_age, preferences.preferred_max_age, user_id))
         conn_pg.commit()
         logger.info(f"Voorkeuren van gebruiker {user_id} succesvol bijgewerkt.")
         return {"status": "success", "message": "Voorkeuren succesvol bijgewerkt."}
@@ -435,7 +442,7 @@ async def swipe(swipee_id: int, liked: int, current_user: dict = Depends(get_cur
 
     try:
         c_pg.execute("INSERT INTO swipes (swiper_id, swipee_id, liked) VALUES (%s, %s, %s) ON CONFLICT (swiper_id, swipee_id) DO UPDATE SET liked = EXCLUDED.liked",
-                  (swiper_id, swipee_id, liked))
+                     (swiper_id, swipee_id, liked))
         conn_pg.commit()
         logger.info(f"Gebruiker {swiper_id} heeft op gebruiker {swipee_id} geswipet (liked: {liked}).")
 
@@ -553,7 +560,7 @@ async def report_user(report: ReportRequest, current_user: dict = Depends(get_cu
 
     try:
         c_pg.execute("INSERT INTO user_reports (reporter_id, reported_id, reason, timestamp) VALUES (%s, %s, %s, %s)",
-                  (reporter_id, reported_id, reason, timestamp))
+                     (reporter_id, reported_id, reason, timestamp))
         conn_pg.commit()
         logger.info(f"Gebruiker {reported_id} succesvol gerapporteerd door gebruiker {reporter_id}.")
         return {"status": "success", "message": "Gebruiker succesvol gerapporteerd."}
@@ -572,7 +579,7 @@ async def block_user(user_to_block_id: int, current_user: dict = Depends(get_cur
 
     try:
         c_pg.execute("INSERT INTO user_blocks (blocker_id, blocked_id, timestamp) VALUES (%s, %s, %s) ON CONFLICT (blocker_id, blocked_id) DO NOTHING",
-                  (blocker_id, user_to_block_id, timestamp))
+                     (blocker_id, user_to_block_id, timestamp))
         conn_pg.commit()
         if c_pg.rowcount == 0:
             logger.warning(f"Gebruiker {user_to_block_id} was al geblokkeerd door gebruiker {blocker_id}.")
@@ -604,7 +611,7 @@ async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_cur
     user_id = current_user['id']
 
     c_pg.execute("UPDATE chats SET deleted_at = %s WHERE id = %s AND sender_id = %s",
-              (datetime.utcnow().isoformat(), chat_id, user_id))
+                 (datetime.utcnow().isoformat(), chat_id, user_id))
     conn_pg.commit()
 
     if c_pg.rowcount == 0:
@@ -698,6 +705,62 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         logger.info(f"WebSocket verbinding gesloten voor gebruiker {user_id}.")
     except Exception as e:
         logger.error(f"WebSocket fout voor gebruiker {user_id}: {e}")
+        
+# --- NIEUW ENDPOINT VOOR ROUTEVOORSTELLEN ---
+@app.get("/suggest_route/{match_id}")
+async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_current_user)):
+    user_id = current_user['id']
+
+    # Controleer of de gebruikers een match zijn
+    c_pg.execute("""
+        SELECT 1 FROM swipes
+        WHERE (swiper_id = %s AND swipee_id = %s AND liked = 1)
+        AND EXISTS (SELECT 1 FROM swipes WHERE swiper_id = %s AND swipee_id = %s AND liked = 1)
+    """, (user_id, match_id, match_id, user_id))
+
+    if not c_pg.fetchone():
+        raise HTTPException(status_code=403, detail="Geen toegang tot routevoorstellen. U bent geen match.")
+
+    # Haal de locatiegegevens van beide gebruikers op
+    c_pg.execute("SELECT last_lat, last_lng FROM users WHERE id IN (%s, %s)", (user_id, match_id))
+    locations = c_pg.fetchall()
+    
+    if len(locations) < 2:
+        raise HTTPException(status_code=404, detail="Locatiegegevens van een of beide gebruikers niet gevonden.")
+
+    user_location = (locations[0][0], locations[0][1])
+    match_location = (locations[1][0], locations[1][1])
+
+    # In de praktijk zou je hier een aanroep doen naar een externe API zoals Google Maps
+    # De volgende code is een vereenvoudigde demonstratie
+    # Vervang 'API_KEY' met een geldige Google Maps API-sleutel
+    google_maps_api_url = f"https://maps.googleapis.com/maps/api/directions/json?origin={user_location[0]},{user_location[1]}&destination={match_location[0]},{match_location[1]}&key={GOOGLE_MAPS_API_KEY}"
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # We maken hier geen echte API-aanroep omdat we de API-sleutel niet hebben.
+            # Dit is een placeholder om de structuur te demonstreren.
+            # response = await client.get(google_maps_api_url)
+            # response.raise_for_status()
+            # route_data = response.json()
+            
+            # We retourneren een hardgecodeerde suggestie als voorbeeld
+            popular_route = {
+                "name": "De Finse Piste",
+                "description": "Een populaire hardlooproute aan de rand van de stad Eeklo. Ideaal voor een eerste gezamenlijke run.",
+                "distance_km": round(haversine(user_location, match_location, unit=Unit.KILOMETERS) / 2, 2),
+                "map_link": f"https://www.google.com/maps/dir/{user_location[0]},{user_location[1]}/{match_location[0]},{match_location[1]}"
+            }
+        
+        logger.info(f"Routevoorstel gegenereerd voor match {user_id}-{match_id}.")
+        return {"status": "success", "route_suggestion": popular_route}
+
+    except httpx.HTTPStatusError as exc:
+        logger.error(f"Fout bij Google Maps API-aanroep: {exc.response.status_code} {exc.response.text}")
+        raise HTTPException(status_code=500, detail=f"Fout bij het ophalen van routegegevens: {exc.response.status_code}")
+    except Exception as e:
+        logger.error(f"Algemene fout bij het genereren van een routevoorstel: {e}")
+        raise HTTPException(status_code=500, detail="Interne serverfout bij het genereren van het routevoorstel.")
 
 # Om uvicorn te draaien bij het direct uitvoeren van dit bestand
 if __name__ == "__main__":
