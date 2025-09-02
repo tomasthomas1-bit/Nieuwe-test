@@ -8,3 +8,4 @@ haversine
 pydantic
 psycopg2-binary
 python-multipart
+httpx
