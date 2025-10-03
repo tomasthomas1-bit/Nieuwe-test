@@ -290,3 +290,28 @@ jobs:
         run: |
           echo "Target: ${BASE_URL}"
           python scripts/api_smoketest.py --base-url "${BASE_URL}"
+
+
+
+          diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -16,6 +16,8 @@
+ jobs:
+   lint-and-test:
+     name: Lint & Test (met Postgres)
+     runs-on: ubuntu-latest
++    permissions:
++      contents: write
+@@ -100,7 +102,9 @@
+         if ! git diff --quiet; then
+           git config user.name "github-actions[bot]"
+           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+           git add -A
+           git commit -m "style(ruff): auto-fix via CI"
+-          git push
++          # Push vanuit detached HEAD naar de PR-branch
++          git push origin "HEAD:${GITHUB_HEAD_REF}"
+         else
+           echo "No changes after Ruff auto-fix."
+         fi
