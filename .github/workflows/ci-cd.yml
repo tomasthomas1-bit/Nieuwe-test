@@ -2,12 +2,11 @@ name: CI/CD
 
 on:
   push:
-    branches: ["main", "master", "develop"]   # + develop voor staging
+    branches: ["main", "master", "develop"]
   pull_request:
     branches: ["main", "master", "develop"]
   workflow_dispatch:
 
-# voorkom parallelle runs per branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -55,17 +54,13 @@ jobs:
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
-            # Minimale set voor jouw app + tools (ruff/pytest) voor CI
             pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
           fi
 
-      # ✅ Correct ENCRYPTION_KEY in GITHUB_ENV
       - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
+        shell: bash
         run: |
-          python - <<'PY' >> $GITHUB_ENV
-from cryptography.fernet import Fernet
-print(f"ENCRYPTION_KEY={Fernet.generate_key().decode()}")
-PY
+          echo "ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; import sys; sys.stdout.write(Fernet.generate_key().decode())')" >> $GITHUB_ENV
 
       - name: Ruff Lint
         run: ruff check .
@@ -138,7 +133,6 @@ PY
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ---------- STAGING (branch: develop) ----------
   deploy-railway-staging:
     name: Deploy naar Railway (staging)
     needs: lint-and-test
@@ -188,7 +182,7 @@ PY
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-        # cache optioneel, kleine dependency
+
       - name: Install smoketest deps
         run: pip install requests
 
@@ -199,7 +193,6 @@ PY
           echo "Target (staging): ${BASE_URL}"
           python scripts/api_smoketest.py --base-url "${BASE_URL}"
 
-  # ---------- PRODUCTIE (branches: main/master) ----------
   deploy-railway:
     name: Deploy naar Railway (main/master)
     needs: lint-and-test
