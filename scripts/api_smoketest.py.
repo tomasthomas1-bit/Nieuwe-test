@@ -2,6 +2,18 @@
 """
 End-to-end smoketest for the FastAPI app (staging/production).
 
+Tests:
+- /healthz
+- Register 4 users (A,B,D near; C far)
+- Suggestions (A sees B & D; not C)
+- Block D -> suggestions update
+- Mutual like A<->B -> match
+- Chat A->B and fetch
+- Route suggestion
+- Photo upload: non-profile + profile, verify profile switch, delete non-profile, verify again
+- Match delete -> negative chat (403)
+- Report C
+
 Usage:
   python scripts/api_smoketest.py --base-url https://<your-app>.up.railway.app/
 
@@ -188,17 +200,16 @@ def main():
     suffix = datetime.utcnow().strftime('%Y%m%d%H%M%S') + '-' + uuid.uuid4().hex[:6]
     pw = "Sterk!Passw0rd1"
 
-    # Users:
-    # A (Antwerpen), B (Antwerpen), C (Parijs - >250km), D (Antwerpen)
+    # Users: A (Antwerpen), B (Antwerpen), C (Parijs), D (Antwerpen)
     userA = f"smokeA-{suffix}"
     userB = f"smokeB-{suffix}"
     userC = f"smokeC-{suffix}"
     userD = f"smokeD-{suffix}"
 
-    a_id = register(base, userA, pw, 51.2194, 4.4025)  # Antwerpen
-    b_id = register(base, userB, pw, 51.2200, 4.4100)  # Antwerpen nabij
-    c_id = register(base, userC, pw, 48.8566, 2.3522)  # Parijs
-    d_id = register(base, userD, pw, 51.2250, 4.4150)  # Antwerpen nabij
+    a_id = register(base, userA, pw, 51.2194, 4.4025)
+    b_id = register(base, userB, pw, 51.2200, 4.4100)
+    c_id = register(base, userC, pw, 48.8566, 2.3522)
+    d_id = register(base, userD, pw, 51.2250, 4.4150)
 
     # login
     _, a_tok = login(base, userA, pw)
@@ -232,8 +243,8 @@ def main():
     # 6) Route suggestion
     suggest_route(base, a_tok, b_id)
 
-    # 7) Foto-upload tests (let op: register voegt default profiel toe)
-    #    Upload extra niet-profiel & daarna nieuwe profiel-foto
+    # 7) Foto-upload scenario
+    # Register voegt default profiel toe ⇒ we uploaden 1 niet-profiel en 1 nieuwe profiel-foto
     photo1 = f"https://picsum.photos/seed/{suffix}-np/200/200"
     photo2 = f"https://picsum.photos/seed/{suffix}-pf/200/200"
     upload_photo(base, a_tok, photo1, is_profile_pic=False)
@@ -266,8 +277,11 @@ def main():
         raise RuntimeError("Profile photo state invalid after deletion")
 
     # 8) Match verwijderen -> negatieve chat test
-    del_url = base.rstrip('/') + f'/delete/match/{b_id}'
-    neg = requests.delete(del_url, headers=auth_headers(a_tok), timeout=20)
+    neg = requests.delete(
+        base.rstrip('/') + f'/delete/match/{b_id}',
+        headers=auth_headers(a_tok),
+        timeout=20
+    )
     if not neg.ok:
         raise RuntimeError(f"delete match failed ({neg.status_code}): {neg.text}")
 
