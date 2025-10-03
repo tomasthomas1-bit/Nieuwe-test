@@ -898,7 +898,12 @@ async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_curr
             "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
             (user_id, photo_url, int(bool(photo.is_profile_pic))),
         )
-        logger.info("Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)", user_id, photo_url, bool(photo.is_profile_pic))
+        logger.info(
+            "Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)",
+            user_id,
+            photo_url,
+            bool(photo.is_profile_pic),
+        )
         return {"status": "success", "message": "Foto succesvol geüpload."}
     except psycopg2.Error:
         logger.exception("Databasefout bij foto-upload.")
@@ -996,3 +1001,9 @@ def healthz(db=Depends(get_db)):
 
 # -------------------- Main --------------------
 if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+        reload=True,
+    )

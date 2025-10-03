@@ -1,0 +1,6 @@
+git checkout -b fix/ruff-autofix
+git apply fix-ruff-autofix-detached-head.patch
+git add .github/workflows/ci-cd.yml
+git commit -m "ci: robust Ruff autofix push from PR head (checkout head, contents:write, safe push)"
+git push -u origin fix/ruff-autofix
+# Open je PR
