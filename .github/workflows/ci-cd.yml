@@ -1,0 +1,208 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+# voorkom parallelle runs per branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-test:
+    name: Lint & Test (met Postgres)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: app_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      # App verwacht DATABASE_URL; we wijzen die naar de Postgres service
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
+      # Voor CI gebruiken we een vaste SECRET_KEY; in productie via Railway env vars
+      SECRET_KEY: ci-secret-key-change-me
+      # Wordt dynamisch gezet in een stap hieronder (Fernet key)
+      # ENCRYPTION_KEY: <dynamic>
+      FRONTEND_ORIGINS: http://localhost:5173
+      GOOGLE_MAPS_API_KEY: ""
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies (requirements.txt als die bestaat)
+        run: |
+          if [ -f requirements.txt ]; then
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            python -m pip install --upgrade pip
+            # Minimale set voor jouw app + tools (ruff/pytest) voor CI
+            pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
+          fi
+
+      - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
+        run: |
+          python - <<'PY'
+          from cryptography.fernet import Fernet
+          key = Fernet.generate_key().decode()
+          print(f"ENCRYPTION_KEY={key}")
+          PY
+        shell: bash
+        id: genkey
+
+      - name: Exporteer ENCRYPTION_KEY naar runtime env
+        run: echo "${{ steps.genkey.outputs.stdout }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Ruff Lint
+        run: ruff check .
+
+      - name: Unit tests (indien aanwezig) of anders Smoke test
+        env:
+          ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
+        run: |
+          set -e
+          if [ -d "tests" ]; then
+            pytest -q
+          else
+            echo "Geen tests/ map gevonden — draai smoke test tegen /healthz"
+            uvicorn main:app --host 127.0.0.1 --port 8000 &
+            SERVER_PID=$!
+            # wacht tot uvicorn opgestart is en DB bereikbaar is
+            for i in {1..30}; do
+              if curl -fsS http://127.0.0.1:8000/healthz >/dev/null; then
+                echo "Health check OK"
+                break
+              fi
+              sleep 1
+            done
+            # Als het na 30s nog niet lukt, faalt de job
+            curl -fsS http://127.0.0.1:8000/healthz
+            kill $SERVER_PID
+          fi
+
+  build-image:
+    name: (Optioneel) Build & Push Docker image naar GHCR
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    # push het image alleen voor pushes (niet voor PR's vanuit forks)
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE_NAME: ghcr.io/${{ github.repository }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in bij GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Genereer imagetags/labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-railway:
+    name: Deploy naar Railway (main/master)
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (voor Railway CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Installeer Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Link project & environment
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          set -e
+          # Koppel repo aan jouw Railway project
+          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }}
+          # (optioneel) kies environment (bv. "production" of ID)
+          if [ -n "${{ secrets.RAILWAY_ENVIRONMENT }}" ]; then
+            railway environment ${{ secrets.RAILWAY_ENVIRONMENT }}
+          fi
+
+      - name: Deploy naar Railway
+        id: deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Deploy vanuit de huidige source (Nixpacks/Dockerfile op Railway)
+          railway up --service "${{ secrets.RAILWAY_SERVICE }}" --ci
+          # Toon status-info (optioneel)
+          railway status || true
+
+      # (optioneel) Health check tegen publieke URL als je die kent
+      - name: Health check (optioneel)
+        if: ${{ secrets.PUBLIC_APP_URL != '' }}
+        run: |
+          echo "Health check op ${{ secrets.PUBLIC_APP_URL }}/healthz"
+          for i in {1..30}; do
+            if curl -fsS "${{ secrets.PUBLIC_APP_URL }}/healthz" >/dev/null; then
+              echo "✅ App gezond"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Health check mislukt"
+          exit 1
