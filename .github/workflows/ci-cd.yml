@@ -206,3 +206,29 @@ jobs:
           done
           echo "❌ Health check mislukt"
           exit 1
+
+post-deploy-smoketest:
+    name: Post-deploy Smoketest (PUBLIC_APP_URL)
+    needs: deploy-railway
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install smoketest deps
+        run: pip install requests
+
+      - name: Run smoketest against deployed app
+        env:
+          BASE_URL: ${{ secrets.PUBLIC_APP_URL }}
+        run: |
+          echo "Target: ${BASE_URL}"
+          python scripts/api_smoketest.py --base-url "${BASE_URL}"
