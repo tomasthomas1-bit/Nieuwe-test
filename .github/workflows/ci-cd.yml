@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "master", "develop"]   # + develop voor staging
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main", "master", "develop"]
   workflow_dispatch:
 
 # voorkom parallelle runs per branch
@@ -33,12 +33,8 @@ jobs:
           --health-retries=5
 
     env:
-      # App verwacht DATABASE_URL; we wijzen die naar de Postgres service
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app_test
-      # Voor CI gebruiken we een vaste SECRET_KEY; in productie via Railway env vars
       SECRET_KEY: ci-secret-key-change-me
-      # Wordt dynamisch gezet in een stap hieronder (Fernet key)
-      # ENCRYPTION_KEY: <dynamic>
       FRONTEND_ORIGINS: http://localhost:5173
       GOOGLE_MAPS_API_KEY: ""
       PYTHONUNBUFFERED: "1"
@@ -55,28 +51,21 @@ jobs:
 
       - name: Install dependencies (requirements.txt als die bestaat)
         run: |
+          python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
-            python -m pip install --upgrade pip
             pip install -r requirements.txt
           else
-            python -m pip install --upgrade pip
             # Minimale set voor jouw app + tools (ruff/pytest) voor CI
             pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
           fi
 
+      # ✅ Correcte manier om ENCRYPTION_KEY in GITHUB_ENV te zetten
       - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
         run: |
-          python - <<'PY'
-          from cryptography.fernet import Fernet
-          key = Fernet.generate_key().decode()
-          print(f"ENCRYPTION_KEY={key}")
-          PY
-        shell: bash
-        id: genkey
-
-      - name: Exporteer ENCRYPTION_KEY naar runtime env
-        run: echo "${{ steps.genkey.outputs.stdout }}" >> $GITHUB_ENV
-        shell: bash
+          python - <<'PY' >> $GITHUB_ENV
+from cryptography.fernet import Fernet
+print(f"ENCRYPTION_KEY={Fernet.generate_key().decode()}")
+PY
 
       - name: Ruff Lint
         run: ruff check .
@@ -109,7 +98,6 @@ jobs:
     name: (Optioneel) Build & Push Docker image naar GHCR
     needs: lint-and-test
     runs-on: ubuntu-latest
-    # push het image alleen voor pushes (niet voor PR's vanuit forks)
     if: github.event_name == 'push'
     permissions:
       contents: read
@@ -152,6 +140,69 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # ---------- STAGING (branch: develop) ----------
+  deploy-railway-staging:
+    name: Deploy naar Railway (staging)
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node (voor Railway CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Installeer Railway CLI
+        run: npm i -g @railway/cli
+
+      - name: Link staging project & environment
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+        run: |
+          set -e
+          railway link --project ${{ secrets.RAILWAY_STAGING_PROJECT_ID }}
+          if [ -n "${{ secrets.RAILWAY_STAGING_ENVIRONMENT }}" ]; then
+            railway environment ${{ secrets.RAILWAY_STAGING_ENVIRONMENT }}
+          fi
+
+      - name: Deploy naar Railway (staging)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
+        run: |
+          railway up --service "${{ secrets.RAILWAY_STAGING_SERVICE }}" --ci
+          railway status || true
+
+  post-deploy-smoketest-staging:
+    name: Post-deploy Smoketest (staging)
+    needs: deploy-railway-staging
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install smoketest deps
+        run: pip install requests
+
+      - name: Run smoketest against STAGING
+        env:
+          BASE_URL: ${{ secrets.PUBLIC_STAGING_URL }}
+        run: |
+          echo "Target (staging): ${BASE_URL}"
+          python scripts/api_smoketest.py --base-url "${BASE_URL}"
+
+  # ---------- PRODUCTIE (branches: main/master) ----------
   deploy-railway:
     name: Deploy naar Railway (main/master)
     needs: lint-and-test
@@ -175,24 +226,18 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set -e
-          # Koppel repo aan jouw Railway project
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }}
-          # (optioneel) kies environment (bv. "production" of ID)
           if [ -n "${{ secrets.RAILWAY_ENVIRONMENT }}" ]; then
             railway environment ${{ secrets.RAILWAY_ENVIRONMENT }}
           fi
 
       - name: Deploy naar Railway
-        id: deploy
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          # Deploy vanuit de huidige source (Nixpacks/Dockerfile op Railway)
           railway up --service "${{ secrets.RAILWAY_SERVICE }}" --ci
-          # Toon status-info (optioneel)
           railway status || true
 
-      # (optioneel) Health check tegen publieke URL als je die kent
       - name: Health check (optioneel)
         if: ${{ secrets.PUBLIC_APP_URL != '' }}
         run: |
@@ -207,7 +252,7 @@ jobs:
           echo "❌ Health check mislukt"
           exit 1
 
-post-deploy-smoketest:
+  post-deploy-smoketest:
     name: Post-deploy Smoketest (PUBLIC_APP_URL)
     needs: deploy-railway
     runs-on: ubuntu-latest
