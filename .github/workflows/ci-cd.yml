@@ -57,6 +57,7 @@ jobs:
             pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
           fi
 
+      # Genereer tijdelijke ENCRYPTION_KEY en exporteer naar GITHUB_ENV
       - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
         shell: bash
         run: |
@@ -133,6 +134,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # ---------- STAGING (branch: develop) ----------
   deploy-railway-staging:
     name: Deploy naar Railway (staging)
     needs: lint-and-test
@@ -193,6 +195,7 @@ jobs:
           echo "Target (staging): ${BASE_URL}"
           python scripts/api_smoketest.py --base-url "${BASE_URL}"
 
+  # ---------- PRODUCTIE (branches: main/master) ----------
   deploy-railway:
     name: Deploy naar Railway (main/master)
     needs: lint-and-test
@@ -228,12 +231,15 @@ jobs:
           railway up --service "${{ secrets.RAILWAY_SERVICE }}" --ci
           railway status || true
 
+      # ✅ Veilig: gebruik secrets via env-bridge in if:
       - name: Health check (optioneel)
-        if: ${{ secrets.PUBLIC_APP_URL != '' }}
+        env:
+          PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
+        if: ${{ env.PUBLIC_APP_URL != '' }}
         run: |
-          echo "Health check op ${{ secrets.PUBLIC_APP_URL }}/healthz"
+          echo "Health check op ${PUBLIC_APP_URL}/healthz"
           for i in {1..30}; do
-            if curl -fsS "${{ secrets.PUBLIC_APP_URL }}/healthz" >/dev/null; then
+            if curl -fsS "${PUBLIC_APP_URL}/healthz" >/dev/null; then
               echo "✅ App gezond"
               exit 0
             fi
