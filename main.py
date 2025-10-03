@@ -1007,3 +1007,19 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    return """
+    <html>
+        <head><title>Sports Match API</title></head>
+        <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+            <h1>Sports Match API is live! ✅</h1>
+            <p>Bekijk de /docsAPI Docs</a> of /redocRedoc</a>.</p>
+        </body>
+    </html>
+    """
+
