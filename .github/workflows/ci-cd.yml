@@ -7,6 +7,7 @@ on:
     branches: ["main", "master", "develop"]
   workflow_dispatch:
 
+# Voorkom parallelle runs per branch
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -37,10 +38,17 @@ jobs:
       FRONTEND_ORIGINS: http://localhost:5173
       GOOGLE_MAPS_API_KEY: ""
       PYTHONUNBUFFERED: "1"
+      # Zet deze repo-variabele naar "true" om Ruff-fixes automatisch te committen op PR's:
+      # Settings → Variables → Actions → Repository variables → RUFF_AUTOFIX=true
+      RUFF_AUTOFIX: ${{ vars.RUFF_AUTOFIX }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Nodig om eventueel terug te kunnen pushen na auto-fix op PR
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -52,20 +60,52 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+            python -m pip install -r requirements.txt
           else
-            pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
+            # Minimale set voor jouw app + tools voor CI
+            python -m pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx pytest
+          fi
+          # ✅ Zorg dat Ruff er ALTIJD is (ook als 'ie niet in requirements.txt staat)
+          python -m pip install "ruff==0.6.9"
+
+      # ✅ Correct ENCRYPTION_KEY in GITHUB_ENV
+      - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
+        run: |
+          python - <<'PY' >> $GITHUB_ENV
+          from cryptography.fernet import Fernet
+          print(f"ENCRYPTION_KEY={Fernet.generate_key().decode()}")
+          PY
+
+      # -------- Ruff: format + lint --------
+      # PR's: optioneel auto-fix + auto-commit (indien RUFF_AUTOFIX=true), anders alleen check met annotaties
+      - name: Ruff Auto-fix (PR) - optioneel
+        if: github.event_name == 'pull_request' && env.RUFF_AUTOFIX == 'true'
+        run: |
+          set -e
+          python -m ruff --version
+          echo "Running Ruff auto-fix on PR branch..."
+          python -m ruff check --fix .
+          python -m ruff format .
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "style(ruff): auto-fix via CI"
+            git push
+          else
+            echo "No changes after Ruff auto-fix."
           fi
 
-      # Genereer tijdelijke ENCRYPTION_KEY en exporteer naar GITHUB_ENV
-      - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
-        shell: bash
+      - name: Ruff Format (check)
+        # Op PR's doen we check na eventuele auto-fix; op pushes altijd check-only
         run: |
-          echo "ENCRYPTION_KEY=$(python -c 'from cryptography.fernet import Fernet; import sys; sys.stdout.write(Fernet.generate_key().decode())')" >> $GITHUB_ENV
+          python -m ruff format --check .
 
-      - name: Ruff Lint
-        run: ruff check .
+      - name: Ruff Lint (annotated)
+        run: |
+          python -m ruff check --output-format=github .
 
+      # -------- Tests / Smoke --------
       - name: Unit tests (indien aanwezig) of anders Smoke test
         env:
           ENCRYPTION_KEY: ${{ env.ENCRYPTION_KEY }}
@@ -88,6 +128,7 @@ jobs:
             kill $SERVER_PID
           fi
 
+  # --- (Optioneel) Build & Push Docker image naar GHCR ---
   build-image:
     name: (Optioneel) Build & Push Docker image naar GHCR
     needs: lint-and-test
@@ -96,10 +137,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     env:
       IMAGE_NAME: ghcr.io/${{ github.repository }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -134,13 +173,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ---------- STAGING (branch: develop) ----------
+  # --- STAGING (branch: develop) ---
   deploy-railway-staging:
     name: Deploy naar Railway (staging)
     needs: lint-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -168,14 +206,13 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
         run: |
           railway up --service "${{ secrets.RAILWAY_STAGING_SERVICE }}" --ci
-          railway status || true
+          railway status
 
   post-deploy-smoketest-staging:
     name: Post-deploy Smoketest (staging)
     needs: deploy-railway-staging
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -186,7 +223,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install smoketest deps
-        run: pip install requests
+        run: python -m pip install requests
 
       - name: Run smoketest against STAGING
         env:
@@ -195,13 +232,12 @@ jobs:
           echo "Target (staging): ${BASE_URL}"
           python scripts/api_smoketest.py --base-url "${BASE_URL}"
 
-  # ---------- PRODUCTIE (branches: main/master) ----------
+  # --- PRODUCTIE (branches: main/master) ---
   deploy-railway:
     name: Deploy naar Railway (main/master)
     needs: lint-and-test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -229,31 +265,13 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           railway up --service "${{ secrets.RAILWAY_SERVICE }}" --ci
-          railway status || true
-
-      # ✅ Veilig: gebruik secrets via env-bridge in if:
-      - name: Health check (optioneel)
-        env:
-          PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
-        if: ${{ env.PUBLIC_APP_URL != '' }}
-        run: |
-          echo "Health check op ${PUBLIC_APP_URL}/healthz"
-          for i in {1..30}; do
-            if curl -fsS "${PUBLIC_APP_URL}/healthz" >/dev/null; then
-              echo "✅ App gezond"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "❌ Health check mislukt"
-          exit 1
+          railway status
 
   post-deploy-smoketest:
     name: Post-deploy Smoketest (PUBLIC_APP_URL)
     needs: deploy-railway
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -264,7 +282,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install smoketest deps
-        run: pip install requests
+        run: python -m pip install requests
 
       - name: Run smoketest against deployed app
         env:
