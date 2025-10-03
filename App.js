@@ -1,8 +1,16 @@
-
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet, Text } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  TouchableOpacity
+} from 'react-native';
 
 export default function App() {
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -32,9 +40,35 @@ export default function App() {
     }
   };
 
+  const handleRegister = async () => {
+    try {
+      console.log("Registratie gestart...");
+      const response = await fetch('https://web-production-ec0bc.up.railway.app/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      console.log("Response status:", response.status);
+      const data = await response.text();
+      console.log("Response body:", data);
+
+      if (response.ok) {
+        Alert.alert('Registratie gelukt', data);
+      } else {
+        Alert.alert('Registratie mislukt', data);
+      }
+    } catch (error) {
+      console.error("Fout:", error);
+      Alert.alert('Fout', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>{isLogin ? 'Login' : 'Registreren'}</Text>
       <TextInput
         style={styles.input}
         placeholder="E-mail"
@@ -50,7 +84,15 @@ export default function App() {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
+      <Button
+        title={isLogin ? 'Inloggen' : 'Registreren'}
+        onPress={isLogin ? handleLogin : handleRegister}
+      />
+      <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
+        <Text style={styles.toggleText}>
+          {isLogin ? 'Nog geen account? Registreer hier.' : 'Heb je al een account? Log in.'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -58,19 +100,26 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     padding: 20
-  },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10
   },
   title: {
     fontSize: 24,
     marginBottom: 20,
+    textAlign: 'center'
+  },
+  input: {
+    height: 40,
+    borderColor: '#999',
+    borderWidth: 1,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+    borderRadius: 5
+  },
+  toggleText: {
+    marginTop: 15,
+    color: 'blue',
     textAlign: 'center'
   }
 });
