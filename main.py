@@ -58,9 +58,9 @@ FRONTEND_ORIGINS = os.environ.get("FRONTEND_ORIGINS", "")  # bv: "https://app.do
 _allowed_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
 # -------------------- App init --------------------
-app = FastAPI(title="Sports Match API", version="2.0.0")
+app = FastAPI(title="Sports Match API", version="2.1.0")
 
-# CORS: veilig met credentials; fallback naar wildcard zonder credentials
+# CORS
 if _allowed_origins:
     app.add_middleware(
         CORSMiddleware,
@@ -73,7 +73,7 @@ else:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=False,  # "*" mag niet met credentials
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -130,7 +130,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def get_bearer_from_cookie(request: Request) -> Optional[str]:
     raw = request.cookies.get(COOKIE_NAME)
-    # simpele sanity check op JWT vorm (drie stukken)
     if raw and raw.count(".") == 2:
         return raw
     return None
@@ -170,6 +169,11 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class UserPhoto(BaseModel):
+    id: int
+    photo_url: str
+    is_profile_pic: bool
+
 class UserProfile(BaseModel):
     id: int
     name: str
@@ -180,6 +184,7 @@ class UserProfile(BaseModel):
     lat: float
     lng: float
     photos: List[str] = []
+    photos_meta: List[UserPhoto] = []
     strava_ytd_url: Optional[str] = None
 
 class UserPreferences(BaseModel):
@@ -224,7 +229,6 @@ async def get_current_user(
             raise HTTPException(status_code=401, detail="Token zonder subject.")
     except JWTError:
         raise HTTPException(status_code=401, detail="Ongeldige of verlopen token.")
-    # haal user op (soft-delete uitgesloten)
     c.execute("""
         SELECT id, username, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability,
                preferred_sport_type, preferred_min_age, preferred_max_age, strava_token
@@ -246,7 +250,6 @@ async def get_current_user(
 @app.on_event("startup")
 def on_startup():
     init_pool()
-    # Tabellen aanmaken (idempotent)
     with DB() as (conn, c):
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -308,7 +311,6 @@ def on_startup():
             reason TEXT,
             timestamp TIMESTAMPTZ
         )""")
-        # Aanbevolen indexen
         c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_swipes_swiper_swipee ON swipes (swiper_id, swipee_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_swipes_swiper_liked ON swipes (swiper_id, liked) WHERE deleted_at IS NULL")
@@ -342,17 +344,16 @@ async def login_for_access_token(
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username},
                                            expires_delta=access_token_expires)
-        # Cookie zetten (zonder 'Bearer ')
         response.set_cookie(
             key=COOKIE_NAME,
             value=access_token,
             httponly=True,
             secure=True,
-            samesite="lax",   # gebruik "none" als je cross-site SPA gebruikt (met TLS)
+            samesite="lax",
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
         return {"access_token": access_token, "token_type": "bearer"}
-    except Exception as e:
+    except Exception:
         logger.exception("Fout bij het genereren van een token.")
         raise HTTPException(status_code=500, detail="Interne serverfout bij tokenaanmaak.")
 
@@ -369,7 +370,6 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
         """, (user.username, password_hash, user.name, user.age, user.bio, user.sport_type,
               user.avg_distance, user.last_lat, user.last_lng, user.availability))
         user_id = c.fetchone()[0]
-        # default profielfoto
         default_photo_url = "https://example.com/default-profile.png"
         c.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
                   (user_id, default_photo_url, 1))
@@ -394,8 +394,12 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     if not user:
         raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
 
-    c.execute("SELECT photo_url FROM user_photos WHERE user_id = %s", (user_id,))
-    photos = [r[0] for r in c.fetchall()]
+    # Photos (urls + metadata)
+    c.execute("SELECT id, photo_url, is_profile_pic FROM user_photos WHERE user_id = %s ORDER BY id ASC", (user_id,))
+    rows = c.fetchall()
+    photos = [r[1] for r in rows]
+    photos_meta = [{"id": r[0], "photo_url": r[1], "is_profile_pic": bool(r[2])} for r in rows]
+
     strava_ytd_url = f"https://www.strava.com/athletes/{user[9]}/ytd" if user[9] else None
 
     logger.info("Gebruiker %s bekijkt profiel van gebruiker %s.", current_user['id'], user_id)
@@ -409,6 +413,7 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
         "lat": user[6],
         "lng": user[7],
         "photos": photos,
+        "photos_meta": photos_meta,
         "strava_ytd_url": strava_ytd_url
     }
 
@@ -445,7 +450,6 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     min_age = current_user.get('preferred_min_age')
     max_age = current_user.get('preferred_max_age')
 
-    # Filter: geen eigen id, geen soft-deletes, geen reeds geswipete, geen blokken in beide richtingen
     query = """
     SELECT u.id, u.name, u.age, u.bio, u.sport_type, u.avg_distance, u.last_lat, u.last_lng
     FROM users u
@@ -472,7 +476,6 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     if not suggestions:
         return {"suggestions": []}
 
-    # afstand berekenen en filter ≤ 250 km, sorteren
     suggestions_with_dist = []
     for s in suggestions:
         distance = haversine((lat, lng), (s[6], s[7]), unit=Unit.KILOMETERS)
@@ -506,7 +509,6 @@ async def swipe(
         """, (swiper_id, swipee_id, liked))
         logger.info("Gebruiker %s heeft op gebruiker %s geswipet (liked: %s).",
                     swiper_id, swipee_id, liked)
-        # check op match (bi-directionele like, beide niet soft-deleted)
         match = False
         if liked:
             c.execute("""
@@ -525,23 +527,30 @@ async def swipe(
 async def get_matches(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
     user_id = current_user['id']
-    # leesbaar & correct met EXISTS en soft-delete filters
     c.execute("""
         SELECT u.id, u.name, u.age, up.photo_url
         FROM users u
-        JOIN swipes s1 ON s1.swipee_id = u.id
-                      AND s1.swiper_id = %s AND s1.liked = TRUE AND s1.deleted_at IS NULL
+        JOIN swipes s1
+          ON s1.swipee_id = u.id
+         AND s1.swiper_id = %s
+         AND s1.liked = TRUE
+         AND s1.deleted_at IS NULL
+        LEFT JOIN LATERAL (
+          SELECT photo_url
+          FROM user_photos up
+          WHERE up.user_id = u.id AND up.is_profile_pic = 1
+          ORDER BY up.id DESC
+          LIMIT 1
+        ) up ON TRUE
         WHERE u.deleted_at IS NULL
           AND EXISTS (
-               SELECT 1 FROM swipes s2
-               WHERE s2.swiper_id = u.id AND s2.swipee_id = %s AND s2.liked = TRUE AND s2.deleted_at IS NULL
+               SELECT 1
+               FROM swipes s2
+               WHERE s2.swiper_id = u.id
+                 AND s2.swipee_id = %s
+                 AND s2.liked = TRUE
+                 AND s2.deleted_at IS NULL
           )
-        LEFT JOIN LATERAL (
-            SELECT photo_url FROM user_photos up
-            WHERE up.user_id = u.id AND up.is_profile_pic = 1
-            ORDER BY up.id DESC
-            LIMIT 1
-        ) up ON TRUE
     """, (user_id, user_id))
     rows = c.fetchall()
     matches = [{"id": r[0], "name": r[1], "age": r[2], "photo_url": r[3]} for r in rows]
@@ -555,7 +564,6 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
     plain_message = message.message
     timestamp = datetime.now(timezone.utc)
 
-    # check of er een match is in beide richtingen (niet soft-deleted)
     c.execute("""
         SELECT 1 FROM swipes
         WHERE (swiper_id = %s AND swipee_id = %s AND liked = TRUE AND deleted_at IS NULL)
@@ -599,7 +607,6 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
     for sender_id, encrypted_message, ts in rows:
         try:
             decrypted = cipher_suite.decrypt(encrypted_message.encode("utf-8")).decode("utf-8")
-            # serialize timestamptz naar ISO-8601
             iso_ts = ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
             chat_history.append(ChatMessage(sender_id=sender_id, message=decrypted, timestamp=iso_ts))
         except Exception:
@@ -660,38 +667,6 @@ async def delete_match(match_id: int, current_user: dict = Depends(get_current_u
     logger.info("Match met gebruiker %s soft-verwijderd door gebruiker %s.", match_id, user_id)
     return {"status": "success", "message": "Match succesvol soft-verwijderd."}
 
-@app.delete("/delete/chat/{chat_id}")
-async def delete_chat_message(chat_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
-    conn, c = db
-    user_id = current_user['id']
-    c.execute("""
-        UPDATE chats
-           SET deleted_at = NOW()
-         WHERE id = %s AND sender_id = %s
-    """, (chat_id, user_id))
-    if c.rowcount == 0:
-        logger.warning("Gebruiker %s kon chatbericht %s niet verwijderen.", user_id, chat_id)
-        raise HTTPException(status_code=404, detail="Bericht niet gevonden of geen permissie.")
-    logger.info("Chatbericht %s van gebruiker %s soft-verwijderd.", chat_id, user_id)
-    return {"status": "success", "message": "Bericht succesvol soft-verwijderd."}
-
-@app.post("/upload_photo")
-async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
-    conn, c = db
-    user_id = current_user['id']
-    photo_url = str(photo.photo_url)
-    try:
-        if photo.is_profile_pic:
-            c.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
-        c.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
-                  (user_id, photo_url, int(bool(photo.is_profile_pic))))
-        logger.info("Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)",
-                    user_id, photo_url, bool(photo.is_profile_pic))
-        return {"status": "success", "message": "Foto succesvol geüpload."}
-    except psycopg2.Error:
-        logger.exception("Databasefout bij foto-upload.")
-        raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van een foto.")
-
 @app.delete("/delete_photo/{photo_id}")
 async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
@@ -722,10 +697,26 @@ async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_u
         logger.exception("Databasefout bij foto-verwijderen.")
         raise HTTPException(status_code=500, detail="Databasefout bij het verwijderen van een foto.")
 
+@app.post("/upload_photo")
+async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user['id']
+    photo_url = str(photo.photo_url)
+    try:
+        if photo.is_profile_pic:
+            c.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
+        c.execute("INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
+                  (user_id, photo_url, int(bool(photo.is_profile_pic))))
+        logger.info("Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)",
+                    user_id, photo_url, bool(photo.is_profile_pic))
+        return {"status": "success", "message": "Foto succesvol geüpload."}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij foto-upload.")
+        raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van een foto.")
+
 # -------------------- WebSocket (auth via token query-param) --------------------
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
-    # Eenvoudige auth: token als query-parameter ?token=...
     token = websocket.query_params.get("token")
     if not token:
         await websocket.close(code=4401)
@@ -741,15 +732,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         return
 
     await websocket.accept()
-    logger.info("WebSocket geaccepteerd voor gebruiker %s (via token: %s).", user_id, username)
+    logger.info("WebSocket geaccepteerd voor gebruiker %s (via token).", user_id)
     try:
         while True:
             data = await websocket.receive_text()
-            # TODO: berichtroutering/opslaan indien nodig
             await websocket.send_text(f"Bericht ontvangen: {data}")
     except WebSocketDisconnect:
         logger.info("WebSocket gesloten voor gebruiker %s.", user_id)
-    except Exception as e:
+    except Exception:
         logger.exception("WebSocket fout voor gebruiker %s.", user_id)
 
 # -------------------- Route Suggestion --------------------
@@ -758,7 +748,6 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     conn, c = db
     user_id = current_user['id']
 
-    # Toegang: alleen als er een match is
     c.execute("""
         SELECT 1 FROM swipes
         WHERE (swiper_id = %s AND swipee_id = %s AND liked = TRUE AND deleted_at IS NULL)
@@ -767,7 +756,6 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Geen toegang tot routevoorstellen (geen match).")
 
-    # Locaties deterministisch ophalen
     c.execute("SELECT last_lat, last_lng FROM users WHERE id = %s", (user_id,))
     u = c.fetchone()
     c.execute("SELECT last_lat, last_lng FROM users WHERE id = %s", (match_id,))
@@ -778,7 +766,6 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     user_location = (u[0], u[1])
     match_location = (m[0], m[1])
 
-    # Eenvoudige suggestie: halve afstand, link voor Google Maps directions
     distance_km = haversine(user_location, match_location, unit=Unit.KILOMETERS)
     map_link = f"https://www.google.com/maps/dir/{user_location[0]},{user_location[1]}/{match_location[0]},{match_location[1]}"
 
@@ -788,14 +775,12 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
         "distance_km": round(distance_km / 2, 2),
         "map_link": map_link
     }
-    # (Optioneel) je kunt hier een echte Directions API call doen met GOOGLE_MAPS_API_KEY
     logger.info("Routevoorstel gegenereerd voor match %s-%s.", user_id, match_id)
     return {"status": "success", "route_suggestion": popular_route}
 
 # -------------------- Health --------------------
 @app.get("/healthz")
 def healthz(db=Depends(get_db)):
-    # eenvoudige check: query uitvoeren
     conn, c = db
     c.execute("SELECT 1")
     return {"status": "ok"}
