@@ -59,7 +59,7 @@ jobs:
             pip install fastapi "uvicorn[standard]" psycopg2-binary passlib[bcrypt] python-jose cryptography haversine pydantic httpx ruff pytest
           fi
 
-      # ✅ Correcte manier om ENCRYPTION_KEY in GITHUB_ENV te zetten
+      # ✅ Correct ENCRYPTION_KEY in GITHUB_ENV
       - name: Genereer tijdelijke ENCRYPTION_KEY (Fernet)
         run: |
           python - <<'PY' >> $GITHUB_ENV
@@ -81,7 +81,6 @@ PY
             echo "Geen tests/ map gevonden — draai smoke test tegen /healthz"
             uvicorn main:app --host 127.0.0.1 --port 8000 &
             SERVER_PID=$!
-            # wacht tot uvicorn opgestart is en DB bereikbaar is
             for i in {1..30}; do
               if curl -fsS http://127.0.0.1:8000/healthz >/dev/null; then
                 echo "Health check OK"
@@ -89,7 +88,6 @@ PY
               fi
               sleep 1
             done
-            # Als het na 30s nog niet lukt, faalt de job
             curl -fsS http://127.0.0.1:8000/healthz
             kill $SERVER_PID
           fi
@@ -190,8 +188,7 @@ PY
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-
+        # cache optioneel, kleine dependency
       - name: Install smoketest deps
         run: pip install requests
 
@@ -266,7 +263,6 @@ PY
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install smoketest deps
         run: pip install requests
