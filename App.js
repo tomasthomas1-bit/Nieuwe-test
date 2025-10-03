@@ -13,10 +13,10 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleLogin = async () => {
     try {
-      console.log("Login gestart...");
       const response = await fetch('https://web-production-ec0bc.up.railway.app/login', {
         method: 'POST',
         headers: {
@@ -25,24 +25,20 @@ export default function App() {
         body: JSON.stringify({ email, password })
       });
 
-      console.log("Response status:", response.status);
       const data = await response.text();
-      console.log("Response body:", data);
-
       if (response.ok) {
         Alert.alert('Login gelukt', data);
+        setIsAuthenticated(true);
       } else {
         Alert.alert('Login mislukt', data);
       }
     } catch (error) {
-      console.error("Fout:", error);
       Alert.alert('Fout', error.message);
     }
   };
 
   const handleRegister = async () => {
     try {
-      console.log("Registratie gestart...");
       const response = await fetch('https://web-production-ec0bc.up.railway.app/register', {
         method: 'POST',
         headers: {
@@ -51,20 +47,27 @@ export default function App() {
         body: JSON.stringify({ email, password })
       });
 
-      console.log("Response status:", response.status);
       const data = await response.text();
-      console.log("Response body:", data);
-
       if (response.ok) {
         Alert.alert('Registratie gelukt', data);
+        setIsAuthenticated(true);
       } else {
         Alert.alert('Registratie mislukt', data);
       }
     } catch (error) {
-      console.error("Fout:", error);
       Alert.alert('Fout', error.message);
     }
   };
+
+  if (isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Welkom, {email}!</Text>
+        <Text style={styles.subtitle}>Je bent nu ingelogd.</Text>
+        <Button title="Uitloggen" onPress={() => setIsAuthenticated(false)} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -108,6 +111,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 20,
     textAlign: 'center'
+  },
+  subtitle: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#555'
   },
   input: {
     height: 40,
