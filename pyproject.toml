@@ -1,0 +1,23 @@
+[tool.ruff]
+# Houd code leesbaar, zonder te strikt te zijn.
+line-length = 120
+# Sluit aan op jouw CI (Python 3.12).
+target-version = "py312"
+
+# Optionals (handig als je later Alembic/venv mappen krijgt):
+# extend-exclude = ["migrations/**", ".venv/**"]
+
+[tool.ruff.lint]
+# Lint-regels:
+# E = pycodestyle, F = pyflakes, I = import order (isort via Ruff)
+select = ["E", "F", "I"]
+
+# In scripts willen we pragmatisch kunnen werken: soms snelle helpers met
+# ongebruikte imports/variabelen. Beperk daarom alleen dáár de regels.
+per-file-ignores = { "scripts/**.py" = ["F401", "F841"] }
+
+# Als je liever lange regels niet wil waarschuwingen geven, kun je E501 toevoegen aan ignores:
+# ignore = ["E501"]
+
+# Als je automatisch import-volgorde wilt fixen bij --fix:
+# isort-ondersteuning is ingebouwd; geen extra config nodig.
