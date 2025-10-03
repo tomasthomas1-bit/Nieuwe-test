@@ -1,0 +1,31 @@
+diff --git a/.github/workflows/ci-cd.yml b/.github/workflows/ci-cd.yml
+--- a/.github/workflows/ci-cd.yml
++++ b/.github/workflows/ci-cd.yml
+@@ -1,6 +1,8 @@
+ jobs:
+   lint-and-test:
+     name: Lint & Test (met Postgres)
+     runs-on: ubuntu-latest
++    permissions:
++      contents: write
+@@ -80,7 +82,15 @@
+-      - name: Ruff Auto-fix (PR) - optioneel
++      - name: Ruff Auto-fix (PR) - optioneel
+         if: github.event_name == 'pull_request' && env.RUFF_AUTOFIX == 'true'
+         run: |
+           set -e
+           python -m ruff --version
+           echo "Running Ruff auto-fix on PR branch..."
+           python -m ruff check --fix .
+           python -m ruff format .
+           if ! git diff --quiet; then
+             git config user.name "github-actions[bot]"
+             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+             git add -A
+             git commit -m "style(ruff): auto-fix via CI"
+-            git push
++            # Push vanuit detached HEAD naar de PR-branch
++            git push origin "HEAD:${GITHUB_HEAD_REF}"
+           else
+             echo "No changes after Ruff auto-fix."
+           fi
