@@ -153,6 +153,106 @@ class UserInDB(UserBase):
     password_hash: str
 
 
+
+{
+  "properties": {
+    "username": {
+      "maxLength": 50,
+      "minLength": 3,
+      "title": "Username",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 50,
+      "minLength": 2,
+      "title": "Name",
+      "type": "string"
+    },
+    "age": {
+      "exclusiveMaximum": 100,
+      "exclusiveMinimum": 17,
+      "title": "Age",
+      "type": "integer"
+    },
+    "bio": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Bio"
+    },
+    "password": {
+      "title": "Password",
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "name",
+    "age",
+    "password"
+  ],
+  "title": "UserCreate",
+  "type": "object"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -956,4 +1056,5 @@ async def home():
         </body>
     </html>
     """
+
 
