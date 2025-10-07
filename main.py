@@ -63,6 +63,43 @@ _allowed_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 # -------------------- App init --------------------
 app = FastAPI(title="Sports Match API", version="2.1.0")
 
+
+@app.middleware("http")
+async def log_requests_and_responses(request: Request, call_next):
+    logger.info("Request: %s %s", request.method, request.url.path)
+    try:
+        response = await call_next(request)
+        logger.info("Response: %s %s - Status: %d", request.method, request.url.path, response.status_code)
+        if hasattr(response, "body_iterator"):
+            body = b"".join([chunk async for chunk in response.body_iterator])
+            logger.info("Response body: %s", body.decode("utf-8", errors="ignore"))
+            response.body_iterator = iter([body])
+        return response
+    except Exception as e:
+        logger.exception("Onverwachte fout tijdens verwerking van request.")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Interne serverfout", "error": str(e)},
+        )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning("Validatiefout bij %s: %s", request.url.path, exc.errors())
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+@app.exception_handler(Exception)
+async def unexpected_exception_handler(request: Request, exc: Exception):
+    tb = traceback.format_exc()
+    logger.error("Onverwachte fout bij %s: %s\n%s", request.url.path, str(exc), tb)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Interne serverfout", "error": str(exc)},
+    )
+
+
 # CORS
 if _allowed_origins:
     app.add_middleware(
@@ -184,7 +221,7 @@ class UserInDB(UserBase):
           "type": "null"
         }
       ],
-      "default": None,
+      "default": none,
       "title": "Bio"
     },
     "password": {
@@ -1056,7 +1093,6 @@ async def home():
         </body>
     </html>
     """
-
 
 
 
