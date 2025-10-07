@@ -148,11 +148,6 @@ class UserBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=50)
     age: int = Field(..., gt=17, lt=100)
     bio: Optional[str] = Field(None, max_length=500)
-    sport_type: str
-    avg_distance: float
-    last_lat: float
-    last_lng: float
-    availability: str
 
 class UserInDB(UserBase):
     password_hash: str
@@ -174,8 +169,6 @@ class UserProfile(BaseModel):
     name: str
     age: int
     bio: Optional[str] = None
-    sport_type: str
-    avg_distance: float
     lat: float
     lng: float
     photos: List[str] = []
@@ -184,7 +177,6 @@ class UserProfile(BaseModel):
 
 
 class UserPreferences(BaseModel):
-    preferred_sport_type: Optional[str] = None
     preferred_min_age: Optional[int] = Field(None, gt=0, lt=100)
     preferred_max_age: Optional[int] = Field(None, gt=0, lt=100)
 
@@ -236,8 +228,6 @@ async def get_current_user(
 
     c.execute(
         """
-        SELECT id, username, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability,
-               preferred_sport_type, preferred_min_age, preferred_max_age, strava_token
         FROM users
         WHERE username = %s AND deleted_at IS NULL
         """,
@@ -253,12 +243,6 @@ async def get_current_user(
         "name": row[2],
         "age": row[3],
         "bio": row[4],
-        "sport_type": row[5],
-        "avg_distance": row[6],
-        "last_lat": row[7],
-        "last_lng": row[8],
-        "availability": row[9],
-        "preferred_sport_type": row[10],
         "preferred_min_age": row[11],
         "preferred_max_age": row[12],
         "strava_token": row[13],
@@ -280,13 +264,7 @@ def on_startup():
                 name TEXT,
                 age INTEGER,
                 bio TEXT,
-                sport_type TEXT,
-                avg_distance REAL,
-                last_lat REAL,
-                last_lng REAL,
-                availability TEXT,
                 strava_token TEXT,
-                preferred_sport_type TEXT,
                 preferred_min_age INTEGER,
                 preferred_max_age INTEGER,
                 push_token TEXT,
@@ -426,13 +404,9 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
     try:
         c.execute(
             """
-            INSERT INTO users (username, password_hash, name, age, bio, sport_type, avg_distance,
-                               last_lat, last_lng, availability)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             RETURNING id
             """,
-            (user.username, password_hash, user.name, user.age, user.bio, user.sport_type,
-             user.avg_distance, user.last_lat, user.last_lng, user.availability),
         )
         user_id = c.fetchone()[0]
 
@@ -461,7 +435,6 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     conn, c = db
     c.execute(
         """
-        SELECT id, name, age, bio, sport_type, avg_distance, last_lat, last_lng, availability, strava_token
         FROM users
         WHERE id = %s AND deleted_at IS NULL
         """,
@@ -487,8 +460,6 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
         "name": user[1],
         "age": user[2],
         "bio": user[3],
-        "sport_type": user[4],
-        "avg_distance": user[5],
         "lat": user[6],
         "lng": user[7],
         "photos": photos,
@@ -512,10 +483,8 @@ async def update_user_preferences(
         c.execute(
             """
             UPDATE users
-            SET preferred_sport_type=%s, preferred_min_age=%s, preferred_max_age=%s
             WHERE id=%s AND deleted_at IS NULL
             """,
-            (preferences.preferred_sport_type, preferences.preferred_min_age, preferences.preferred_max_age, user_id),
         )
         logger.info("Voorkeuren van gebruiker %s succesvol bijgewerkt.", user_id)
         return {"status": "success", "message": "Voorkeuren succesvol bijgewerkt."}
@@ -528,14 +497,10 @@ async def update_user_preferences(
 async def get_suggestions(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
     user_id = current_user['id']
-    lat = current_user['last_lat']
-    lng = current_user['last_lng']
-    sport_type = current_user.get('preferred_sport_type')
     min_age = current_user.get('preferred_min_age')
     max_age = current_user.get('preferred_max_age')
 
     query = """
-        SELECT u.id, u.name, u.age, u.bio, u.sport_type, u.avg_distance, u.last_lat, u.last_lng
         FROM users u
         WHERE u.id <> %s
           AND u.deleted_at IS NULL
@@ -544,9 +509,6 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
           AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = %s AND s.swipee_id = u.id)
     """
     params: List[Any] = [user_id, user_id, user_id, user_id]
-    if sport_type:
-        query += " AND u.sport_type = %s"
-        params.append(sport_type)
     if min_age:
         query += " AND u.age >= %s"
         params.append(min_age)
@@ -570,8 +532,6 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
                     "name": s[1],
                     "age": s[2],
                     "bio": s[3],
-                    "sport_type": s[4],
-                    "avg_distance": s[5],
                     "lat": s[6],
                     "lng": s[7],
                     "distance_km": round(distance, 2),
@@ -945,9 +905,7 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Geen toegang tot routevoorstellen (geen match).")
 
-    c.execute("SELECT last_lat, last_lng FROM users WHERE id = %s", (user_id,))
     u = c.fetchone()
-    c.execute("SELECT last_lat, last_lng FROM users WHERE id = %s", (match_id,))
     m = c.fetchone()
     if not u or not m:
         raise HTTPException(status_code=404, detail="Locatiegegevens niet gevonden.")
