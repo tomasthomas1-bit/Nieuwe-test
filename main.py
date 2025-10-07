@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from haversine import Unit, haversine
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from psycopg2.pool import ThreadedConnectionPool
 from pydantic import BaseModel, Field, HttpUrl, validator
 import uvicorn
@@ -121,48 +121,11 @@ def get_db():
 
 
 # -------------------- Password & Token --------------------
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    password = password[:72]  # Truncate to 72 characters for bcrypt
-    return pwd_context.hash(password)
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
-
-def get_bearer_from_cookie(request: Request) -> Optional[str]:
-    raw = request.cookies.get(COOKIE_NAME)
-    if raw and raw.count(".") == 2:
-        return raw
-    return None
-
-
-# -------------------- Schemas --------------------
-class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    name: str = Field(..., min_length=2, max_length=50)
-    age: int = Field(..., gt=17, lt=100)
-    bio: Optional[str] = Field(None, max_length=500)
-    sport_type: str
-    avg_distance: float
-    last_lat: float
-    last_lng: float
-    availability: str
-
-
-class UserCreate(UserBase):
-    password: str
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
     @validator("password")
     def validate_password_strength(cls, v: str) -> str:
