@@ -1,16 +1,14 @@
 # main.py
-
-from fastapi.responses import JSONResponse
-import traceback
-
 from __future__ import annotations
 
 import logging
 import os
 import re
+import traceback
 from datetime import datetime, timedelta, timezone
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, Dict
 
+import bcrypt
 import psycopg2
 from cryptography.fernet import Fernet
 from fastapi import (
@@ -25,15 +23,15 @@ from fastapi import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from haversine import Unit, haversine
 from jose import JWTError, jwt
-import bcrypt
 from psycopg2.pool import ThreadedConnectionPool
 from pydantic import BaseModel, Field, HttpUrl, validator
 import uvicorn
 
-# -------------------- Config & Logging --------------------
+# ----------------------- Config & Logging -----------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -46,7 +44,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7  # future use
 COOKIE_NAME = "access_token"
 
-# -------------------- Env & Secrets --------------------
+# ----------------------- Env & Secrets -----------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL omgevingsvariabele is niet ingesteld.")
@@ -61,11 +59,11 @@ if not ENCRYPTION_KEY:
 
 cipher_suite = Fernet(ENCRYPTION_KEY.encode("utf-8"))
 
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")  # (optioneel, nu niet gebruikt)
 FRONTEND_ORIGINS = os.environ.get("FRONTEND_ORIGINS", "")  # bv: "https://app...,https://staging..."
 _allowed_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
-# -------------------- App init --------------------
+# ----------------------- App init -----------------------
 app = FastAPI(title="Sports Match API", version="2.1.0")
 
 
@@ -74,11 +72,21 @@ async def log_requests_and_responses(request: Request, call_next):
     logger.info("Request: %s %s", request.method, request.url.path)
     try:
         response = await call_next(request)
-        logger.info("Response: %s %s - Status: %d", request.method, request.url.path, response.status_code)
+        logger.info(
+            "Response: %s %s - Status: %d",
+            request.method,
+            request.url.path,
+            response.status_code,
+        )
+        # (Optioneel) response body loggen als beschikbaar
         if hasattr(response, "body_iterator"):
-            body = b"".join([chunk async for chunk in response.body_iterator])
-            logger.info("Response body: %s", body.decode("utf-8", errors="ignore"))
-            response.body_iterator = iter([body])
+            try:
+                body = b"".join([chunk async for chunk in response.body_iterator])
+                logger.info("Response body: %s", body.decode("utf-8", errors="ignore"))
+                response.body_iterator = iter([body])
+            except Exception:
+                # We willen logging niet laten falen
+                pass
         return response
     except Exception as e:
         logger.exception("Onverwachte fout tijdens verwerking van request.")
@@ -87,6 +95,7 @@ async def log_requests_and_responses(request: Request, call_next):
             content={"detail": "Interne serverfout", "error": str(e)},
         )
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.warning("Validatiefout bij %s: %s", request.url.path, exc.errors())
@@ -94,6 +103,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422,
         content={"detail": exc.errors()},
     )
+
 
 @app.exception_handler(Exception)
 async def unexpected_exception_handler(request: Request, exc: Exception):
@@ -123,7 +133,7 @@ else:
         allow_headers=["*"],
     )
 
-# -------------------- DB Pool & Helpers --------------------
+# ----------------------- DB Pool & Helpers -----------------------
 pool: Optional[ThreadedConnectionPool] = None
 
 
@@ -162,12 +172,20 @@ def get_db():
         yield conn, cur
 
 
-# -------------------- Password & Token --------------------
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# ----------------------- Models -----------------------
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    name: str = Field(..., min_length=2, max_length=50)
+    age: int = Field(..., gt=17, lt=100)
+    bio: Optional[str] = Field(None, max_length=500)
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+class UserInDB(UserBase):
+    password_hash: str
+
+
+class UserCreate(UserBase):
+    password: str
 
     @validator("password")
     def validate_password_strength(cls, v: str) -> str:
@@ -182,117 +200,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         if not re.search(r"[\\#\\?!@$%^&*\\-]", v):
             raise ValueError("Wachtwoord moet minimaal één speciaal karakter bevatten.")
         return v
-
-
-
-class UserBase(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50)
-    name: str = Field(..., min_length=2, max_length=50)
-    age: int = Field(..., gt=17, lt=100)
-    bio: Optional[str] = Field(None, max_length=500)
-
-class UserInDB(UserBase):
-    password_hash: str
-
-
-
-{
-  "properties": {
-    "username": {
-      "maxLength": 50,
-      "minLength": 3,
-      "title": "Username",
-      "type": "string"
-    },
-    "name": {
-      "maxLength": 50,
-      "minLength": 2,
-      "title": "Name",
-      "type": "string"
-    },
-    "age": {
-      "exclusiveMaximum": 100,
-      "exclusiveMinimum": 17,
-      "title": "Age",
-      "type": "integer"
-    },
-    "bio": {
-      "anyOf": [
-        {
-          "maxLength": 500,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": None,
-      "title": "Bio"
-    },
-    "password": {
-      "title": "Password",
-      "type": "string"
-    }
-  },
-  "required": [
-    "username",
-    "name",
-    "age",
-    "password"
-  ],
-  "title": "UserCreate",
-  "type": "object"
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class Token(BaseModel):
@@ -311,11 +218,8 @@ class UserProfile(BaseModel):
     name: str
     age: int
     bio: Optional[str] = None
-    lat: float
-    lng: float
     photos: List[str] = []
     photos_meta: List[UserPhoto] = []
-    strava_ytd_url: Optional[str] = None
 
 
 class UserPreferences(BaseModel):
@@ -344,7 +248,52 @@ class PhotoUpload(BaseModel):
     is_profile_pic: Optional[bool] = False
 
 
-# -------------------- Auth Dependency --------------------
+# ----------------------- Password & Token -----------------------
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+
+
+def get_password_hash(plain_password: str) -> str:
+    return bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def create_access_token(data: Dict[str, Any], expires_delta: timedelta) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_bearer_from_cookie(request: Request) -> Optional[str]:
+    return request.cookies.get(COOKIE_NAME)
+
+
+# ----------------------- Strava helpers (mock) -----------------------
+def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[float, float]]:
+    """
+    MOCK: haalt coördinaten uit strava_token als die begint met 'mock:LAT,LNG'.
+    Voorbeeld: 'mock:51.2194,4.4025' -> (51.2194, 4.4025)
+
+    TODO: vervang dit door een echte Strava API call:
+      - /athlete/activities?per_page=1
+      - pak start_latlng van de meest recente activiteit
+    """
+    if not strava_token:
+        return None
+    if strava_token.startswith("mock:"):
+        try:
+            coords = strava_token.split("mock:", 1)[1]
+            lat_str, lng_str = coords.split(",", 1)
+            return float(lat_str.strip()), float(lng_str.strip())
+        except Exception:
+            return None
+    return None
+
+
+# ----------------------- Auth Dependency -----------------------
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     request: Request = None,
@@ -359,7 +308,6 @@ async def get_current_user(
             detail="Kon validatiegegevens niet verifiëren.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -370,6 +318,7 @@ async def get_current_user(
 
     c.execute(
         """
+        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token
         FROM users
         WHERE username = %s AND deleted_at IS NULL
         """,
@@ -385,110 +334,112 @@ async def get_current_user(
         "name": row[2],
         "age": row[3],
         "bio": row[4],
-        "preferred_min_age": row[11],
-        "preferred_max_age": row[12],
-        "strava_token": row[13],
+        "preferred_min_age": row[5],
+        "preferred_max_age": row[6],
+        "strava_token": row[7],
     }
     return user
 
 
-# -------------------- Startup / Shutdown --------------------
+# ----------------------- Startup / Shutdown -----------------------
 @app.on_event("startup")
 def on_startup():
     init_pool()
     with DB() as (conn, c):
+        # users: GEEN lat/lng kolommen
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE,
-                password_hash TEXT,
-                name TEXT,
-                age INTEGER,
-                bio TEXT,
-                strava_token TEXT,
-                preferred_min_age INTEGER,
-                preferred_max_age INTEGER,
-                push_token TEXT,
-                deleted_at TIMESTAMPTZ
+              id SERIAL PRIMARY KEY,
+              username TEXT UNIQUE,
+              password_hash TEXT,
+              name TEXT,
+              age INTEGER,
+              bio TEXT,
+              strava_token TEXT,
+              preferred_min_age INTEGER,
+              preferred_max_age INTEGER,
+              push_token TEXT,
+              deleted_at TIMESTAMPTZ
             )
             """
         )
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS swipes (
-                swiper_id INTEGER,
-                swipee_id INTEGER,
-                liked BOOLEAN,
-                deleted_at TIMESTAMPTZ,
-                PRIMARY KEY (swiper_id, swipee_id)
+              swiper_id INTEGER,
+              swipee_id INTEGER,
+              liked BOOLEAN,
+              deleted_at TIMESTAMPTZ,
+              PRIMARY KEY (swiper_id, swipee_id)
             )
             """
         )
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS chats (
-                id SERIAL PRIMARY KEY,
-                match_id INTEGER,
-                sender_id INTEGER,
-                encrypted_message TEXT,
-                timestamp TIMESTAMPTZ DEFAULT NOW(),
-                deleted_at TIMESTAMPTZ
+              id SERIAL PRIMARY KEY,
+              match_id INTEGER,
+              sender_id INTEGER,
+              encrypted_message TEXT,
+              timestamp TIMESTAMPTZ DEFAULT NOW(),
+              deleted_at TIMESTAMPTZ
             )
             """
         )
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS user_photos (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER,
-                photo_url TEXT,
-                is_profile_pic INTEGER DEFAULT 0,
-                FOREIGN KEY (user_id) REFERENCES users(id)
+              id SERIAL PRIMARY KEY,
+              user_id INTEGER,
+              photo_url TEXT,
+              is_profile_pic INTEGER DEFAULT 0,
+              FOREIGN KEY (user_id) REFERENCES users(id)
             )
             """
         )
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS user_blocks (
-                blocker_id INTEGER,
-                blocked_id INTEGER,
-                timestamp TIMESTAMPTZ,
-                PRIMARY KEY (blocker_id, blocked_id)
+              blocker_id INTEGER,
+              blocked_id INTEGER,
+              timestamp TIMESTAMPTZ,
+              PRIMARY KEY (blocker_id, blocked_id)
             )
             """
         )
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS user_reports (
-                id SERIAL PRIMARY KEY,
-                reporter_id INTEGER,
-                reported_id INTEGER,
-                reason TEXT,
-                timestamp TIMESTAMPTZ
+              id SERIAL PRIMARY KEY,
+              reporter_id INTEGER,
+              reported_id INTEGER,
+              reason TEXT,
+              timestamp TIMESTAMPTZ
             )
             """
         )
-        c.execute('CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)')
-        c.execute('CREATE INDEX IF NOT EXISTS idx_swipes_swiper_swipee ON swipes (swiper_id, swipee_id)')
+        # Indexen
+        c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_swipes_swiper_swipee ON swipes (swiper_id, swipee_id)")
         c.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_swipes_swiper_liked
-              ON swipes (swiper_id, liked)
-              WHERE deleted_at IS NULL
+            ON swipes (swiper_id, liked)
+            WHERE deleted_at IS NULL
             """
         )
         c.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_blocks_pair
-              ON user_blocks (blocker_id, blocked_id)
+            ON user_blocks (blocker_id, blocked_id)
             """
         )
         c.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_chats_match
-              ON chats (match_id)
-              WHERE deleted_at IS NULL
+            ON chats (match_id)
+            WHERE deleted_at IS NULL
             """
         )
 
@@ -499,10 +450,10 @@ def on_shutdown():
     if pool:
         pool.closeall()
         logger.info("PostgreSQL connection pool afgesloten.")
-        pool = None
+    pool = None
 
 
-# -------------------- Endpoints --------------------
+# ----------------------- Endpoints -----------------------
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
     response: Response,
@@ -524,7 +475,6 @@ async def login_for_access_token(
             )
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
-
         response.set_cookie(
             key=COOKIE_NAME,
             value=access_token,
@@ -546,9 +496,22 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
     try:
         c.execute(
             """
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            INSERT INTO users (username, password_hash, name, age, bio, strava_token,
+                               preferred_min_age, preferred_max_age, push_token, deleted_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NULL)
             RETURNING id
             """,
+            (
+                user.username,
+                password_hash,
+                user.name,
+                user.age,
+                user.bio,
+                None,  # strava_token initieel None
+                None,  # preferred_min_age
+                None,  # preferred_max_age
+                None,  # push_token
+            ),
         )
         user_id = c.fetchone()[0]
 
@@ -577,6 +540,7 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     conn, c = db
     c.execute(
         """
+        SELECT id, name, age, bio
         FROM users
         WHERE id = %s AND deleted_at IS NULL
         """,
@@ -594,19 +558,15 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     rows = c.fetchall()
     photos = [r[1] for r in rows]
     photos_meta = [{"id": r[0], "photo_url": r[1], "is_profile_pic": bool(r[2])} for r in rows]
-    strava_ytd_url = f"https://www.strava.com/athletes/{user[9]}/ytd" if user[9] else None
 
-    logger.info("Gebruiker %s bekijkt profiel van gebruiker %s.", current_user['id'], user_id)
+    logger.info("Gebruiker %s bekijkt profiel van gebruiker %s.", current_user["id"], user_id)
     return {
         "id": user[0],
         "name": user[1],
         "age": user[2],
         "bio": user[3],
-        "lat": user[6],
-        "lng": user[7],
         "photos": photos,
         "photos_meta": photos_meta,
-        "strava_ytd_url": strava_ytd_url,
     }
 
 
@@ -617,16 +577,17 @@ async def update_user_preferences(
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    if user_id != current_user['id']:
+    if user_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Geen toestemming om deze voorkeuren bij te werken.")
-
     conn, c = db
     try:
         c.execute(
             """
             UPDATE users
+            SET preferred_min_age = %s, preferred_max_age = %s
             WHERE id=%s AND deleted_at IS NULL
             """,
+            (preferences.preferred_min_age, preferences.preferred_max_age, user_id),
         )
         logger.info("Voorkeuren van gebruiker %s succesvol bijgewerkt.", user_id)
         return {"status": "success", "message": "Voorkeuren succesvol bijgewerkt."}
@@ -638,11 +599,12 @@ async def update_user_preferences(
 @app.get("/suggestions")
 async def get_suggestions(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
-    min_age = current_user.get('preferred_min_age')
-    max_age = current_user.get('preferred_max_age')
+    user_id = current_user["id"]
+    min_age = current_user.get("preferred_min_age")
+    max_age = current_user.get("preferred_max_age")
 
     query = """
+        SELECT u.id, u.name, u.age, u.bio
         FROM users u
         WHERE u.id <> %s
           AND u.deleted_at IS NULL
@@ -660,28 +622,13 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     query += " LIMIT 200"
 
     c.execute(query, tuple(params))
-    suggestions = c.fetchall()
-    if not suggestions:
-        return {"suggestions": []}
-
-    suggestions_with_dist = []
-    for s in suggestions:
-        distance = haversine((lat, lng), (s[6], s[7]), unit=Unit.KILOMETERS)
-        if distance <= 250:
-            suggestions_with_dist.append(
-                {
-                    "id": s[0],
-                    "name": s[1],
-                    "age": s[2],
-                    "bio": s[3],
-                    "lat": s[6],
-                    "lng": s[7],
-                    "distance_km": round(distance, 2),
-                }
-            )
-    suggestions_with_dist.sort(key=lambda x: x['distance_km'])
-    logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions_with_dist))
-    return {"suggestions": suggestions_with_dist}
+    rows = c.fetchall()
+    suggestions = [
+        {"id": r[0], "name": r[1], "age": r[2], "bio": r[3]}
+        for r in rows
+    ]
+    logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
+    return {"suggestions": suggestions}
 
 
 @app.post("/swipe/{swipee_id}")
@@ -692,10 +639,9 @@ async def swipe(
     db=Depends(get_db),
 ):
     conn, c = db
-    swiper_id = current_user['id']
+    swiper_id = current_user["id"]
     if swiper_id == swipee_id:
         raise HTTPException(status_code=400, detail="Je kunt niet op je eigen profiel swipen.")
-
     try:
         c.execute(
             """
@@ -734,7 +680,7 @@ async def swipe(
 @app.get("/matches")
 async def get_matches(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
     c.execute(
         """
         SELECT u.id, u.name, u.age, up.photo_url
@@ -745,11 +691,11 @@ async def get_matches(current_user: dict = Depends(get_current_user), db=Depends
          AND s1.liked = TRUE
          AND s1.deleted_at IS NULL
         LEFT JOIN LATERAL (
-            SELECT photo_url
-            FROM user_photos up
-            WHERE up.user_id = u.id AND up.is_profile_pic = 1
-            ORDER BY up.id DESC
-            LIMIT 1
+          SELECT photo_url
+          FROM user_photos up
+          WHERE up.user_id = u.id AND up.is_profile_pic = 1
+          ORDER BY up.id DESC
+          LIMIT 1
         ) up ON TRUE
         WHERE u.deleted_at IS NULL
           AND EXISTS (
@@ -771,7 +717,7 @@ async def get_matches(current_user: dict = Depends(get_current_user), db=Depends
 @app.post("/send_message")
 async def send_message(message: MessageIn, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
     match_id = message.match_id
     plain_message = message.message
     timestamp = datetime.now(timezone.utc)
@@ -786,14 +732,14 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
             AND liked = TRUE
             AND deleted_at IS NULL
         )
-          AND EXISTS (
+        AND EXISTS (
             SELECT 1
             FROM swipes
             WHERE swiper_id = %s
               AND swipee_id = %s
               AND liked = TRUE
               AND deleted_at IS NULL
-          )
+        )
         """,
         (user_id, match_id, match_id, user_id),
     )
@@ -815,8 +761,7 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
 @app.get("/chat/{match_id}/messages")
 async def get_chat_messages(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
-
+    user_id = current_user["id"]
     c.execute(
         """
         SELECT 1
@@ -827,14 +772,14 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
             AND liked = TRUE
             AND deleted_at IS NULL
         )
-          AND EXISTS (
+        AND EXISTS (
             SELECT 1
             FROM swipes
             WHERE swiper_id = %s
               AND swipee_id = %s
               AND liked = TRUE
               AND deleted_at IS NULL
-          )
+        )
         """,
         (user_id, match_id, match_id, user_id),
     )
@@ -851,7 +796,6 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
         (match_id,),
     )
     rows = c.fetchall()
-
     chat_history: List[ChatMessage] = []
     for sender_id, encrypted_message, ts in rows:
         try:
@@ -861,17 +805,15 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
         except Exception:
             logger.exception("Fout bij decoderen van bericht.")
             continue
-
     return {"chat_history": chat_history}
 
 
 @app.post("/report_user")
 async def report_user(report: ReportRequest, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    reporter_id = current_user['id']
+    reporter_id = current_user["id"]
     if reporter_id == report.reported_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet rapporteren.")
-
     try:
         c.execute(
             """
@@ -890,10 +832,9 @@ async def report_user(report: ReportRequest, current_user: dict = Depends(get_cu
 @app.post("/block_user")
 async def block_user(user_to_block_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    blocker_id = current_user['id']
+    blocker_id = current_user["id"]
     if blocker_id == user_to_block_id:
         raise HTTPException(status_code=400, detail="Je kunt jezelf niet blokkeren.")
-
     try:
         c.execute(
             """
@@ -906,7 +847,6 @@ async def block_user(user_to_block_id: int, current_user: dict = Depends(get_cur
         if c.rowcount == 0:
             logger.info("Gebruiker %s was al geblokkeerd door gebruiker %s.", user_to_block_id, blocker_id)
             return {"status": "success", "message": "Gebruiker was al geblokkeerd."}
-
         logger.info("Gebruiker %s succesvol geblokkeerd door gebruiker %s.", user_to_block_id, blocker_id)
         return {"status": "success", "message": "Gebruiker succesvol geblokkeerd."}
     except psycopg2.Error:
@@ -917,14 +857,14 @@ async def block_user(user_to_block_id: int, current_user: dict = Depends(get_cur
 @app.delete("/delete/match/{match_id}")
 async def delete_match(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
     c.execute(
         """
         UPDATE swipes
         SET deleted_at = NOW()
         WHERE (
-            (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
-            OR (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
+          (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
+          OR (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
         )
         """,
         (user_id, match_id, match_id, user_id),
@@ -936,9 +876,12 @@ async def delete_match(match_id: int, current_user: dict = Depends(get_current_u
 @app.delete("/delete_photo/{photo_id}")
 async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
     try:
-        c.execute("SELECT is_profile_pic FROM user_photos WHERE id = %s AND user_id = %s", (photo_id, user_id))
+        c.execute(
+            "SELECT is_profile_pic FROM user_photos WHERE id = %s AND user_id = %s",
+            (photo_id, user_id),
+        )
         row = c.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Foto niet gevonden of geen permissie.")
@@ -967,7 +910,7 @@ async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_u
 @app.post("/upload_photo")
 async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
     photo_url = str(photo.photo_url)
     try:
         if photo.is_profile_pic:
@@ -988,7 +931,7 @@ async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_curr
         raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van een foto.")
 
 
-# -------------------- WebSocket (auth via token query-param) --------------------
+# ----------------------- WebSocket (auth via token query-param) -----------------------
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
     token = websocket.query_params.get("token")
@@ -1001,6 +944,13 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         if not username:
             await websocket.close(code=4401)
             return
+        # (extra check) user_id matchen met token's gebruiker
+        with DB() as (conn, c):
+            c.execute("SELECT id FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
+            row = c.fetchone()
+            if not row or row[0] != user_id:
+                await websocket.close(code=4403)  # forbidden
+                return
     except JWTError:
         await websocket.close(code=4401)
         return
@@ -1017,12 +967,13 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
         logger.exception("WebSocket fout voor gebruiker %s.", user_id)
 
 
-# -------------------- Route Suggestion --------------------
+# ----------------------- Route Suggestion -----------------------
 @app.get("/suggest_route/{match_id}")
 async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
-    user_id = current_user['id']
+    user_id = current_user["id"]
 
+    # check match
     c.execute(
         """
         SELECT 1
@@ -1033,33 +984,43 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
             AND liked = TRUE
             AND deleted_at IS NULL
         )
-          AND EXISTS (
+        AND EXISTS (
             SELECT 1
             FROM swipes
             WHERE swiper_id = %s
               AND swipee_id = %s
               AND liked = TRUE
               AND deleted_at IS NULL
-          )
+        )
         """,
         (user_id, match_id, match_id, user_id),
     )
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Geen toegang tot routevoorstellen (geen match).")
 
-    u = c.fetchone()
-    m = c.fetchone()
-    if not u or not m:
-        raise HTTPException(status_code=404, detail="Locatiegegevens niet gevonden.")
+    # haal strava_tokens op
+    user_strava_token = current_user.get("strava_token")
+    c.execute("SELECT strava_token FROM users WHERE id = %s AND deleted_at IS NULL", (match_id,))
+    row = c.fetchone()
+    match_strava_token = row[0] if row else None
 
-    user_location = (u[0], u[1])
-    match_location = (m[0], m[1])
-    distance_km = haversine(user_location, match_location, unit=Unit.KILOMETERS)
-    map_link = f"https://www.google.com/maps/dir/{user_location[0]},{user_location[1]}/{match_location[0]},{match_location[1]}"
+    user_loc = get_latest_strava_coords(user_strava_token)
+    match_loc = get_latest_strava_coords(match_strava_token)
+    if not user_loc or not match_loc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Kon geen recente Strava-locaties bepalen. "
+                "Zorg dat beide gebruikers een geldig strava_token hebben of gebruik 'mock:LAT,LNG' voor testen."
+            ),
+        )
+
+    distance_km = haversine(user_loc, match_loc, unit=Unit.KILOMETERS)
+    map_link = f"https://www.google.com/maps/dir/{user_loc[0]},{user_loc[1]}/{match_loc[0]},{match_loc[1]}"
 
     popular_route = {
         "name": "Voorstel gezamenlijke route",
-        "description": "Voorbeeld: een route ongeveer halverwege jullie locaties. Pas aan op basis van voorkeur.",
+        "description": "Suggestie gebaseerd op meest recente Strava-activiteiten (mock of echte integratie).",
         "distance_km": round(distance_km / 2, 2),
         "map_link": map_link,
     }
@@ -1067,7 +1028,7 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     return {"status": "success", "route_suggestion": popular_route}
 
 
-# -------------------- Health --------------------
+# ----------------------- Health -----------------------
 @app.get("/healthz")
 def healthz(db=Depends(get_db)):
     conn, c = db
@@ -1075,7 +1036,21 @@ def healthz(db=Depends(get_db)):
     return {"status": "ok"}
 
 
-# -------------------- Main --------------------
+# ----------------------- Home -----------------------
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    return """
+    <html>
+    <head><title>Sports Match API</title></head>
+    <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+      <h1>Sports Match API is live! ✅</h1>
+      <p>Bekijk de /docsAPI Docs</a> of /redocRedoc</a>.</p>
+    </body>
+    </html>
+    """
+
+
+# ----------------------- Main -----------------------
 if __name__ == "__main__":
     uvicorn.run(
         "main:app",
@@ -1083,24 +1058,3 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
-
-
-from fastapi.responses import HTMLResponse
-
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    return """
-    <html>
-        <head><title>Sports Match API</title></head>
-        <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-            <h1>Sports Match API is live! ✅</h1>
-            <p>Bekijk de /docsAPI Docs</a> of /redocRedoc</a>.</p>
-        </body>
-    </html>
-    """
-
-
-
-
-
-
