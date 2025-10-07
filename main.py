@@ -184,7 +184,7 @@ class UserInDB(UserBase):
           "type": "null"
         }
       ],
-      "default": none,
+      "default": None,
       "title": "Bio"
     },
     "password": {
@@ -1056,6 +1056,7 @@ async def home():
         </body>
     </html>
     """
+
 
 
 
