@@ -15,3 +15,4 @@ httpx
 ruff==0.6.9
 pytest
 
+bcrypt==4.0.1
