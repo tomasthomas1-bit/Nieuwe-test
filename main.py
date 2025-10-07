@@ -142,6 +142,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return v
 
 
+
+class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    name: str = Field(..., min_length=2, max_length=50)
+    age: int = Field(..., gt=17, lt=100)
+    bio: Optional[str] = Field(None, max_length=500)
+    sport_type: str
+    avg_distance: float
+    last_lat: float
+    last_lng: float
+    availability: str
+
 class UserInDB(UserBase):
     password_hash: str
 
