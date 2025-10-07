@@ -69,6 +69,7 @@ app = FastAPI(title="Sports Match API", version="2.1.0")
 
 @app.middleware("http")
 async def log_requests_and_responses(request: Request, call_next):
+    """Eenvoudige, veilige logging (zonder response-body capturing)."""
     logger.info("Request: %s %s", request.method, request.url.path)
     try:
         response = await call_next(request)
@@ -78,15 +79,6 @@ async def log_requests_and_responses(request: Request, call_next):
             request.url.path,
             response.status_code,
         )
-        # (Optioneel) response body loggen als beschikbaar
-        if hasattr(response, "body_iterator"):
-            try:
-                body = b"".join([chunk async for chunk in response.body_iterator])
-                logger.info("Response body: %s", body.decode("utf-8", errors="ignore"))
-                response.body_iterator = iter([body])
-            except Exception:
-                # We willen logging niet laten falen
-                pass
         return response
     except Exception as e:
         logger.exception("Onverwachte fout tijdens verwerking van request.")
@@ -267,10 +259,6 @@ def create_access_token(data: Dict[str, Any], expires_delta: timedelta) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def get_bearer_from_cookie(request: Request) -> Optional[str]:
-    return request.cookies.get(COOKIE_NAME)
-
-
 # ----------------------- Strava helpers (mock) -----------------------
 def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[float, float]]:
     """
@@ -293,21 +281,20 @@ def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[floa
     return None
 
 
-# ----------------------- Auth Dependency -----------------------
+# ----------------------- Auth Dependency (geen cookie-fallback) -----------------------
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    request: Request = None,
     db=Depends(get_db),
 ):
     conn, c = db
-    if not token and request:
-        token = get_bearer_from_cookie(request)
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Kon validatiegegevens niet verifiëren.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -328,7 +315,7 @@ async def get_current_user(
     if not row:
         raise HTTPException(status_code=401, detail="Gebruiker niet gevonden of gedeactiveerd.")
 
-    user = {
+    return {
         "id": row[0],
         "username": row[1],
         "name": row[2],
@@ -338,7 +325,6 @@ async def get_current_user(
         "preferred_max_age": row[6],
         "strava_token": row[7],
     }
-    return user
 
 
 # ----------------------- Startup / Shutdown -----------------------
@@ -468,13 +454,17 @@ async def login_for_access_token(
         )
         row = c.fetchone()
         if not row or not verify_password(form_data.password, row[0]):
+            # Laat 401 ongewijzigd naar buiten gaan
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrecte gebruikersnaam of wachtwoord",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
+
+        # Cookie zetten mag blijven; we lezen 'm niet als fallback
         response.set_cookie(
             key=COOKIE_NAME,
             value=access_token,
@@ -484,6 +474,9 @@ async def login_for_access_token(
             max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         )
         return {"access_token": access_token, "token_type": "bearer"}
+    except HTTPException:
+        # Belangrijk: HTTP-excepties niet maskeren als 500
+        raise
     except Exception:
         logger.exception("Fout bij het genereren van een token.")
         raise HTTPException(status_code=500, detail="Interne serverfout bij tokenaanmaak.")
