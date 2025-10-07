@@ -429,6 +429,20 @@ def on_startup():
             """
         )
 
+        # ---------- Schema-migratie: swipes.liked -> BOOLEAN (idempotent) ----------
+        c.execute(
+            """
+            SELECT data_type
+            FROM information_schema.columns
+            WHERE table_name = 'swipes' AND column_name = 'liked'
+            """
+        )
+        row = c.fetchone()
+        if row and row[0] != 'boolean':
+            logger.warning("Migrating swipes.liked from %s to boolean ...", row[0])
+            c.execute("ALTER TABLE swipes ALTER COLUMN liked TYPE BOOLEAN USING (liked <> 0)")
+            logger.info("Migratie voltooid: swipes.liked is nu BOOLEAN.")
+
 
 @app.on_event("shutdown")
 def on_shutdown():
