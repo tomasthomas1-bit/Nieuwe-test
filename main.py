@@ -1,11 +1,13 @@
 # main.py
 from __future__ import annotations
+
 import logging
 import os
 import re
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional, Tuple, Dict
+
 import bcrypt
 import psycopg2
 from cryptography.fernet import Fernet
@@ -18,7 +20,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     status,
-    Header,  # PATCH: nodig voor eigen token-extractor
+    Header,  # voor eigen token-extractor
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +32,7 @@ from psycopg2.pool import ThreadedConnectionPool
 from pydantic import BaseModel, Field, HttpUrl, validator
 import uvicorn
 
+
 # -------------------- Config & Logging --------------------
 logging.basicConfig(
     level=logging.INFO,
@@ -39,10 +42,11 @@ logging.basicConfig(
 logger = logging.getLogger("app")
 
 ALGORITHM = "HS256"
-# PATCH: maak expiratie via env configureerbaar (default 30 min)
+# Token-expiratie via ENV configureerbaar (default 30 min)
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-REFRESH_TOKEN_EXPIRE_DAYS = 7  # future use
+REFRESH_TOKEN_EXPIRE_DAYS = 7  # (niet gebruikt nu, handig voor later)
 COOKIE_NAME = "access_token"
+
 
 # -------------------- Env & Secrets --------------------
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -58,14 +62,17 @@ if not ENCRYPTION_KEY:
     raise RuntimeError("ENCRYPTION_KEY omgevingsvariabele is niet ingesteld.")
 
 cipher_suite = Fernet(ENCRYPTION_KEY.encode("utf-8"))
-GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")  # (optioneel, nu niet gebruikt)
-FRONTEND_ORIGINS = os.environ.get("FRONTEND_ORIGINS", "")  # bv: "https://app...,https://staging..."
+
+GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")  # (optioneel)
+FRONTEND_ORIGINS = os.environ.get("FRONTEND_ORIGINS", "")  # bv. "https://app...,https://staging..."
 _allowed_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
-# -------------------- App init --------------------
-app = FastAPI(title="Sports Match API", version="2.1.0")
 
-# PATCH: middleware die header/cookie-aanwezigheid logt, zonder secrets te loggen
+# -------------------- App init --------------------
+app = FastAPI(title="Sports Match API", version="2.2.0")
+
+
+# Middleware: log of auth header/cookie aanwezig is (zonder secrets te loggen)
 @app.middleware("http")
 async def log_requests_and_responses(request: Request, call_next):
     has_auth_header = "authorization" in request.headers
@@ -93,13 +100,12 @@ async def log_requests_and_responses(request: Request, call_next):
             content={"detail": "Interne serverfout", "error": str(e)},
         )
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.warning("Validatiefout bij %s: %s", request.url.path, exc.errors())
-    return JSONResponse(
-        status_code=422,
-        content={"detail": exc.errors()},
-    )
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
 
 @app.exception_handler(Exception)
 async def unexpected_exception_handler(request: Request, exc: Exception):
@@ -109,6 +115,7 @@ async def unexpected_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Interne serverfout", "error": str(exc)},
     )
+
 
 # CORS
 if _allowed_origins:
@@ -128,8 +135,10 @@ else:
         allow_headers=["*"],
     )
 
+
 # -------------------- DB Pool & Helpers --------------------
 pool: Optional[ThreadedConnectionPool] = None
+
 
 def init_pool() -> None:
     """Initialiseer één thread-safe connection pool voor de app."""
@@ -137,6 +146,7 @@ def init_pool() -> None:
     if pool is None:
         pool = ThreadedConnectionPool(minconn=1, maxconn=10, dsn=DATABASE_URL)
         logger.info("PostgreSQL connection pool geïnitialiseerd.")
+
 
 class DB:
     """Contextmanager voor (conn, cur) per request."""
@@ -158,9 +168,11 @@ class DB:
             if pool:
                 pool.putconn(self.conn)
 
+
 def get_db():
     with DB() as (conn, cur):
         yield conn, cur
+
 
 # -------------------- Models --------------------
 class UserBase(BaseModel):
@@ -169,11 +181,14 @@ class UserBase(BaseModel):
     age: int = Field(..., gt=17, lt=100)
     bio: Optional[str] = Field(None, max_length=500)
 
+
 class UserInDB(UserBase):
     password_hash: str
 
+
 class UserCreate(UserBase):
     password: str
+
     @validator("password")
     def validate_password_strength(cls, v: str) -> str:
         if len(v) < 8:
@@ -184,18 +199,21 @@ class UserCreate(UserBase):
             raise ValueError("Wachtwoord moet minimaal één hoofdletter bevatten.")
         if not re.search(r"[0-9]", v):
             raise ValueError("Wachtwoord moet minimaal één cijfer bevatten.")
-        if not re.search(r"[\\#\\?!@$%^&*\\-]", v):
+        if not re.search(r"[\\#\\?!@$%^&*\-]", v):
             raise ValueError("Wachtwoord moet minimaal één speciaal karakter bevatten.")
         return v
+
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class UserPhoto(BaseModel):
     id: int
     photo_url: str
     is_profile_pic: bool
+
 
 class UserProfile(BaseModel):
     id: int
@@ -205,41 +223,79 @@ class UserProfile(BaseModel):
     photos: List[str] = []
     photos_meta: List[UserPhoto] = []
 
+
 class UserPreferences(BaseModel):
     preferred_min_age: Optional[int] = Field(None, gt=0, lt=100)
     preferred_max_age: Optional[int] = Field(None, gt=0, lt=100)
 
+
 class MessageIn(BaseModel):
     match_id: int
     message: str
+
 
 class ChatMessage(BaseModel):
     sender_id: int
     message: str
     timestamp: str  # ISO8601
 
+
 class ReportRequest(BaseModel):
     reported_id: int
     reason: str
+
 
 class PhotoUpload(BaseModel):
     photo_url: HttpUrl
     is_profile_pic: Optional[bool] = False
 
+
 # -------------------- Password & Token --------------------
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")  # (niet meer gebruikt als dependency, ok)
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
+
 def get_password_hash(plain_password: str) -> str:
     return bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
 
 def create_access_token(data: Dict[str, Any], expires_delta: timedelta) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+# -------------------- Timestamp normalisatie helper --------------------
+def _to_isoz(ts) -> str:
+    """
+    Converteer een datetime of string naar ISO-8601 met 'Z' (UTC).
+    Vangt diverse stringformaten op; faalt nooit hard (geeft desnoods input terug).
+    """
+    if isinstance(ts, datetime):
+        return ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    if isinstance(ts, str):
+        s = ts.strip()
+        try:
+            # ' ' -> 'T'
+            if "T" not in s and " " in s:
+                s = s.replace(" ", "T")
+            # '+00' -> '+00:00'
+            if s.endswith("+00"):
+                s = s + ":00"
+            # 'Z' suffix accepteren
+            if s.endswith("Z"):
+                dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            else:
+                dt = datetime.fromisoformat(s)
+            return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            return s
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
 
 # -------------------- Strava helpers (mock) --------------------
 def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[float, float]]:
@@ -259,18 +315,18 @@ def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[floa
             return None
     return None
 
-# -------------------- Auth Dependency met header/cookie --------------------
-# PATCH: Token extractor die eerst de Authorization-header leest, anders cookie
+
+# -------------------- Auth Dependency (header of cookie) --------------------
 async def get_bearer_token(
     request: Request,
     authorization: Optional[str] = Header(None),
 ) -> Optional[str]:
+    """Lees eerst Authorization: Bearer ...; zo niet, val terug op cookie."""
     if authorization and authorization.lower().startswith("bearer "):
         return authorization[7:]
-    # Fallback naar cookie (werkt alleen als client cookies meestuurt)
     return request.cookies.get(COOKIE_NAME)
 
-# PATCH: vervangt eerdere get_current_user (nu met header/cookie support)
+
 async def get_current_user(
     token: Optional[str] = Depends(get_bearer_token),
     db=Depends(get_db),
@@ -312,12 +368,13 @@ async def get_current_user(
         "strava_token": row[7],
     }
 
+
 # -------------------- Startup / Shutdown --------------------
 @app.on_event("startup")
 def on_startup():
     init_pool()
     with DB() as (conn, c):
-        # users: GEEN lat/lng kolommen
+        # Tabellen
         c.execute(
             """
             CREATE TABLE IF NOT EXISTS users (
@@ -413,7 +470,8 @@ def on_startup():
             WHERE deleted_at IS NULL
             """
         )
-        # Schema-migratie (idempotent) was hier al aanwezig: liked -> BOOLEAN
+
+        # Migratie: swipes.liked -> BOOLEAN (idempotent)
         c.execute(
             """
             SELECT data_type
@@ -427,6 +485,21 @@ def on_startup():
             c.execute("ALTER TABLE swipes ALTER COLUMN liked TYPE BOOLEAN USING (liked <> 0)")
             logger.info("Migratie voltooid: swipes.liked is nu BOOLEAN.")
 
+        # Migratie: chats.timestamp -> TIMESTAMPTZ (idempotent)
+        c.execute(
+            """
+            SELECT data_type
+            FROM information_schema.columns
+            WHERE table_name = 'chats' AND column_name = 'timestamp'
+            """
+        )
+        row = c.fetchone()
+        if row and row[0] not in ('timestamp with time zone', 'timestamptz'):
+            logger.warning("Migrating chats.timestamp from %s to TIMESTAMPTZ ...", row[0])
+            c.execute("ALTER TABLE chats ALTER COLUMN timestamp TYPE TIMESTAMPTZ USING (timestamp::timestamptz)")
+            logger.info("Migratie voltooid: chats.timestamp is nu TIMESTAMPTZ.")
+
+
 @app.on_event("shutdown")
 def on_shutdown():
     global pool
@@ -434,6 +507,7 @@ def on_shutdown():
         pool.closeall()
         logger.info("PostgreSQL connection pool afgesloten.")
         pool = None
+
 
 # -------------------- Endpoints --------------------
 @app.post("/token", response_model=Token)
@@ -450,7 +524,7 @@ async def login_for_access_token(
         )
         row = c.fetchone()
         if not row or not verify_password(form_data.password, row[0]):
-            # Laat 401 ongewijzigd naar buiten gaan
+            # 401 doorgeven
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrecte gebruikersnaam of wachtwoord",
@@ -458,7 +532,7 @@ async def login_for_access_token(
             )
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
-        # Cookie zetten mag blijven; we lezen 'm nu ook als fallback
+        # Cookie zetten (fallback)
         response.set_cookie(
             key=COOKIE_NAME,
             value=access_token,
@@ -469,11 +543,11 @@ async def login_for_access_token(
         )
         return {"access_token": access_token, "token_type": "bearer"}
     except HTTPException:
-        # Belangrijk: HTTP-excepties niet maskeren als 500
         raise
     except Exception:
         logger.exception("Fout bij het genereren van een token.")
         raise HTTPException(status_code=500, detail="Interne serverfout bij tokenaanmaak.")
+
 
 @app.post("/register")
 async def create_user(user: UserCreate, db=Depends(get_db)):
@@ -519,6 +593,7 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
         logger.exception("Algemene fout bij het aanmaken van gebruiker.")
         raise HTTPException(status_code=500, detail="Interne serverfout")
 
+
 @app.get("/users/{user_id}", response_model=UserProfile)
 async def read_user(user_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
@@ -551,6 +626,7 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
         "photos_meta": photos_meta,
     }
 
+
 @app.post("/users/{user_id}/preferences")
 async def update_user_preferences(
     user_id: int,
@@ -575,6 +651,7 @@ async def update_user_preferences(
     except psycopg2.Error:
         logger.exception("Databasefout bij het bijwerken van voorkeuren.")
         raise HTTPException(status_code=500, detail="Databasefout bij het bijwerken van voorkeuren.")
+
 
 @app.get("/suggestions")
 async def get_suggestions(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
@@ -601,12 +678,10 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     query += " LIMIT 200"
     c.execute(query, tuple(params))
     rows = c.fetchall()
-    suggestions = [
-        {"id": r[0], "name": r[1], "age": r[2], "bio": r[3]}
-        for r in rows
-    ]
+    suggestions = [{"id": r[0], "name": r[1], "age": r[2], "bio": r[3]} for r in rows]
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
     return {"suggestions": suggestions}
+
 
 @app.post("/swipe/{swipee_id}")
 async def swipe(
@@ -651,6 +726,7 @@ async def swipe(
         logger.exception("Databasefout bij het swipen.")
         raise HTTPException(status_code=500, detail="Databasefout bij het swipen.")
 
+
 @app.get("/matches")
 async def get_matches(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
@@ -687,6 +763,7 @@ async def get_matches(current_user: dict = Depends(get_current_user), db=Depends
     matches = [{"id": r[0], "name": r[1], "age": r[2], "photo_url": r[3]} for r in rows]
     return {"matches": matches}
 
+
 @app.post("/send_message")
 async def send_message(message: MessageIn, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
@@ -694,6 +771,8 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
     match_id = message.match_id
     plain_message = message.message
     timestamp = datetime.now(timezone.utc)
+
+    # check wederzijdse like
     c.execute(
         """
         SELECT 1
@@ -717,6 +796,7 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
     )
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Bericht kan niet worden verzonden: geen match.")
+
     encrypted_message = cipher_suite.encrypt(plain_message.encode("utf-8")).decode("utf-8")
     c.execute(
         """
@@ -728,10 +808,13 @@ async def send_message(message: MessageIn, current_user: dict = Depends(get_curr
     logger.info("Chatbericht van gebruiker %s naar gebruiker %s opgeslagen.", user_id, match_id)
     return {"status": "success", "message": "Bericht verzonden."}
 
+
 @app.get("/chat/{match_id}/messages")
 async def get_chat_messages(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
     user_id = current_user["id"]
+
+    # toegang checken
     c.execute(
         """
         SELECT 1
@@ -755,6 +838,7 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
     )
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Geen toegang tot deze chat.")
+
     c.execute(
         """
         SELECT sender_id, encrypted_message, timestamp
@@ -769,12 +853,14 @@ async def get_chat_messages(match_id: int, current_user: dict = Depends(get_curr
     for sender_id, encrypted_message, ts in rows:
         try:
             decrypted = cipher_suite.decrypt(encrypted_message.encode("utf-8")).decode("utf-8")
-            iso_ts = ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            iso_ts = _to_isoz(ts)  # <-- robuuste normalisatie
             chat_history.append(ChatMessage(sender_id=sender_id, message=decrypted, timestamp=iso_ts))
         except Exception:
             logger.exception("Fout bij decoderen van bericht.")
             continue
+
     return {"chat_history": chat_history}
+
 
 @app.post("/report_user")
 async def report_user(report: ReportRequest, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
@@ -795,6 +881,7 @@ async def report_user(report: ReportRequest, current_user: dict = Depends(get_cu
     except psycopg2.Error:
         logger.exception("Databasefout bij rapporteren van gebruiker.")
         raise HTTPException(status_code=500, detail="Databasefout bij het rapporteren van gebruiker.")
+
 
 @app.post("/block_user")
 async def block_user(user_to_block_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
@@ -820,6 +907,7 @@ async def block_user(user_to_block_id: int, current_user: dict = Depends(get_cur
         logger.exception("Databasefout bij het blokkeren van gebruiker.")
         raise HTTPException(status_code=500, detail="Databasefout bij het blokkeren van gebruiker.")
 
+
 @app.delete("/delete/match/{match_id}")
 async def delete_match(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
@@ -837,6 +925,7 @@ async def delete_match(match_id: int, current_user: dict = Depends(get_current_u
     )
     logger.info("Match met gebruiker %s soft-verwijderd door gebruiker %s.", match_id, user_id)
     return {"status": "success", "message": "Match succesvol soft-verwijderd."}
+
 
 @app.delete("/delete_photo/{photo_id}")
 async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
@@ -868,6 +957,31 @@ async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_u
         logger.exception("Databasefout bij foto-verwijderen.")
         raise HTTPException(status_code=500, detail="Databasefout bij het verwijderen van een foto.")
 
+
+@app.post("/upload_photo")
+async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    photo_url = str(photo.photo_url)
+    try:
+        if photo.is_profile_pic:
+            c.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
+        c.execute(
+            "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
+            (user_id, photo_url, int(bool(photo.is_profile_pic))),
+        )
+        logger.info(
+            "Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)",
+            user_id,
+            photo_url,
+            bool(photo.is_profile_pic),
+        )
+        return {"status": "success", "message": "Foto succesvol geüpload."}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij foto-upload.")
+        raise HTTPException(status_code=500, detail="Databasefout bij het uploaden van een foto.")
+
+
 # -------------------- WebSocket --------------------
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: int):
@@ -891,6 +1005,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
     except JWTError:
         await websocket.close(code=4401)
         return
+
     await websocket.accept()
     logger.info("WebSocket geaccepteerd voor gebruiker %s (via token).", user_id)
     try:
@@ -902,12 +1017,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
     except Exception:
         logger.exception("WebSocket fout voor gebruiker %s.", user_id)
 
+
 # -------------------- Route Suggestion --------------------
 @app.get("/suggest_route/{match_id}")
 async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
     user_id = current_user["id"]
-    # check match
+
+    # check wederzijdse like
     c.execute(
         """
         SELECT 1
@@ -931,7 +1048,8 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     )
     if not c.fetchone():
         raise HTTPException(status_code=403, detail="Geen toegang tot routevoorstellen (geen match).")
-    # haal strava_tokens op
+
+    # Strava tokens ophalen
     user_strava_token = current_user.get("strava_token")
     c.execute("SELECT strava_token FROM users WHERE id = %s AND deleted_at IS NULL", (match_id,))
     row = c.fetchone()
@@ -950,6 +1068,7 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
 
     distance_km = haversine(user_loc, match_loc, unit=Unit.KILOMETERS)
     map_link = f"https://www.google.com/maps/dir/{user_loc[0]},{user_loc[1]}/{match_loc[0]},{match_loc[1]}"
+
     popular_route = {
         "name": "Voorstel gezamenlijke route",
         "description": "Suggestie gebaseerd op meest recente Strava-activiteiten (mock of echte integratie).",
@@ -959,14 +1078,15 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     logger.info("Routevoorstel gegenereerd voor match %s-%s.", user_id, match_id)
     return {"status": "success", "route_suggestion": popular_route}
 
-# -------------------- Health --------------------
+
+# -------------------- Health & Home --------------------
 @app.get("/healthz")
 def healthz(db=Depends(get_db)):
     conn, c = db
     c.execute("SELECT 1")
     return {"status": "ok"}
 
-# -------------------- Home --------------------
+
 @app.get("/", response_class=HTMLResponse)
 async def home():
     return """
@@ -974,10 +1094,11 @@ async def home():
     <head><title>Sports Match API</title></head>
     <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
       <h1>Sports Match API is live! ✅</h1>
-      <p>Bekijk de /docsAPI Docs</a> of /redocRedoc</a>.</p>
+      <p>Bekijk de <aocsAPI Docs</a> of /redocRedoc</a>.</p>
     </body>
     </html>
     """
+
 
 # -------------------- Main --------------------
 if __name__ == "__main__":
@@ -987,28 +1108,3 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
-
-# PATCH: helper om diverse timestamp-formaten naar ISO-8601 'Z' te normaliseren
-def _to_isoz(ts) -> str:
-    if isinstance(ts, datetime):
-        return ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-    if isinstance(ts, str):
-        s = ts.strip()
-        try:
-            # Zorg dat ' ' tussen datum/tijd wordt 'T'
-            if "T" not in s and " " in s:
-                s = s.replace(" ", "T")
-            # Normaliseer +00 -> +00:00
-            if s.endswith("+00"):
-                s = s + ":00"
-            # Ondersteun 'Z' suffix
-            if s.endswith("Z"):
-                dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
-            else:
-                dt = datetime.fromisoformat(s)
-            return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-        except Exception:
-            # Als parsen mislukt, geef best-effort terug (liever string dan crashen)
-            return s
-    # Fallback
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
