@@ -987,3 +987,28 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
+# PATCH: helper om diverse timestamp-formaten naar ISO-8601 'Z' te normaliseren
+def _to_isoz(ts) -> str:
+    if isinstance(ts, datetime):
+        return ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    if isinstance(ts, str):
+        s = ts.strip()
+        try:
+            # Zorg dat ' ' tussen datum/tijd wordt 'T'
+            if "T" not in s and " " in s:
+                s = s.replace(" ", "T")
+            # Normaliseer +00 -> +00:00
+            if s.endswith("+00"):
+                s = s + ":00"
+            # Ondersteun 'Z' suffix
+            if s.endswith("Z"):
+                dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            else:
+                dt = datetime.fromisoformat(s)
+            return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            # Als parsen mislukt, geef best-effort terug (liever string dan crashen)
+            return s
+    # Fallback
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
