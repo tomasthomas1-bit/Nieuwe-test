@@ -1,4 +1,4 @@
-// ThemeContext.js (of bovenaan in App.js plaatsen)
+// ThemeContext.js
 import React, { createContext, useMemo, useEffect, useState, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { useColorScheme } from 'react-native';
@@ -6,11 +6,11 @@ import { useColorScheme } from 'react-native';
 export const ThemeContext = createContext(null);
 
 const STORE_KEYS = {
-  MODE: 'pref_theme_mode',        // 'system' | 'light' | 'dark'
-  PRESET: 'pref_theme_preset',    // 'ios' | 'whatsapp'
+  MODE: 'pref_theme_mode',    // 'system' | 'light' | 'dark'
+  PRESET: 'pref_theme_preset' // 'ios'    | 'whatsapp'
 };
 
-// Kleurenpaletten per preset+mode
+// Kleurenpaletten per preset + mode
 const PALETTES = {
   ios: {
     light: {
@@ -38,9 +38,9 @@ const PALETTES = {
   },
   whatsapp: {
     light: {
-      bubbleMeBg: '#25D366',           // WA green
+      bubbleMeBg: '#25D366', // WA green
       bubbleMeBorder: 'rgba(0,0,0,0.06)',
-      bubbleThemBg: '#F0F2F5',         // WA list bg-ish
+      bubbleThemBg: '#F0F2F5',
       bubbleThemBorder: 'rgba(0,0,0,0.06)',
       bubbleMeText: '#0B1A12',
       bubbleThemText: '#111111',
@@ -49,7 +49,7 @@ const PALETTES = {
       tailThemBorder: 'rgba(0,0,0,0.06)',
     },
     dark: {
-      bubbleMeBg: '#005C4B',           // WA dark outgoing
+      bubbleMeBg: '#005C4B', // WA dark outgoing
       bubbleMeBorder: 'rgba(255,255,255,0.08)',
       bubbleThemBg: '#202C33',
       bubbleThemBorder: 'rgba(255,255,255,0.06)',
@@ -62,45 +62,61 @@ const PALETTES = {
   },
 };
 
-// makeTheme dat je bestaande tokens uitbreidt met chat-preset kleuren
 export function useTheming(makeBaseTheme) {
-  const osScheme = useColorScheme(); // 'dark'|'light'|null
-  const [mode, setMode] = useState('system');      // 'system' | 'light' | 'dark'
-  const [preset, setPreset] = useState('ios');     // 'ios' | 'whatsapp'
+  const osScheme = useColorScheme(); // 'dark' | 'light' | null
+  const [mode, setMode] = useState('system'); // 'system' | 'light' | 'dark'
+  const [preset, setPreset] = useState('ios'); // 'ios' | 'whatsapp'
 
-  // bij start voorkeuren laden
+  // Bij start voorkeuren laden
   useEffect(() => {
     (async () => {
-      const m = await SecureStore.getItemAsync(STORE_KEYS.MODE);
-      const p = await SecureStore.getItemAsync(STORE_KEYS.PRESET);
-      if (m) setMode(m);
-      if (p) setPreset(p);
+      try {
+        const m = await SecureStore.getItemAsync(STORE_KEYS.MODE);
+        const p = await SecureStore.getItemAsync(STORE_KEYS.PRESET);
+        if (m) setMode(m);
+        if (p) setPreset(p);
+      } catch {
+        // laisser faire — defaults blijven gelden
+      }
     })();
   }, []);
 
-  const effectiveMode = mode === 'system' ? (osScheme === 'dark' ? 'dark' : 'light') : mode;
-  const baseTheme = useMemo(() => makeBaseTheme(effectiveMode), [effectiveMode, makeBaseTheme]);
+  // Bepaal effectieve mode
+  const effectiveMode = mode === 'system'
+    ? (osScheme === 'dark' ? 'dark' : 'light')
+    : (mode === 'dark' ? 'dark' : 'light');
 
-  const chatPalette = PALETTES[preset][effectiveMode];
+  // Veilige fallbacks (typo-veilig)
+  const safePreset = PALETTES[preset] ? preset : 'ios';
+  const safeMode = effectiveMode === 'dark' ? 'dark' : 'light';
+
+  const baseTheme = useMemo(
+    () => makeBaseTheme(safeMode),
+    [makeBaseTheme, safeMode]
+  );
+
+  const chatPalette = PALETTES[safePreset][safeMode];
+
   const theme = useMemo(() => ({
     ...baseTheme,
-    preset,
+    preset: safePreset,
     chat: {
       ...chatPalette,
-      // staartjes (mogen meeschalen met palette)
+      // Staartjes volgen de palette-kleuren
       tailMeBorder: chatPalette.bubbleMeBorder,
-      tailMeFill: chatPalette.bubbleMeBg,
+      tailMeFill:   chatPalette.bubbleMeBg,
       tailThemFill: chatPalette.bubbleThemBg,
     }
-  }), [baseTheme, preset, chatPalette]);
+  }), [baseTheme, safePreset, safeMode]);
 
   const setUserMode = useCallback(async (m) => {
     setMode(m);
-    await SecureStore.setItemAsync(STORE_KEYS.MODE, m);
+    try { await SecureStore.setItemAsync(STORE_KEYS.MODE, m); } catch {}
   }, []);
+
   const setUserPreset = useCallback(async (p) => {
     setPreset(p);
-    await SecureStore.setItemAsync(STORE_KEYS.PRESET, p);
+    try { await SecureStore.setItemAsync(STORE_KEYS.PRESET, p); } catch {}
   }, []);
 
   return { theme, mode, setUserMode, preset, setUserPreset };
