@@ -1113,3 +1113,29 @@ if __name__ == "__main__":
 from settings import router as settings_router
 app.include_router(settings_router)
 
+# routes.py / main.py (voorbeeld)
+from fastapi import APIRouter, Depends, HTTPException
+from .models import UserPublic, UserUpdate
+from .auth import get_current_user  # je bestaande auth dep
+from .db import get_user_by_id, update_user  # je db-helpers
+
+router = APIRouter()
+
+@router.get("/me", response_model=UserPublic)
+def me(user=Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "name": user.name,
+        "age": user.age,
+        "bio": user.bio,
+    }
+
+@router.patch("/users/{user_id}", response_model=UserPublic)
+def patch_user(user_id: int, payload: UserUpdate, user=Depends(get_current_user)):
+    if user_id != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    updated = update_user(user_id, payload.dict(exclude_unset=True))
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated
