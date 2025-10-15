@@ -1,15 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from enum import Enum
 from main import get_current_user, get_db
 import logging
+
 router = APIRouter()
 logger = logging.getLogger("settings")
+
+class MessagePreference(str, Enum):
+    everyone = "everyone"
+    matches = "matches"
+    none = "none"
 
 class UserSettings(BaseModel):
     sports: List[str] = Field(default_factory=list)
     show_location: bool = True
-    allow_messages_from: str = Field("everyone", regex="^(everyone|matches|none)$")
+    allow_messages_from: MessagePreference = Field(default=MessagePreference.everyone)
     strava_token: Optional[str] = None
     garmin_token: Optional[str] = None
 
@@ -49,7 +56,7 @@ async def update_user_settings(user_id: int, settings: UserSettings, current_use
                           allow_messages_from = EXCLUDED.allow_messages_from,
                           strava_token = EXCLUDED.strava_token,
                           garmin_token = EXCLUDED.garmin_token
-        """, (user_id, settings.sports, settings.show_location, settings.allow_messages_from, settings.strava_token, settings.garmin_token))
+        """, (user_id, settings.sports, settings.show_location, settings.allow_messages_from.value, settings.strava_token, settings.garmin_token))
         logger.info("Instellingen bijgewerkt voor gebruiker %s", user_id)
         return {"status": "success", "message": "Instellingen succesvol opgeslagen."}
     except Exception:
