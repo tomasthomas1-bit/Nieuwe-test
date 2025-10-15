@@ -1108,3 +1108,8 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
+#-------------------- Toevoegen van user settings --------------------
+from settings import router as settings_router
+app.include_router(settings_router)
+
