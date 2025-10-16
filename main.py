@@ -459,7 +459,18 @@ def on_startup():
             notifications_enabled BOOLEAN
         )
         """)
-
+        # === User availability (nieuw) ===
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS user_availabilities (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            day_of_week SMALLINT NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),  -- 0=Maandag ... 6=Zondag
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            timezone TEXT DEFAULT 'Europe/Brussels'
+        )
+        """)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_avail_user ON user_availabilities(user_id)")
 
         # Indexen
         c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
@@ -647,6 +658,99 @@ async def save_user_settings(
         (user_id, data["match_goal"], data["preferred_gender"], data["max_distance_km"], data["notifications_enabled"]),
     )
     return {"status": "success"}
+
+from typing import Iterable
+
+class AvailabilityItem(BaseModel):
+    day_of_week: int  # 0..6 (0=ma, 6=zo)
+    start_time: str   # "HH:MM"
+    end_time: str     # "HH:MM"
+    timezone: Optional[str] = "Europe/Brussels"
+
+def _validate_time(hhmm: str) -> Tuple[int, int]:
+    parts = hhmm.split(":")
+    if len(parts) != 2:
+        raise ValueError("Ongeldig tijdformaat, gebruik HH:MM")
+    h, m = int(parts[0]), int(parts[1])
+    if not (0 <= h < 24 and 0 <= m < 60):
+        raise ValueError("Uur/minuut buiten bereik")
+    return h, m
+
+@app.get("/users/{user_id}/availability")
+async def get_availability(
+    user_id: int,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn, c = db
+    c.execute("""
+      SELECT id, day_of_week, to_char(start_time,'HH24:MI'), to_char(end_time,'HH24:MI'), timezone
+      FROM user_availabilities WHERE user_id=%s ORDER BY day_of_week, start_time
+    """, (user_id,))
+    rows = c.fetchall()
+    items = [{
+        "id": r[0],
+        "day_of_week": r[1],
+        "start_time": r[2],
+        "end_time": r[3],
+        "timezone": r[4],
+    } for r in rows]
+    return {"availability": items}
+
+@app.post("/users/{user_id}/availability")
+async def save_availability(
+    user_id: int,
+    payload: List[AvailabilityItem],
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+
+@app.post("/photos/{photo_id}/set_profile")
+async def set_profile_photo(
+    photo_id: int,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    conn, c = db
+    user_id = current_user["id"]
+    # Check eigendom
+    c.execute("SELECT id FROM user_photos WHERE id=%s AND user_id=%s", (photo_id, user_id))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Foto niet gevonden of geen permissie.")
+    # Reset en zet nieuwe
+    c.execute("UPDATE user_photos SET is_profile_pic=0 WHERE user_id=%s", (user_id,))
+    c.execute("UPDATE user_photos SET is_profile_pic=1 WHERE id=%s", (photo_id,))
+    return {"status": "success"}
+    
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn, c = db
+    # Validatie
+    for it in payload:
+        if it.day_of_week < 0 or it.day_of_week > 6:
+            raise HTTPException(status_code=422, detail="day_of_week moet 0..6 zijn")
+        try:
+            sh, sm = _validate_time(it.start_time)
+            eh, em = _validate_time(it.end_time)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=str(e))
+        if (eh, em) <= (sh, sm):
+            raise HTTPException(status_code=422, detail="end_time moet later zijn dan start_time")
+    # Vervang alles in één transactie
+    try:
+        c.execute("DELETE FROM user_availabilities WHERE user_id=%s", (user_id,))
+        for it in payload:
+            c.execute("""
+              INSERT INTO user_availabilities (user_id, day_of_week, start_time, end_time, timezone)
+              VALUES (%s, %s, %s, %s, %s)
+            """, (user_id, it.day_of_week, it.start_time, it.end_time, it.timezone or "Europe/Brussels"))
+        return {"status": "success"}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij het opslaan van beschikbaarheden.")
+        raise HTTPException(status_code=500, detail="Databasefout bij het opslaan van beschikbaarheden.")
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
@@ -1246,5 +1350,6 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
