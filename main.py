@@ -447,6 +447,20 @@ def on_startup():
             )
             """
         )
+
+            
+       # === User settings (nieuw) ===
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS user_settings (
+            user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+            match_goal TEXT,
+            preferred_gender TEXT,
+            max_distance_km INTEGER,
+            notifications_enabled BOOLEAN
+        )
+        """)
+
+
         # Indexen
         c.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_swipes_swiper_swipee ON swipes (swiper_id, swipee_id)")
@@ -1139,3 +1153,4 @@ def patch_user(user_id: int, payload: UserUpdate, user=Depends(get_current_user)
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     return updated
+
