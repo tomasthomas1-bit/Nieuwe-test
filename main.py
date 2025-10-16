@@ -524,6 +524,130 @@ def on_shutdown():
 
 
 # -------------------- Endpoints --------------------
+
+# === Profiel-modellen ===
+class UserPublic(BaseModel):
+    id: int
+    username: str
+    name: str
+    age: int
+    bio: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    age: Optional[int] = None
+    bio: Optional[str] = None
+
+# === /me ===
+@app.get("/me", response_model=UserPublic)
+async def me(current_user: dict = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "username": current_user["username"],
+        "name": current_user["name"],
+        "age": current_user["age"],
+        "bio": current_user["bio"],
+    }
+
+# === PATCH /users/{id} ===
+@app.patch("/users/{user_id}", response_model=UserPublic)
+async def patch_user(
+    user_id: int,
+    payload: UserUpdate,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn, c = db
+
+    updates = []
+    values: List[Any] = []
+    for k, v in payload.dict(exclude_unset=True).items():
+        updates.append(f"{k}=%s")
+        values.append(v)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    values.append(user_id)
+    c.execute(
+        f"UPDATE users SET {', '.join(updates)} WHERE id=%s AND deleted_at IS NULL",
+        tuple(values)
+    )
+    c.execute("SELECT id, username, name, age, bio FROM users WHERE id=%s", (user_id,))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"id": row[0], "username": row[1], "name": row[2], "age": row[3], "bio": row[4]}
+
+# === User-settings model ===
+class UserSettingsModel(BaseModel):
+    match_goal: Optional[str] = None
+    preferred_gender: Optional[str] = None
+    max_distance_km: Optional[int] = None
+    notifications_enabled: Optional[bool] = None
+DEFAULT_SETTINGS = {
+    "match_goal": "friendship",
+    "preferred_gender": "any",
+    "max_distance_km": 25,
+    "notifications_enabled": True,
+}
+
+# === GET /users/{id}/settings ===
+@app.get("/users/{user_id}/settings")
+async def get_user_settings(
+    user_id: int,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn, c = db
+    c.execute(
+        """
+        SELECT match_goal, preferred_gender, max_distance_km, notifications_enabled
+        FROM user_settings WHERE user_id=%s
+        """,
+        (user_id,),
+    )
+    row = c.fetchone()
+    if not row:
+        # als nog niet gezet: defaults teruggeven
+        return DEFAULT_SETTINGS
+    return {
+        "match_goal": row[0],
+        "preferred_gender": row[1],
+        "max_distance_km": row[2],
+        "notifications_enabled": row[3],
+    }
+
+# === POST /users/{id}/settings ===
+@app.post("/users/{user_id}/settings")
+async def save_user_settings(
+    user_id: int,
+    payload: UserSettingsModel,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    if user_id != current_user["id"]:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn, c = db
+    data = {**DEFAULT_SETTINGS, **payload.dict(exclude_unset=True)}
+    c.execute(
+        """
+        INSERT INTO user_settings (user_id, match_goal, preferred_gender, max_distance_km, notifications_enabled)
+        VALUES (%s,%s,%s,%s,%s)
+        ON CONFLICT (user_id) DO UPDATE SET
+            match_goal=EXCLUDED.match_goal,
+            preferred_gender=EXCLUDED.preferred_gender,
+            max_distance_km=EXCLUDED.max_distance_km,
+            notifications_enabled=EXCLUDED.notifications_enabled
+        """,
+        (user_id, data["match_goal"], data["preferred_gender"], data["max_distance_km"], data["notifications_enabled"]),
+    )
+    return {"status": "success"}
+
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
     response: Response,
@@ -1123,34 +1247,4 @@ if __name__ == "__main__":
         reload=True,
     )
 
-#-------------------- Toevoegen van user settings --------------------
-from settings import router as settings_router
-app.include_router(settings_router)
-
-# routes.py / main.py (voorbeeld)
-from fastapi import APIRouter, Depends, HTTPException
-from .models import UserPublic, UserUpdate
-from .auth import get_current_user  # je bestaande auth dep
-from .db import get_user_by_id, update_user  # je db-helpers
-
-router = APIRouter()
-
-@router.get("/me", response_model=UserPublic)
-def me(user=Depends(get_current_user)):
-    return {
-        "id": user.id,
-        "username": user.username,
-        "name": user.name,
-        "age": user.age,
-        "bio": user.bio,
-    }
-
-@router.patch("/users/{user_id}", response_model=UserPublic)
-def patch_user(user_id: int, payload: UserUpdate, user=Depends(get_current_user)):
-    if user_id != user.id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-    updated = update_user(user_id, payload.dict(exclude_unset=True))
-    if not updated:
-        raise HTTPException(status_code=404, detail="User not found")
-    return updated
 
