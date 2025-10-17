@@ -824,15 +824,13 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
                 None,  # push_token
             ),
         )
-        
-        
         user_id = c.fetchone()[0]
-          logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
-          return {
-           "status": "success",
-           "user_id": user_id,
-           "username": user.username,
-           "profile_pic_url": None,
+        logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "username": user.username,
+            "profile_pic_url": None,
         }
     except psycopg2.Error:
         logger.exception("Databasefout bij het aanmaken van gebruiker.")
@@ -916,27 +914,27 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     user_id = current_user["id"]
     min_age = current_user.get("preferred_min_age")
     max_age = current_user.get("preferred_max_age")
-    
-query = """
- SELECT
-    u.id, u.name, u.age, u.bio,
-    prof.photo_url AS profile_photo_url,
-    photos.photos   AS photos
+
+    query = """
+    SELECT
+      u.id, u.name, u.age, u.bio,
+      prof.photo_url AS profile_photo_url,
+      photos.photos  AS photos
     FROM users u
     -- Profielfoto (één)
     LEFT JOIN LATERAL (
-    SELECT up.photo_url
-    FROM user_photos up
-    WHERE up.user_id = u.id AND up.is_profile_pic = 1
-    ORDER BY up.id DESC
-    LIMIT 1
+      SELECT up.photo_url
+      FROM user_photos up
+      WHERE up.user_id = u.id AND up.is_profile_pic = 1
+      ORDER BY up.id DESC
+      LIMIT 1
     ) prof ON TRUE
     -- Alle foto's (profielfoto eerst)
     LEFT JOIN LATERAL (
-    SELECT array_agg(up2.photo_url ORDER BY (up2.is_profile_pic=1) DESC, up2.id ASC) AS photos
-    FROM user_photos up2
-    WHERE up2.user_id = u.id
-    ) photos ON TRUE  
+      SELECT array_agg(up2.photo_url ORDER BY (up2.is_profile_pic=1) DESC, up2.id ASC) AS photos
+      FROM user_photos up2
+      WHERE up2.user_id = u.id
+    ) photos ON TRUE
     WHERE u.id <> %s
       AND u.deleted_at IS NULL
       AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE b.blocker_id = %s AND b.blocked_id = u.id)
@@ -951,19 +949,20 @@ query = """
         query += " AND u.age <= %s"
         params.append(max_age)
     query += " LIMIT 200"
+
     c.execute(query, tuple(params))
     rows = c.fetchall()
     suggestions = []
     for r in rows:
-    _photos = r[5] if isinstance(r[5], list) else []
-    suggestions.append({
-        "id": r[0],
-        "name": r[1],
-        "age": r[2],
-        "bio": r[3],
-        "profile_photo_url": r[4],
-        "photos": _photos,
-            })
+        _photos = r[5] if isinstance(r[5], list) else []
+        suggestions.append({
+            "id": r[0],
+            "name": r[1],
+            "age": r[2],
+            "bio": r[3],
+            "profile_photo_url": r[4],
+            "photos": _photos,
+        })
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
     return {"suggestions": suggestions}
 
@@ -1392,6 +1391,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
