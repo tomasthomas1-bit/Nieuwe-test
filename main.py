@@ -707,27 +707,18 @@ async def save_availability(
     db=Depends(get_db),
 ):
 
-@app.post("/photos/{photo_id}/set_profile")
-async def set_profile_photo(
-    photo_id: int,
+# === Beschikbaarheden opslaan ===
+@app.post("/users/{user_id}/availability")
+async def save_availability(
+    user_id: int,
+    payload: List[AvailabilityItem],
     current_user: dict = Depends(get_current_user),
     db=Depends(get_db),
 ):
-    conn, c = db
-    user_id = current_user["id"]
-    # Check eigendom
-    c.execute("SELECT id FROM user_photos WHERE id=%s AND user_id=%s", (photo_id, user_id))
-    row = c.fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Foto niet gevonden of geen permissie.")
-    # Reset en zet nieuwe
-    c.execute("UPDATE user_photos SET is_profile_pic=0 WHERE user_id=%s", (user_id,))
-    c.execute("UPDATE user_photos SET is_profile_pic=1 WHERE id=%s", (photo_id,))
-    return {"status": "success"}
-    
     if user_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn, c = db
+
     # Validatie
     for it in payload:
         if it.day_of_week < 0 or it.day_of_week > 6:
@@ -739,18 +730,44 @@ async def set_profile_photo(
             raise HTTPException(status_code=422, detail=str(e))
         if (eh, em) <= (sh, sm):
             raise HTTPException(status_code=422, detail="end_time moet later zijn dan start_time")
+
     # Vervang alles in één transactie
     try:
         c.execute("DELETE FROM user_availabilities WHERE user_id=%s", (user_id,))
         for it in payload:
-            c.execute("""
-              INSERT INTO user_availabilities (user_id, day_of_week, start_time, end_time, timezone)
-              VALUES (%s, %s, %s, %s, %s)
-            """, (user_id, it.day_of_week, it.start_time, it.end_time, it.timezone or "Europe/Brussels"))
+            c.execute(
+                """
+                INSERT INTO user_availabilities (user_id, day_of_week, start_time, end_time, timezone)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (user_id, it.day_of_week, it.start_time, it.end_time, it.timezone or "Europe/Brussels"),
+            )
         return {"status": "success"}
     except psycopg2.Error:
         logger.exception("Databasefout bij het opslaan van beschikbaarheden.")
         raise HTTPException(status_code=500, detail="Databasefout bij het opslaan van beschikbaarheden.")
+
+
+# === Profielfoto instellen ===
+@app.post("/photos/{photo_id}/set_profile")
+async def set_profile_photo(
+    photo_id: int,
+    current_user: dict = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    conn, c = db
+    user_id = current_user["id"]
+
+    # Check eigendom
+    c.execute("SELECT id FROM user_photos WHERE id=%s AND user_id=%s", (photo_id, user_id))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Foto niet gevonden of geen permissie.")
+
+    # Reset en zet nieuwe
+    c.execute("UPDATE user_photos SET is_profile_pic=0 WHERE user_id=%s", (user_id,))
+    c.execute("UPDATE user_photos SET is_profile_pic=1 WHERE id=%s", (photo_id,))
+    return {"status": "success"}
 
 @app.post("/token", response_model=Token)
 async def login_for_access_token(
@@ -1333,11 +1350,11 @@ def healthz(db=Depends(get_db)):
 async def home():
     return """
     <html>
-    <head><title>Sports Match API</title></head>
-    <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
-      <h1>Sports Match API is live! ✅</h1>
-      <p>Bekijk de <aocsAPI Docs</a> of /redocRedoc</a>.</p>
-    </body>
+      <head><title>Sports Match API</title></head>
+      <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h1>Sports Match API is live! ✅</h1>
+        <p>Bekijk de /docsSwagger UI</a> of /redocRedoc</a>.</p>
+      </body>
     </html>
     """
 
@@ -1350,6 +1367,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
