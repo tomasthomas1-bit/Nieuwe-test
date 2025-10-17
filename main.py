@@ -824,18 +824,19 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
                 None,  # push_token
             ),
         )
+        
         user_id = c.fetchone()[0]
-        default_photo_url = "https://example.com/default-profile.png"
-        c.execute(
-            "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
-            (user_id, default_photo_url, 1),
-        )
+         logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
+         return {
+             "status": "success",
+             "user_id": user_id,
+
         logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
         return {
             "status": "success",
             "user_id": user_id,
             "username": user.username,
-            "profile_pic_url": default_photo_url,
+            "profile_pic_url": None,
         }
     except psycopg2.Error:
         logger.exception("Databasefout bij het aanmaken van gebruiker.")
@@ -867,6 +868,12 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
     rows = c.fetchall()
     photos = [r[1] for r in rows]
     photos_meta = [{"id": r[0], "photo_url": r[1], "is_profile_pic": bool(r[2])} for r in rows]
+
+
+    # Bepaal profielfoto (als die er is)
+        profile_photo_url = next((r[1] for r in rows if r[2] == 1), None)
+          has_profile_photo = profile_photo_url is not None
+
     logger.info("Gebruiker %s bekijkt profiel van gebruiker %s.", current_user["id"], user_id)
     return {
         "id": user[0],
@@ -875,7 +882,10 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
         "bio": user[3],
         "photos": photos,
         "photos_meta": photos_meta,
-    }
+        "has_profile_photo": has_profile_photo,
+        "profile_photo_url": profile_photo_url,
+     }
+
 
 
 @app.post("/users/{user_id}/preferences")
@@ -1359,6 +1369,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
