@@ -865,8 +865,8 @@ async def read_user(user_id: int, current_user: dict = Depends(get_current_user)
 
 
     # Bepaal profielfoto (als die er is)
-        profile_photo_url = next((r[1] for r in rows if r[2] == 1), None)
-          has_profile_photo = profile_photo_url is not None
+    profile_photo_url = next((r[1] for r in rows if r[2] == 1), None)
+    has_profile_photo = profile_photo_url is not None
 
     logger.info("Gebruiker %s bekijkt profiel van gebruiker %s.", current_user["id"], user_id)
     return {
@@ -1391,6 +1391,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
