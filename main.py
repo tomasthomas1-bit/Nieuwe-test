@@ -699,14 +699,6 @@ async def get_availability(
     } for r in rows]
     return {"availability": items}
 
-@app.post("/users/{user_id}/availability")
-async def save_availability(
-    user_id: int,
-    payload: List[AvailabilityItem],
-    current_user: dict = Depends(get_current_user),
-    db=Depends(get_db),
-):
-
 # === Beschikbaarheden opslaan ===
 @app.post("/users/{user_id}/availability")
 async def save_availability(
@@ -1367,6 +1359,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
