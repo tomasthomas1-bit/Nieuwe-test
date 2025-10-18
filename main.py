@@ -783,7 +783,7 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
         )
 
         # Mail versturen (email_utils kan zelf subject/body bepalen; zoniet, breid daar uit)
-        send_verification_email(user.username, user.name, token)
+        send_verification_email(user.username, user.name, token, lang=lang)
 
         logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
         return {
@@ -810,7 +810,7 @@ async def resend_verification(username: str, db=Depends(get_db)):
         raise HTTPException(status_code=400, detail=t("user_already_verified", lang))
     token = generate_verification_token()
     c.execute("INSERT INTO email_verification_tokens (user_id, token) VALUES (%s, %s)", (user_id, token))
-    send_verification_email(username, name, token)
+    send_verification_email(username, name, token, lang=lang)
     return {"status": "success", "message": t("verification_email_sent", lang)}
 
 @app.get("/verify-email")
@@ -1359,3 +1359,4 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
