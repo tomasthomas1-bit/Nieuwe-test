@@ -447,6 +447,13 @@ def on_startup():
             )
             """
         )
+   
+    CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        token TEXT UNIQUE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        is_used BOOLEAN DEFAULT FALSE
+        );
 
             
        # === User settings (nieuw) ===
@@ -1391,6 +1398,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
