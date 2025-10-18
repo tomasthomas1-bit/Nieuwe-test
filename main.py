@@ -447,7 +447,12 @@ def on_startup():
             )
             """
         )
-   
+
+        c.execute("""
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE
+            """)
+
     CREATE TABLE IF NOT EXISTS email_verification_tokens (
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         token TEXT UNIQUE,
@@ -455,6 +460,39 @@ def on_startup():
         is_used BOOLEAN DEFAULT FALSE
         );
 
+@app.get("/verify-email")
+async def verify_email(token: str, db=Depends(get_db)):
+    conn, c = db
+    c.execute("""
+        SELECT user_id FROM email_verification_tokens
+        WHERE token = %s AND is_used = FALSE
+    """, (token,))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Ongeldige of verlopen verificatielink.")
+
+    user_id = row[0]
+    c.execute("UPDATE email_verification_tokens SET is_used = TRUE WHERE token = %s", (token,))
+    c.execute("UPDATE users SET is_verified = TRUE WHERE id = %s", (user_id,))
+    logger.info("E-mailadres bevestigd voor gebruiker %s", user_id)
+    return {"status": "success", "message": "E-mailadres succesvol bevestigd."}
+
+@app.post("/resend-verification")
+async def resend_verification(username: str, db=Depends(get_db)):
+    conn, c = db
+    c.execute("SELECT id, name, is_verified FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
+    user_id, name, is_verified = row
+    if is_verified:
+        raise HTTPException(status_code=400, detail="Gebruiker is al geverifieerd")
+
+    # Genereer nieuwe token en verstuur mail
+    token = generate_verification_token()
+    c.execute("INSERT INTO email_verification_tokens (user_id, token) VALUES (%s, %s)", (user_id, token))
+    send_verification_email(username, name, token)
+    return {"status": "success", "message": "Nieuwe verificatiemail verzonden."}
             
        # === User settings (nieuw) ===
         c.execute("""
@@ -1453,6 +1491,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
