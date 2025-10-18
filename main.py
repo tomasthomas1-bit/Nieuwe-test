@@ -461,7 +461,10 @@ def on_startup():
                 is_used BOOLEAN DEFAULT FALSE
             )
         """)
-    ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'nl';
+       cursor.execute("""
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'nl';
+        """)
+
 
 @app.get("/verify-email")
 async def verify_email(token: str, db=Depends(get_db)):
@@ -1510,6 +1513,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
