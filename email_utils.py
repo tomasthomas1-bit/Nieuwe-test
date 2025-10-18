@@ -8,61 +8,49 @@ from email.message import EmailMessage
 from typing import Optional, Tuple
 
 from translations import translations
+from email_templates import render_verification_email_html
 
 logger = logging.getLogger(__name__)
 
-
-# ------------------ Token ------------------
+# -------- Token --------
 def generate_verification_token(nbytes: int = 32) -> str:
-    """
-    Genereer een URL-veilige verificatietoken (default ~43 tekens).
-    Verhoog nbytes voor langere tokens.
-    """
     return secrets.token_urlsafe(nbytes)
 
-
-# ------------------ Templates ------------------
-def _render_email(name: str, token: str, lang: str = "nl") -> Tuple[str, str]:
+# -------- Templates (plain text) --------
+def _render_email_text(name: str, token: str, lang: str = "nl") -> Tuple[str, str]:
     """
-    Bouw subject en body op uit translations + FRONTEND_URL.
+    Plain-text subject & body uit translations + FRONTEND_URL.
     """
     lang = lang if lang in translations else "en"
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
     link = f"{frontend_url}/verify-email?token={token}"
-
     subject = translations[lang]["email_verification_subject"]
-    # Belangrijk: 'email_verification_body' is een lambda in translations.py
     body = translations[lang]"email_verification_body"
     return subject, body
 
-
+# -------- SMTP ----------
 def _build_message(
     to_email: str,
     from_email: str,
     subject: str,
-    body: str,
+    text_body: str,
+    html_body: Optional[str] = None,
     reply_to: Optional[str] = None,
 ) -> EmailMessage:
-    """
-    Bouw een text/plain bericht op (kan je later uitbreiden naar HTML/alt).
-    """
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = from_email
     msg["To"] = to_email
     if reply_to:
         msg["Reply-To"] = reply_to
-    msg.set_content(body, subtype="plain", charset="utf-8")
+
+    # multipart/alternative: eerst text/plain, dan text/html
+    msg.set_content(text_body, subtype="plain", charset="utf-8")
+    if html_body:
+        msg.add_alternative(html_body, subtype="html", charset="utf-8")
     return msg
 
-
-# ------------------ SMTP ------------------
 def _smtp_send(msg: EmailMessage) -> None:
-    """
-    Verzend het bericht via SMTP op basis van env-variabelen.
-    Ondersteunt STARTTLS (meest gangbaar), SSL of PLAINTEXT.
-    """
-
     host = os.getenv("SMTP_HOST")
     port = int(os.getenv("SMTP_PORT", "0") or "0")
     user = os.getenv("SMTP_USERNAME")
@@ -76,13 +64,11 @@ def _smtp_send(msg: EmailMessage) -> None:
     context = ssl.create_default_context()
 
     if security == "SSL" or port == 465:
-        # SMTPS (465)
         with smtplib.SMTP_SSL(host=host, port=port, timeout=timeout, context=context) as server:
             if user and pwd:
                 server.login(user, pwd)
             server.send_message(msg)
     elif security == "STARTTLS":
-        # Submission (587)
         with smtplib.SMTP(host=host, port=port, timeout=timeout) as server:
             server.ehlo()
             server.starttls(context=context)
@@ -91,7 +77,6 @@ def _smtp_send(msg: EmailMessage) -> None:
                 server.login(user, pwd)
             server.send_message(msg)
     elif security == "PLAINTEXT":
-        # Alleen voor lokale/dev relays zonder TLS
         with smtplib.SMTP(host=host, port=port, timeout=timeout) as server:
             if user and pwd:
                 server.login(user, pwd)
@@ -99,8 +84,7 @@ def _smtp_send(msg: EmailMessage) -> None:
     else:
         raise ValueError(f"Onbekende SMTP_SECURITY: {security}")
 
-
-# ------------------ Public API ------------------
+# -------- Public API --------
 def send_verification_email(
     to_email: str,
     name: str,
@@ -110,21 +94,25 @@ def send_verification_email(
     body: Optional[str] = None,
 ) -> None:
     """
-    Verzend de verificatiemail.
-    - Als subject/body niet zijn meegegeven, rendert dit ze op basis van 'lang'.
-    - Als SMTP niet (volledig) geconfigureerd is, loggen we de mail (dev fallback).
-    - Raise bij echte SMTP-fouten, zodat je dit in de app/logs ziet.
+    Verzend verificatiemail als multipart (text + HTML).
+    - Als subject/body ontbreken, rendert functie zelf text + html op basis van 'lang'.
+    - Zonder SMTP-config -> logging-only (geen verzending, wel zichtbaar in logs).
     """
-
-    # From en (optioneel) Reply-To
     from_email = os.getenv("SMTP_FROM")
     reply_to = os.getenv("SMTP_REPLY_TO")
 
-    # Als subject/body ontbreken, haal uit translations.
+    # Render text/html
     if subject is None or body is None:
-        subject, body = _render_email(name, token, lang)
+        subject, text_body = _render_email_text(name, token, lang)
+    else:
+        text_body = body
 
-    # Fallback: geen SMTP -> alleen loggen (dev/staging)
+    # Bouw link opnieuw voor HTML (zelfde logica als text)
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+    link = f"{frontend_url}/verify-email?token={token}"
+    html_body = render_verification_email_html(name, link, lang)
+
+    # Fallback: geen SMTP-config -> loggen en return
     host = os.getenv("SMTP_HOST")
     port = os.getenv("SMTP_PORT")
     if not host or not port or not from_email:
@@ -133,16 +121,22 @@ def send_verification_email(
             "E-mail wordt NIET verzonden; logging-only mode ingeschakeld."
         )
         logger.info("Verification email (to=%s, from=%s): subject=%r", to_email, from_email or "<unset>", subject)
-        logger.debug("Body:\n%s", body)
+        logger.debug("Text body:\n%s", text_body)
+        logger.debug("HTML body:\n%s", html_body)
         return
 
-    # Bouw en verstuur bericht
-    msg = _build_message(to_email=to_email, from_email=from_email, subject=subject, body=body, reply_to=reply_to)
+    msg = _build_message(
+        to_email=to_email,
+        from_email=from_email,
+        subject=subject,
+        text_body=text_body,
+        html_body=html_body,
+        reply_to=reply_to,
+    )
 
     try:
         _smtp_send(msg)
         logger.info("Verificatiemail verzonden naar %s", to_email)
-    except Exception as e:
-        # Belangrijk: bubbelt door naar de caller of wordt gelogd door FastAPI exception handler
+    except Exception:
         logger.exception("Verzenden van verificatiemail is mislukt.")
         raise
