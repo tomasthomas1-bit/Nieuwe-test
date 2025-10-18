@@ -994,4 +994,368 @@ async def swipe(
         return {"status": "success", "message": t("match_success", lang) if match else t("swipe_registered", lang), "match": match}
     except psycopg2.Error:
         logger.exception("Databasefout bij het swipen.")
-        raise
+        raise HTTPException(status_code=500, detail=t("db_error", lang))
+
+@app.get("/matches")
+async def get_matches(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    c.execute(
+        """
+        SELECT u.id, u.name, u.age, up.photo_url
+        FROM users u
+        JOIN swipes s1
+          ON s1.swipee_id = u.id
+         AND s1.swiper_id = %s
+         AND s1.liked = TRUE
+         AND s1.deleted_at IS NULL
+        LEFT JOIN LATERAL (
+            SELECT photo_url
+            FROM user_photos up
+            WHERE up.user_id = u.id AND up.is_profile_pic = 1
+            ORDER BY up.id DESC
+            LIMIT 1
+        ) up ON TRUE
+        WHERE u.deleted_at IS NULL
+          AND EXISTS (
+              SELECT 1
+              FROM swipes s2
+              WHERE s2.swiper_id = u.id
+                AND s2.swipee_id = %s
+                AND s2.liked = TRUE
+                AND s2.deleted_at IS NULL
+          )
+        """,
+        (user_id, user_id),
+    )
+    rows = c.fetchall()
+    matches = [{"id": r[0], "name": r[1], "age": r[2], "photo_url": r[3]} for r in rows]
+    return {"matches": matches}
+
+@app.post("/send_message")
+async def send_message(message: MessageIn, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    lang = get_lang(current_user)
+    match_id = message.match_id
+    plain_message = message.message
+    timestamp = datetime.now(timezone.utc)
+    # check wederzijdse like
+    c.execute(
+        """
+        SELECT 1
+        FROM swipes
+        WHERE (
+            swiper_id = %s
+            AND swipee_id = %s
+            AND liked = TRUE
+            AND deleted_at IS NULL
+        )
+        AND EXISTS (
+            SELECT 1
+            FROM swipes
+            WHERE swiper_id = %s
+              AND swipee_id = %s
+              AND liked = TRUE
+              AND deleted_at IS NULL
+        )
+        """,
+        (user_id, match_id, match_id, user_id),
+    )
+    if not c.fetchone():
+        raise HTTPException(status_code=403, detail=t("no_match_cannot_message", lang))
+    encrypted_message = cipher_suite.encrypt(plain_message.encode("utf-8")).decode("utf-8")
+    c.execute(
+        """
+        INSERT INTO chats (match_id, sender_id, encrypted_message, timestamp)
+        VALUES (%s, %s, %s, %s)
+        """,
+        (match_id, user_id, encrypted_message, timestamp),
+    )
+    logger.info("Chatbericht van gebruiker %s naar gebruiker %s opgeslagen.", user_id, match_id)
+    return {"status": "success", "message": t("message_sent", lang)}
+
+@app.get("/chat/{match_id}/messages")
+async def get_chat_messages(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    lang = get_lang(current_user)
+    # toegang checken
+    c.execute(
+        """
+        SELECT 1
+        FROM swipes
+        WHERE (
+            swiper_id = %s
+            AND swipee_id = %s
+            AND liked = TRUE
+            AND deleted_at IS NULL
+        )
+        AND EXISTS (
+            SELECT 1
+            FROM swipes
+            WHERE swiper_id = %s
+              AND swipee_id = %s
+              AND liked = TRUE
+              AND deleted_at IS NULL
+        )
+        """,
+        (user_id, match_id, match_id, user_id),
+    )
+    if not c.fetchone():
+        raise HTTPException(status_code=403, detail=t("chat_access_denied", lang))
+    c.execute(
+        """
+        SELECT sender_id, encrypted_message, timestamp
+        FROM chats
+        WHERE match_id = %s AND (deleted_at IS NULL)
+        ORDER BY timestamp ASC
+        """,
+        (match_id,),
+    )
+    rows = c.fetchall()
+    chat_history: List[ChatMessage] = []
+    for sender_id, encrypted_message, ts in rows:
+        try:
+            decrypted = cipher_suite.decrypt(encrypted_message.encode("utf-8")).decode("utf-8")
+            iso_ts = _to_isoz(ts)
+            chat_history.append(ChatMessage(sender_id=sender_id, message=decrypted, timestamp=iso_ts))
+        except Exception:
+            logger.exception("Fout bij decoderen van bericht.")
+            continue
+    return {"chat_history": chat_history}
+
+@app.post("/report_user")
+async def report_user(report: ReportRequest, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    reporter_id = current_user["id"]
+    lang = get_lang(current_user)
+    if reporter_id == report.reported_id:
+        raise HTTPException(status_code=400, detail=t("cannot_report_self", lang))
+    try:
+        c.execute(
+            """
+            INSERT INTO user_reports (reporter_id, reported_id, reason, timestamp)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (reporter_id, report.reported_id, report.reason, datetime.now(timezone.utc)),
+        )
+        logger.info("Gebruiker %s gerapporteerd door gebruiker %s.", report.reported_id, reporter_id)
+        return {"status": "success", "message": t("user_reported", lang)}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij rapporteren van gebruiker.")
+        raise HTTPException(status_code=500, detail=t("db_error", lang))
+
+@app.post("/block_user")
+async def block_user(user_to_block_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    blocker_id = current_user["id"]
+    lang = get_lang(current_user)
+    if blocker_id == user_to_block_id:
+        raise HTTPException(status_code=400, detail=t("cannot_block_self", lang))
+    try:
+        c.execute(
+            """
+            INSERT INTO user_blocks (blocker_id, blocked_id, timestamp)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (blocker_id, blocked_id) DO NOTHING
+            """,
+            (blocker_id, user_to_block_id, datetime.now(timezone.utc)),
+        )
+        if c.rowcount == 0:
+            logger.info("Gebruiker %s was al geblokkeerd door gebruiker %s.", user_to_block_id, blocker_id)
+            return {"status": "success", "message": t("user_already_blocked", lang)}
+        logger.info("Gebruiker %s succesvol geblokkeerd door gebruiker %s.", user_to_block_id, blocker_id)
+        return {"status": "success", "message": t("user_blocked", lang)}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij het blokkeren van gebruiker.")
+        raise HTTPException(status_code=500, detail=t("db_error", lang))
+
+@app.delete("/delete/match/{match_id}")
+async def delete_match(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    lang = get_lang(current_user)
+    c.execute(
+        """
+        UPDATE swipes
+        SET deleted_at = NOW()
+        WHERE (
+            (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
+            OR (swiper_id = %s AND swipee_id = %s AND liked = TRUE)
+        )
+        """,
+        (user_id, match_id, match_id, user_id),
+    )
+    logger.info("Match met gebruiker %s soft-verwijderd door gebruiker %s.", match_id, user_id)
+    return {"status": "success", "message": t("match_deleted", lang)}
+
+@app.delete("/delete_photo/{photo_id}")
+async def delete_photo(photo_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    lang = get_lang(current_user)
+    try:
+        c.execute(
+            "SELECT is_profile_pic FROM user_photos WHERE id = %s AND user_id = %s",
+            (photo_id, user_id),
+        )
+        row = c.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=t("photo_not_found", lang))
+        was_profile = row[0] == 1
+        c.execute("DELETE FROM user_photos WHERE id = %s AND user_id = %s", (photo_id, user_id))
+        if c.rowcount == 0:
+            raise HTTPException(status_code=404, detail=t("photo_not_found", lang))
+        if was_profile:
+            c.execute("SELECT id FROM user_photos WHERE user_id = %s LIMIT 1", (user_id,))
+            new_pic = c.fetchone()
+            if new_pic:
+                c.execute("UPDATE user_photos SET is_profile_pic = 1 WHERE id = %s", (new_pic[0],))
+                logger.info("Nieuwe profielfoto %s toegewezen voor gebruiker %s.", new_pic[0], user_id)
+            else:
+                logger.warning("Gebruiker %s heeft geen profielfoto meer.", user_id)
+        logger.info("Foto %s verwijderd voor gebruiker %s.", photo_id, user_id)
+        return {"status": "success", "message": t("photo_deleted", lang)}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij foto-verwijderen.")
+        raise HTTPException(status_code=500, detail=t("db_error", lang))
+
+@app.post("/upload_photo")
+async def upload_photo(photo: PhotoUpload, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    photo_url = str(photo.photo_url)
+    lang = get_lang(current_user)
+    try:
+        if photo.is_profile_pic:
+            c.execute("UPDATE user_photos SET is_profile_pic = 0 WHERE user_id = %s", (user_id,))
+        c.execute(
+            "INSERT INTO user_photos (user_id, photo_url, is_profile_pic) VALUES (%s,%s,%s)",
+            (user_id, photo_url, int(bool(photo.is_profile_pic))),
+        )
+        logger.info(
+            "Nieuwe foto geüpload voor gebruiker %s. URL: %s (profile: %s)",
+            user_id,
+            photo_url,
+            bool(photo.is_profile_pic),
+        )
+        return {"status": "success", "message": t("photo_uploaded", lang)}
+    except psycopg2.Error:
+        logger.exception("Databasefout bij foto-upload.")
+        raise HTTPException(status_code=500, detail=t("db_error", lang))
+
+# ------------------------- WebSocket -------------------------------
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: int):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if not username:
+            await websocket.close(code=4401)
+            return
+        with DB() as (conn, c):
+            c.execute("SELECT id FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
+            row = c.fetchone()
+            if not row or row[0] != user_id:
+                await websocket.close(code=4403)  # forbidden
+                return
+    except JWTError:
+        await websocket.close(code=4401)
+        return
+    await websocket.accept()
+    logger.info("WebSocket geaccepteerd voor gebruiker %s (via token).", user_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await websocket.send_text(f"Bericht ontvangen: {data}")
+    except WebSocketDisconnect:
+        logger.info("WebSocket gesloten voor gebruiker %s.", user_id)
+    except Exception:
+        logger.exception("WebSocket fout voor gebruiker %s.", user_id)
+
+# ------------------------- Route Suggestion ------------------------
+@app.get("/suggest_route/{match_id}")
+async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    conn, c = db
+    user_id = current_user["id"]
+    lang = get_lang(current_user)
+    # check wederzijdse like
+    c.execute(
+        """
+        SELECT 1
+        FROM swipes
+        WHERE (
+            swiper_id = %s
+            AND swipee_id = %s
+            AND liked = TRUE
+            AND deleted_at IS NULL
+        )
+        AND EXISTS (
+            SELECT 1
+            FROM swipes
+            WHERE swiper_id = %s
+              AND swipee_id = %s
+              AND liked = TRUE
+              AND deleted_at IS NULL
+        )
+        """,
+        (user_id, match_id, match_id, user_id),
+    )
+    if not c.fetchone():
+        raise HTTPException(status_code=403, detail=t("chat_access_denied", lang))
+    # Strava tokens ophalen
+    user_strava_token = current_user.get("strava_token")
+    c.execute("SELECT strava_token FROM users WHERE id = %s AND deleted_at IS NULL", (match_id,))
+    row = c.fetchone()
+    match_strava_token = row[0] if row else None
+
+    user_loc = get_latest_strava_coords(user_strava_token)
+    match_loc = get_latest_strava_coords(match_strava_token)
+    if not user_loc or not match_loc:
+        raise HTTPException(
+            status_code=400,
+            detail=t("route_suggestion_error", lang),
+        )
+    distance_km = haversine(user_loc, match_loc, unit=Unit.KILOMETERS)
+    map_link = f"https://www.google.com/maps/dir/{user_loc[0]},{user_loc[1]}/{match_loc[0]},{match_loc[1]}"
+    popular_route = {
+        "name": "Voorstel gezamenlijke route",
+        "description": "Suggestie gebaseerd op meest recente Strava-activiteiten (mock of echte integratie).",
+        "distance_km": round(distance_km / 2, 2),
+        "map_link": map_link,
+    }
+    logger.info("Routevoorstel gegenereerd voor match %s-%s.", user_id, match_id)
+    return {"status": "success", "message": t("route_suggestion_success", lang), "route_suggestion": popular_route}
+
+# ------------------------- Health & Home ---------------------------
+@app.get("/healthz")
+def healthz(db=Depends(get_db)):
+    conn, c = db
+    c.execute("SELECT 1")
+    return {"status": "ok"}
+
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    return """
+    <html>
+      <head><title>Sports Match API</title></head>
+      <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+        <h1>Sports Match API is live! ✅</h1>
+        <p>Bekijk de /docsSwagger UI</a> of /redocRedoc</a>.</p>
+      </body>
+    </html>
+    """
+
+# ------------------------- Main -----------------------------------
+if __name__ == "__main__":
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+        reload=True,
+    )
