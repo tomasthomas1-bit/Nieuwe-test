@@ -25,7 +25,9 @@ def _render_email_text(name: str, token: str, lang: str = "nl") -> Tuple[str, st
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
     link = f"{frontend_url}/verify-email?token={token}"
     subject = translations[lang]["email_verification_subject"]
-    body = translations[lang]"email_verification_body"
+    lang_map = translations.get(lang, translations.get("en", {}))
+    body = lang_map.get("email_verification_body", "")
+
     return subject, body
 
 # -------- SMTP ----------
