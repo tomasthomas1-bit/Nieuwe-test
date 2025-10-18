@@ -1,6 +1,14 @@
 # main.py
 from __future__ import annotations
 
+from translations import translations
+def get_lang(user: dict) -> str:
+    lang = user.get("language", "nl")
+    return lang if lang in translations else "en"
+
+def t(key: str, lang: str) -> str:
+    return translations.get(lang, translations["en"]).get(key, key)
+
 import logging
 import os
 import re
@@ -1513,6 +1521,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
