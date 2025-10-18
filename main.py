@@ -899,7 +899,9 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
 from translations import translations
 
 # Haal taal op uit user.language of standaard naar 'nl'
-lang = user.language if user.language in translations else 'nl'
+lang = getattr(user, "language", "nl")
+if lang not in translations:
+    lang = "en"  # fallback naar Engels als taal niet ondersteund is
 subject = translations[lang]["email_verification_subject"]
 body = translations[lang]"email_verification_body"
 
@@ -1508,6 +1510,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
