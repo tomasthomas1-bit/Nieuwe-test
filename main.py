@@ -895,6 +895,13 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
 
         from email_utils import generate_verification_token, send_verification_email
 
+from translations import translations
+
+# Haal taal op uit user.language of standaard naar 'nl'
+lang = user.language if user.language in translations else 'nl'
+subject = translations[lang]["email_verification_subject"]
+body = translations[lang]"email_verification_body"
+
 @app.post("/register")
 async def create_user(user: UserCreate, db=Depends(get_db)):
     conn, c = db
@@ -1500,6 +1507,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
