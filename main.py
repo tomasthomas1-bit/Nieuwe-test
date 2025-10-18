@@ -152,6 +152,9 @@ class DB:
             raise RuntimeError("DB pool is niet geïnitialiseerd.")
         self.conn = pool.getconn()
         self.cur = self.conn.cursor()
+        # Belangrijk: forceer schema-resolutie naar 'public'
+        # Zo voorkom je dat PostgreSQL eerst in "$user"-schema zoekt (search_path = "$user", public)
+        self.cur.execute("SET search_path TO public;")
         return self.conn, self.cur
     def __exit__(self, exc_type, exc, tb):
         try:
@@ -1359,4 +1362,5 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
