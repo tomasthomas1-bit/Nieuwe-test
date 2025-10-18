@@ -460,6 +460,8 @@ def on_startup():
         is_used BOOLEAN DEFAULT FALSE
         );
 
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'nl';
+
 @app.get("/verify-email")
 async def verify_email(token: str, db=Depends(get_db)):
     conn, c = db
@@ -649,6 +651,13 @@ DEFAULT_SETTINGS = {
     "max_distance_km": 25,
     "notifications_enabled": True,
 }
+
+class UserSettingsModel(BaseModel):
+    match_goal: Optional[str] = None
+    preferred_gender: Optional[str] = None
+    max_distance_km: Optional[int] = None
+    notifications_enabled: Optional[bool] = None
+    language: Optional[str] = Field(None, regex="^(nl|en)$")  # Alleen 'nl' of 'en'
 
 # === GET /users/{id}/settings ===
 @app.get("/users/{user_id}/settings")
@@ -1491,6 +1500,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
