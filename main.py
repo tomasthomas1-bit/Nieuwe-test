@@ -846,6 +846,46 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
         logger.exception("Algemene fout bij het aanmaken van gebruiker.")
         raise HTTPException(status_code=500, detail="Interne serverfout")
 
+        from email_utils import generate_verification_token, send_verification_email
+
+@app.post("/register")
+async def create_user(user: UserCreate, db=Depends(get_db)):
+    conn, c = db
+    password_hash = get_password_hash(user.password)
+    try:
+        # Gebruiker aanmaken
+        c.execute("""
+            INSERT INTO users (username, password_hash, name, age, bio, strava_token,
+            preferred_min_age, preferred_max_age, push_token, deleted_at)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NULL)
+            RETURNING id
+        """, (
+            user.username, password_hash, user.name, user.age, user.bio,
+            None, None, None
+        ))
+        user_id = c.fetchone()[0]
+
+        # Token genereren en opslaan
+        token = generate_verification_token()
+        c.execute("""
+            INSERT INTO email_verification_tokens (user_id, token)
+            VALUES (%s, %s)
+        """, (user_id, token))
+
+        # Mail versturen
+        send_verification_email(user.username, user.name, token)
+
+        logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "username": user.username,
+            "profile_pic_url": None,
+            "message": "Verificatiemail verzonden. Controleer je inbox."
+        }
+    except Exception:
+        logger.exception("Fout bij registratie.")
+        raise HTTPException(status_code=500, detail="Interne serverfout")
 
 @app.get("/users/{user_id}", response_model=UserProfile)
 async def read_user(user_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):
@@ -1389,6 +1429,21 @@ async def home():
     </html>
     """
 
+@app.get("/verify-email")
+async def verify_email(token: str, db=Depends(get_db)):
+    conn, c = db
+    c.execute("""
+        SELECT user_id FROM email_verification_tokens
+        WHERE token = %s AND is_used = FALSE
+    """, (token,))
+    row = c.fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Ongeldige of verlopen verificatielink.")
+
+    user_id = row[0]
+    c.execute("UPDATE email_verification_tokens SET is_used = TRUE WHERE token = %s", (token,))
+    logger.info("E-mailadres bevestigd voor gebruiker %s", user_id)
+    return {"status": "success", "message": "E-mailadres succesvol bevestigd."}
 
 # -------------------- Main --------------------
 if __name__ == "__main__":
@@ -1398,6 +1453,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
