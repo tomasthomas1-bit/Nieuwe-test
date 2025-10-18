@@ -461,7 +461,7 @@ def on_startup():
                 is_used BOOLEAN DEFAULT FALSE
             )
         """)
-       cursor.execute("""
+  await conn.execute("""
         ALTER TABLE users ADD COLUMN IF NOT EXISTS language TEXT DEFAULT 'nl';
         """)
 
@@ -1513,6 +1513,7 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", "8000")),
         reload=True,
     )
+
 
 
 
