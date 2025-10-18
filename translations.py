@@ -2,7 +2,7 @@
 
 translations = {
     "nl": {
-        # --- E-mail (reeds aanwezig) ---
+        # --- E-mail ---
         "email_verification_subject": "Bevestig je e-mailadres voor Athlo",
         "email_verification_body": lambda name, link: f"""
 Welkom bij Athlo, {name}!
@@ -15,6 +15,7 @@ Het Athlo Team
         "email_verified": "E-mailadres succesvol bevestigd.",
         "email_already_verified": "Gebruiker is al geverifieerd.",
         "email_sent": "Verificatiemail verzonden. Controleer je inbox.",
+
         # --- API keys (NL) ---
         "ok": "OK",
         "forbidden": "Toegang geweigerd.",
@@ -42,7 +43,7 @@ Het Athlo Team
         "route_suggestion_error": "Kon geen recente Strava-locaties bepalen. Zorg dat beide gebruikers een geldig strava_token hebben of gebruik 'mock:LAT,LNG' voor testen.",
         "route_suggestion_success": "Voorstel gegenereerd op basis van Strava-activiteit.",
 
-        # Extra keys gebruikt in validaties
+        # Validatie/overige
         "no_fields_to_update": "Geen velden om bij te werken.",
         "day_of_week_invalid": "day_of_week moet 0..6 zijn.",
         "invalid_time_format": "Ongeldig tijdformaat, gebruik HH:MM.",
@@ -53,8 +54,9 @@ Het Athlo Team
         "token_missing": "Kon validatiegegevens niet verifiëren.",
         "token_invalid": "Ongeldige of verlopen token.",
     },
+
     "en": {
-        # --- Email (existing) ---
+        # --- Email ---
         "email_verification_subject": "Confirm your email address for Athlo",
         "email_verification_body": lambda name, link: f"""
 Welcome to Athlo, {name}!
@@ -95,7 +97,7 @@ The Athlo Team
         "route_suggestion_error": "Could not determine recent Strava locations. Ensure both users have a valid strava_token or use 'mock:LAT,LNG' for testing.",
         "route_suggestion_success": "Suggestion generated based on Strava activity.",
 
-        # Extra keys used in validations
+        # Validation/other
         "no_fields_to_update": "No fields to update.",
         "day_of_week_invalid": "day_of_week must be 0..6.",
         "invalid_time_format": "Invalid time format, use HH:MM.",
@@ -107,8 +109,8 @@ The Athlo Team
         "token_invalid": "Invalid or expired token.",
     },
 
-    # De overige talen behouden de e-mail sleutels zoals je had
     "fr": {
+        # --- E-mail ---
         "email_verification_subject": "Confirmez votre adresse e-mail pour Athlo",
         "email_verification_body": lambda name, link: f"""
 Bienvenue sur Athlo, {name} !
@@ -121,8 +123,48 @@ L'équipe Athlo
         "email_verified": "Adresse e-mail confirmée avec succès.",
         "email_already_verified": "L'utilisateur est déjà vérifié.",
         "email_sent": "E-mail de vérification envoyé. Veuillez vérifier votre boîte de réception.",
+
+        # --- API keys (FR) ---
+        "ok": "OK",
+        "forbidden": "Accès refusé.",
+        "user_not_found": "Utilisateur introuvable.",
+        "user_already_verified": "L'utilisateur est déjà vérifié.",
+        "verification_email_sent": "E-mail de vérification envoyé. Veuillez vérifier votre boîte de réception.",
+        "invalid_or_expired_token": "Lien de vérification invalide ou expiré.",
+        "internal_server_error": "Erreur interne du serveur.",
+        "incorrect_credentials": "Nom d'utilisateur ou mot de passe incorrect.",
+        "match_success": "Match !",
+        "swipe_registered": "Swipe enregistré.",
+        "message_sent": "Message envoyé.",
+        "no_match_cannot_message": "Impossible d'envoyer le message : pas de match.",
+        "chat_access_denied": "Aucun accès à cette discussion.",
+        "user_reported": "Utilisateur signalé avec succès.",
+        "cannot_report_self": "Vous ne pouvez pas vous signaler vous-même.",
+        "user_blocked": "Utilisateur bloqué avec succès.",
+        "user_already_blocked": "L'utilisateur était déjà bloqué.",
+        "cannot_block_self": "Vous ne pouvez pas vous bloquer vous-même.",
+        "match_deleted": "Match supprimé avec succès.",
+        "photo_deleted": "Photo supprimée avec succès.",
+        "photo_not_found": "Photo introuvable ou sans autorisation.",
+        "photo_uploaded": "Photo téléchargée avec succès.",
+        "no_profile_photo": "L'utilisateur n'a plus de photo de profil.",
+        "route_suggestion_error": "Impossible de déterminer des positions Strava récentes. Assurez-vous que les deux utilisateurs possèdent un strava_token valide ou utilisez 'mock:LAT,LNG' pour les tests.",
+        "route_suggestion_success": "Suggestion générée sur la base de l'activité Strava.",
+
+        # Validation/other
+        "no_fields_to_update": "Aucun champ à mettre à jour.",
+        "day_of_week_invalid": "day_of_week doit être 0..6.",
+        "invalid_time_format": "Format d'heure invalide, utilisez HH:MM.",
+        "time_out_of_range": "Heure/minute hors limites.",
+        "end_time_after_start": "end_time doit être postérieure à start_time.",
+        "cannot_swipe_self": "Vous ne pouvez pas swiper votre propre profil.",
+        "db_error": "Erreur de base de données.",
+        "token_missing": "Impossible de vérifier les informations d’identification.",
+        "token_invalid": "Jeton invalide ou expiré.",
     },
+
     "de": {
+        # --- E-Mail ---
         "email_verification_subject": "Bestätigen Sie Ihre E-Mail-Adresse für Athlo",
         "email_verification_body": lambda name, link: f"""
 Willkommen bei Athlo, {name}!
@@ -135,8 +177,48 @@ Das Athlo-Team
         "email_verified": "E-Mail-Adresse erfolgreich bestätigt.",
         "email_already_verified": "Benutzer ist bereits verifiziert.",
         "email_sent": "Bestätigungs-E-Mail gesendet. Bitte überprüfen Sie Ihren Posteingang.",
+
+        # --- API keys (DE) ---
+        "ok": "OK",
+        "forbidden": "Zugriff verweigert.",
+        "user_not_found": "Benutzer nicht gefunden.",
+        "user_already_verified": "Benutzer ist bereits verifiziert.",
+        "verification_email_sent": "Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihren Posteingang.",
+        "invalid_or_expired_token": "Ungültiger oder abgelaufener Bestätigungslink.",
+        "internal_server_error": "Interner Serverfehler.",
+        "incorrect_credentials": "Falscher Benutzername oder falsches Passwort.",
+        "match_success": "Match!",
+        "swipe_registered": "Swipe registriert.",
+        "message_sent": "Nachricht gesendet.",
+        "no_match_cannot_message": "Nachricht kann nicht gesendet werden: kein Match.",
+        "chat_access_denied": "Kein Zugriff auf diesen Chat.",
+        "user_reported": "Benutzer erfolgreich gemeldet.",
+        "cannot_report_self": "Sie können sich nicht selbst melden.",
+        "user_blocked": "Benutzer erfolgreich blockiert.",
+        "user_already_blocked": "Benutzer war bereits blockiert.",
+        "cannot_block_self": "Sie können sich nicht selbst blockieren.",
+        "match_deleted": "Match erfolgreich gelöscht.",
+        "photo_deleted": "Foto erfolgreich gelöscht.",
+        "photo_not_found": "Foto nicht gefunden oder keine Berechtigung.",
+        "photo_uploaded": "Foto erfolgreich hochgeladen.",
+        "no_profile_photo": "Benutzer hat kein Profilfoto mehr.",
+        "route_suggestion_error": "Konnte keine aktuellen Strava-Positionen ermitteln. Stellen Sie sicher, dass beide Benutzer ein gültiges strava_token haben oder verwenden Sie 'mock:LAT,LNG' zum Testen.",
+        "route_suggestion_success": "Vorschlag basierend auf Strava-Aktivität erstellt.",
+
+        # Validierung/sonstiges
+        "no_fields_to_update": "Keine Felder zum Aktualisieren.",
+        "day_of_week_invalid": "day_of_week muss 0..6 sein.",
+        "invalid_time_format": "Ungültiges Zeitformat, verwenden Sie HH:MM.",
+        "time_out_of_range": "Stunde/Minute außerhalb des gültigen Bereichs.",
+        "end_time_after_start": "end_time muss nach start_time liegen.",
+        "cannot_swipe_self": "Sie können Ihr eigenes Profil nicht swipen.",
+        "db_error": "Datenbankfehler.",
+        "token_missing": "Anmeldedaten konnten nicht überprüft werden.",
+        "token_invalid": "Ungültiges oder abgelaufenes Token.",
     },
+
     "es": {
+        # --- Correo ---
         "email_verification_subject": "Confirma tu dirección de correo electrónico para Athlo",
         "email_verification_body": lambda name, link: f"""
 ¡Bienvenido a Athlo, {name}!
@@ -149,8 +231,48 @@ El equipo de Athlo
         "email_verified": "Dirección de correo electrónico confirmada con éxito.",
         "email_already_verified": "El usuario ya está verificado.",
         "email_sent": "Correo de verificación enviado. Por favor revisa tu bandeja de entrada.",
+
+        # --- API keys (ES) ---
+        "ok": "OK",
+        "forbidden": "Acceso denegado.",
+        "user_not_found": "Usuario no encontrado.",
+        "user_already_verified": "El usuario ya está verificado.",
+        "verification_email_sent": "Correo de verificación enviado. Por favor revisa tu bandeja de entrada.",
+        "invalid_or_expired_token": "Enlace de verificación inválido o caducado.",
+        "internal_server_error": "Error interno del servidor.",
+        "incorrect_credentials": "Nombre de usuario o contraseña incorrectos.",
+        "match_success": "¡Match!",
+        "swipe_registered": "Swipe registrado.",
+        "message_sent": "Mensaje enviado.",
+        "no_match_cannot_message": "No se puede enviar el mensaje: no hay match.",
+        "chat_access_denied": "Sin acceso a este chat.",
+        "user_reported": "Usuario reportado correctamente.",
+        "cannot_report_self": "No puedes reportarte a ti mismo.",
+        "user_blocked": "Usuario bloqueado correctamente.",
+        "user_already_blocked": "El usuario ya estaba bloqueado.",
+        "cannot_block_self": "No puedes bloquearte a ti mismo.",
+        "match_deleted": "Match eliminado correctamente.",
+        "photo_deleted": "Foto eliminada correctamente.",
+        "photo_not_found": "Foto no encontrada o sin permisos.",
+        "photo_uploaded": "Foto subida correctamente.",
+        "no_profile_photo": "El usuario ya no tiene foto de perfil.",
+        "route_suggestion_error": "No se pudieron determinar ubicaciones recientes de Strava. Asegúrate de que ambos usuarios tengan un strava_token válido o usa 'mock:LAT,LNG' para pruebas.",
+        "route_suggestion_success": "Sugerencia generada según la actividad de Strava.",
+
+        # Validación/otros
+        "no_fields_to_update": "No hay campos para actualizar.",
+        "day_of_week_invalid": "day_of_week debe ser 0..6.",
+        "invalid_time_format": "Formato de hora inválido, usa HH:MM.",
+        "time_out_of_range": "Hora/minuto fuera de rango.",
+        "end_time_after_start": "end_time debe ser posterior a start_time.",
+        "cannot_swipe_self": "No puedes hacer swipe en tu propio perfil.",
+        "db_error": "Error de base de datos.",
+        "token_missing": "No se pudieron verificar las credenciales.",
+        "token_invalid": "Token inválido o expirado.",
     },
+
     "pt": {
+        # --- E-mail ---
         "email_verification_subject": "Confirme seu endereço de e-mail para Athlo",
         "email_verification_body": lambda name, link: f"""
 Bem-vindo ao Athlo, {name}!
@@ -163,8 +285,48 @@ Equipe Athlo
         "email_verified": "Endereço de e-mail confirmado com sucesso.",
         "email_already_verified": "Usuário já verificado.",
         "email_sent": "E-mail de verificação enviado. Verifique sua caixa de entrada.",
+
+        # --- API keys (PT) ---
+        "ok": "OK",
+        "forbidden": "Acesso negado.",
+        "user_not_found": "Usuário não encontrado.",
+        "user_already_verified": "O usuário já está verificado.",
+        "verification_email_sent": "E-mail de verificação enviado. Verifique sua caixa de entrada.",
+        "invalid_or_expired_token": "Link de verificação inválido ou expirado.",
+        "internal_server_error": "Erro interno do servidor.",
+        "incorrect_credentials": "Nome de usuário ou senha incorretos.",
+        "match_success": "Match!",
+        "swipe_registered": "Swipe registrado.",
+        "message_sent": "Mensagem enviada.",
+        "no_match_cannot_message": "Não é possível enviar a mensagem: não há match.",
+        "chat_access_denied": "Sem acesso a este chat.",
+        "user_reported": "Usuário reportado com sucesso.",
+        "cannot_report_self": "Você não pode se reportar.",
+        "user_blocked": "Usuário bloqueado com sucesso.",
+        "user_already_blocked": "O usuário já estava bloqueado.",
+        "cannot_block_self": "Você não pode se bloquear.",
+        "match_deleted": "Match excluído com sucesso.",
+        "photo_deleted": "Foto excluída com sucesso.",
+        "photo_not_found": "Foto não encontrada ou sem permissão.",
+        "photo_uploaded": "Foto enviada com sucesso.",
+        "no_profile_photo": "O usuário não possui mais foto de perfil.",
+        "route_suggestion_error": "Não foi possível determinar locais recentes do Strava. Garanta que ambos os usuários tenham um strava_token válido ou use 'mock:LAT,LNG' para testes.",
+        "route_suggestion_success": "Sugestão gerada com base na atividade do Strava.",
+
+        # Validação/outros
+        "no_fields_to_update": "Nenhum campo para atualizar.",
+        "day_of_week_invalid": "day_of_week deve ser 0..6.",
+        "invalid_time_format": "Formato de hora inválido, use HH:MM.",
+        "time_out_of_range": "Hora/minuto fora do intervalo.",
+        "end_time_after_start": "end_time deve ser posterior a start_time.",
+        "cannot_swipe_self": "Você não pode fazer swipe no seu próprio perfil.",
+        "db_error": "Erro de banco de dados.",
+        "token_missing": "Não foi possível verificar as credenciais.",
+        "token_invalid": "Token inválido ou expirado.",
     },
+
     "it": {
+        # --- Email ---
         "email_verification_subject": "Conferma il tuo indirizzo email per Athlo",
         "email_verification_body": lambda name, link: f"""
 Benvenuto su Athlo, {name}!
@@ -175,8 +337,45 @@ Cordiali saluti,
 Il team di Athlo
 """,
         "email_verified": "Indirizzo email confermato con successo.",
-        "email_already_verified": "Utente già verificato.",
+        "email_already_verified": "L'utente è già verificato.",
         "email_sent": "Email di verifica inviata. Controlla la tua casella di posta.",
+
+        # --- API keys (IT) ---
+        "ok": "OK",
+        "forbidden": "Accesso negato.",
+        "user_not_found": "Utente non trovato.",
+        "user_already_verified": "L'utente è già verificato.",
+        "verification_email_sent": "Email di verifica inviata. Controlla la tua casella di posta.",
+        "invalid_or_expired_token": "Link di verifica non valido o scaduto.",
+        "internal_server_error": "Errore interno del server.",
+        "incorrect_credentials": "Nome utente o password errati.",
+        "match_success": "Match!",
+        "swipe_registered": "Swipe registrato.",
+        "message_sent": "Messaggio inviato.",
+        "no_match_cannot_message": "Impossibile inviare il messaggio: nessun match.",
+        "chat_access_denied": "Nessun accesso a questa chat.",
+        "user_reported": "Utente segnalato con successo.",
+        "cannot_report_self": "Non puoi segnalare te stesso.",
+        "user_blocked": "Utente bloccato con successo.",
+        "user_already_blocked": "L'utente era già bloccato.",
+        "cannot_block_self": "Non puoi bloccare te stesso.",
+        "match_deleted": "Match eliminato con successo.",
+        "photo_deleted": "Foto eliminata con successo.",
+        "photo_not_found": "Foto non trovata o senza autorizzazione.",
+        "photo_uploaded": "Foto caricata con successo.",
+        "no_profile_photo": "L'utente non ha più una foto del profilo.",
+        "route_suggestion_error": "Impossibile determinare posizioni recenti di Strava. Assicurati che entrambi gli utenti abbiano un strava_token valido o usa 'mock:LAT,LNG' per i test.",
+        "route_suggestion_success": "Suggerimento generato in base all'attività Strava.",
+
+        # Validazione/altro
+        "no_fields_to_update": "Nessun campo da aggiornare.",
+        "day_of_week_invalid": "day_of_week deve essere 0..6.",
+        "invalid_time_format": "Formato orario non valido, usa HH:MM.",
+        "time_out_of_range": "Ora/minuto fuori intervallo.",
+        "end_time_after_start": "end_time deve essere successivo a start_time.",
+        "cannot_swipe_self": "Non puoi fare swipe sul tuo stesso profilo.",
+        "db_error": "Errore del database.",
+        "token_missing": "Impossibile verificare le credenziali.",
+        "token_invalid": "Token non valido o scaduto.",
     },
 }
-``
