@@ -1,40 +1,48 @@
-import smtplib
-import ssl
+# email_utils.py
+import os
+import logging
 import secrets
-from email.message import EmailMessage
+from typing import Optional, Tuple
+from translations import translations
 
-def send_verification_email(user_email, user_name):
-    token = secrets.token_urlsafe(32)
-    verification_link = f"https://athlo.app/verify-email?token={token}"
+logger = logging.getLogger(__name__)
 
-    email_sender = "no-reply@athlo.app"
-    email_password = "YOUR_APP_PASSWORD"  # Gebruik een app-specifiek wachtwoord of environment variable
-    email_receiver = user_email
-
-    subject = "Bevestig je e-mailadres voor Athlo"
-    body = f"""
-    Welkom bij Athlo, {user_name}!
-
-    Bedankt voor je registratie. Klik op onderstaande link om je e-mailadres te bevestigen:
-
-    {verification_link}
-
-    Als je je niet hebt geregistreerd, kun je deze e-mail negeren.
-
-    Sportieve groet,
-    Het Athlo Team
+def generate_verification_token(nbytes: int = 32) -> str:
     """
+    Genereer een URL-veilige verificatietoken (default ~43 tekens).
+    Verhoog nbytes voor langere tokens.
+    """
+    return secrets.token_urlsafe(nbytes)
 
-    em = EmailMessage()
-    em['From'] = email_sender
-    em['To'] = email_receiver
-    em['Subject'] = subject
-    em.set_content(body)
+def _render_email(name: str, token: str, lang: str = "nl") -> Tuple[str, str]:
+    """
+    Bouw subject en body op uit translations + FRONTEND_URL.
+    """
+    lang = lang if lang in translations else "en"
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    link = f"{frontend_url.rstrip('/')}/verify-email?token={token}"
 
-    context = ssl.create_default_context()
+    subject = translations[lang]["email_verification_subject"]
+    body = translations[lang]["email_verification_body"    return subject, body
 
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
-        smtp.login(email_sender, email_password)
-        smtp.send_message(em)
+def send_verification_email(
+    to_email: str,
+    name: str,
+    token: str,
+    lang: str = "nl",
+    subject: Optional[str] = None,
+    body: Optional[str] = None,
+) -> None:
+    """
+    Verzend de verificatiemail. Als subject/body niet meegegeven zijn,
+    worden ze vertaald op basis van 'lang' en translations.
+    Vervang de logging hieronder door je echte SMTP/ESP-integratie.
+    """
+    if subject is None or body is None:
+        subject_rendered, body_rendered = _render_email(name, token, lang)
+    else:
+        subject_rendered, body_rendered = subject, body
 
-    return token  # Deze token kun je opslaan in je database
+    # TODO: vervang door echte mailtransport (SMTP/ESP). Voor nu loggen we:
+    logger.info("Sending verification email to %s | subject=%r", to_email, subject_rendered)
+    logger.debug("Body:\n%s", body_rendered)
