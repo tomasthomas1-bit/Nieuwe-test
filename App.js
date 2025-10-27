@@ -396,31 +396,31 @@ function useApi() {
 
 /* ================= REUSABLE: LogoBox ================= */
 function LogoBox({ theme, uri, size = 120 }) {
+  const styles = StyleSheet.create({
+    logoBox: {
+      width: size,
+      height: size,
+      alignSelf: 'center',
+      marginBottom: 24,
+      backgroundColor: theme.color.surface,
+      borderRadius: 0,
+      borderWidth: 0,
+      borderColor: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    logoImage: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'contain',
+      borderRadius: 0,
+      backgroundColor: 'transparent',
+    },
+  });
+
   return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        alignSelf: 'center',
-        marginBottom: 24,
-        backgroundColor: theme.color.surface,
-        borderRadius: 0,
-        borderWidth: 0,
-        borderColor: 'transparent',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <Image
-        source={{ uri }}
-        style={{
-          width: '100%',
-          height: '100%',
-          resizeMode: 'contain',
-          borderRadius: 0,
-          backgroundColor: 'transparent',
-        }}
-      />
+    <View style={styles.logoBox}>
+      <Image source={{ uri }} style={styles.logoImage} />
     </View>
   );
 }
