@@ -587,103 +587,104 @@ function DiscoverScreen({ api, theme, user }) {
   }, [api, load]);
 
   return (
-    <ScrollView style={styles.discoverContainer} contentContainerStyle={styles.discoverContent}>
-      <View style={styles.discoverHeader}>
-        <View style={styles.headerLeft}>
-          <Avatar theme={theme} size={44} uri={user?.profile_photo_url} />
-        </View>
-
-        <View style={styles.headerCenter}>
-          <View style={styles.logoContainer}>
-            <View style={styles.heartIcon}>
-              <View style={styles.heartLeft} />
-              <View style={styles.heartRight} />
-            </View>
-          </View>
-          <Text style={styles.athloText}>athlo</Text>
-          <Text style={styles.tagline}>Find your fit.</Text>
-        </View>
-
-        <View style={styles.headerRight}>
-          <View style={styles.matchCounter}>
-            <Ionicons name="heart" size={18} color="#FF6B35" />
-            <Text style={styles.matchCount}>{matchCount}</Text>
-          </View>
-        </View>
+    <ScrollView contentContainerStyle={styles.tabContent}>
+      <View style={styles.rowBetween}>
+        <Text style={styles.sectionTitle}>Ontdekken</Text>
+        <TouchableOpacity onPress={load} style={styles.ghostBtn}>
+          <Text style={styles.ghostBtnText}>Vernieuw</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.findPartnerBtn}>
-        <Text style={styles.findPartnerText}>Find a Partner</Text>
-      </TouchableOpacity>
+      {loading ? <LoaderBar theme={theme} /> : null}
 
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Workouts</Text>
-          <Text style={styles.statValue}>{stats.workouts}</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Distance</Text>
-          <Text style={styles.statValue}>{stats.distance} km</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Hours</Text>
-          <Text style={styles.statValue}>{stats.hours}</Text>
-        </View>
-      </View>
-
-      {loading ? (
-        <LoaderBar theme={theme} />
-      ) : suggestions.length === 0 ? (
+      {(!suggestions || suggestions.length === 0) ? (
         <EmptyState
           theme={theme}
           title="Nog geen suggesties"
-          subtitle="Tik op 'Vernieuw' om suggesties op te halen."
+          subtitle="Tik op ‘Vernieuw’ om suggesties op te halen."
         />
       ) : (
-        <View style={styles.cardsGrid}>
+        <View style={{ gap: theme.gap.m }}>
           {suggestions.map((s) => {
-            const photoUrl = s.profile_photo_url || (s.photos && s.photos[0]);
-            const distance = Math.floor(Math.random() * 50) + 1;
-            const city = s.city || 'Amsterdam';
+            // Fotolijst
+            const photoList = Array.isArray(s.photos) && s.photos.length
+              ? s.photos
+              : (s.profile_photo_url ? [s.profile_photo_url] : []);
+            const activeIdx = photoIdxById[s.id] ?? 0;
+            const canBrowse = photoList.length > 1;
+            const activeUrl = photoList[Math.min(activeIdx, photoList.length - 1)];
 
             return (
-              <View key={s.id} style={styles.userCard}>
-                <View style={styles.cardPhotoContainer}>
-                  {photoUrl ? (
+              <View key={s.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  {/* Header-icoon: profielfoto */}
+                  <Avatar theme={theme} size={56} uri={s.profile_photo_url} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.cardTitle}>{s.name} · {s.age}</Text>
+                    {s.bio ? <Text style={styles.cardSubtitle} numberOfLines={2}>{s.bio}</Text> : null}
+                  </View>
+                </View>
+
+                {/* Grote foto: tik om verder te bladeren */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    if (!canBrowse) return;
+                    setPhotoIdxById(prev => ({
+                      ...prev,
+                      [s.id]: (activeIdx + 1) % photoList.length
+                    }));
+                  }}
+                  style={{
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    borderWidth: 1,
+                    borderColor: theme.color.border
+                  }}
+                >
+                  {activeUrl ? (
                     <Image
-                      source={{ uri: photoUrl }}
-                      style={styles.cardPhoto}
+                      source={{ uri: activeUrl }}
+                      style={{ width: '100%', height: 220 }}
                       resizeMode="cover"
                     />
                   ) : (
-                    <View style={styles.cardPhotoPlaceholder}>
-                      <Ionicons name="person" size={40} color="#666" />
+                    <View style={{
+                      width: '100%', height: 220,
+                      alignItems: 'center', justifyContent: 'center',
+                      backgroundColor: '#F0F2F5'
+                    }}>
+                      <Ionicons name="image-outline" size={32} color={theme.color.textSecondary} />
+                      <Text style={{
+                        color: theme.color.textSecondary, marginTop: 6,
+                        fontFamily: theme.font.bodyFamily
+                      }}>
+                        Geen foto
+                      </Text>
                     </View>
                   )}
-                </View>
-
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardName}>{s.name}, {s.age}</Text>
-                  
-                  <View style={styles.cardDetail}>
-                    <Ionicons name="triangle" size={12} color="#32D74B" />
-                    <Text style={styles.cardDistance}>{distance} km</Text>
-                  </View>
-
-                  <View style={styles.cardDetail}>
-                    <Ionicons name="location" size={12} color="#999" />
-                    <Text style={styles.cardCity}>{city}</Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.connectBtn}
-                  onPress={() => doConnect(s.id)}
-                >
-                  <Text style={styles.connectBtnText}>Connect</Text>
                 </TouchableOpacity>
+
+                {/* Acties */}
+                <View style={styles.cardActions}>
+                  <RoundAction color={theme.color.danger} label="✕" onPress={() => doSwipe(s.id, false)} />
+                  <RoundAction color={theme.color.success} label="♥" onPress={() => doSwipe(s.id, true)} />
+                </View>
+
+                {/* Dots */}
+                {canBrowse ? (
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginTop: 6 }}>
+                    {photoList.map((_, i) => (
+                      <View
+                        key={i}
+                        style={{
+                          width: 6, height: 6, borderRadius: 3,
+                          backgroundColor: i === activeIdx ? theme.color.primary : theme.color.border
+                        }}
+                      />
+                    ))}
+                  </View>
+                ) : null}
               </View>
             );
           })}
@@ -1430,7 +1431,7 @@ function MainTabs({ api, theme }) {
       })}
     >
       <Tabs.Screen name="Ontdekken" options={{ title: 'Ontdekken' }}>
-        {(props) => <DiscoverScreen {...props} api={api} theme={theme} user={{ profile_photo_url: profilePhotoUrl }} />}
+        {(props) => <DiscoverScreen {...props} api={api} theme={theme} />}
       </Tabs.Screen>
       <Tabs.Screen name="Matches" options={{ title: 'Matches' }}>
         {(props) => <MatchesScreen {...props} api={api} theme={theme} />}
@@ -1720,193 +1721,6 @@ const createStyles = (THEME) => StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: THEME.radius.md,
-  },
-  // Discover Screen
-  discoverContainer: {
-    flex: 1,
-    backgroundColor: THEME.color.background,
-  },
-  discoverContent: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  discoverHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerLeft: {
-    width: 44,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerRight: {
-    width: 44,
-    alignItems: 'flex-end',
-  },
-  logoContainer: {
-    marginBottom: 8,
-  },
-  heartIcon: {
-    width: 60,
-    height: 60,
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heartLeft: {
-    position: 'absolute',
-    width: 30,
-    height: 40,
-    backgroundColor: '#0A84FF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    left: 0,
-    transform: [{ rotate: '-45deg' }],
-  },
-  heartRight: {
-    position: 'absolute',
-    width: 30,
-    height: 40,
-    backgroundColor: '#32D74B',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    right: 0,
-    transform: [{ rotate: '45deg' }],
-  },
-  athloText: {
-    fontSize: 40,
-    fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#32D74B',
-    fontFamily: THEME.font.bodyFamily,
-    textAlign: 'center',
-  },
-  matchCounter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,107,53,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
-  },
-  matchCount: {
-    fontSize: 16,
-    fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
-  },
-  findPartnerBtn: {
-    backgroundColor: '#0A84FF',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  findPartnerText: {
-    fontSize: 18,
-    fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    fontFamily: THEME.font.bodyFamily,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 24,
-    fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: '#444',
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  userCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  cardPhotoContainer: {
-    width: '100%',
-    height: 180,
-    backgroundColor: '#E5E7EB',
-  },
-  cardPhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  cardPhotoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E5E7EB',
-  },
-  cardInfo: {
-    padding: 12,
-  },
-  cardName: {
-    fontSize: 16,
-    fontFamily: THEME.font.bodyBold,
-    color: '#000',
-    marginBottom: 6,
-  },
-  cardDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
-  },
-  cardDistance: {
-    fontSize: 12,
-    color: '#32D74B',
-    fontFamily: THEME.font.bodyFamily,
-  },
-  cardCity: {
-    fontSize: 12,
-    color: '#999',
-    fontFamily: THEME.font.bodyFamily,
-  },
-  connectBtn: {
-    backgroundColor: '#FF6B35',
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    marginTop: 8,
-  },
-  connectBtnText: {
-    fontSize: 16,
-    fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
   },
 });
 
