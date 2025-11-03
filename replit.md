@@ -175,51 +175,57 @@ Preferred communication style: Simple, everyday language.
    - Password: `test123`
    - Ready for testing authentication flow
 
-### Discover Screen Redesign (App.js)
+### Tinder-Style Swipe Interface (App.js)
 
-Complete redesign of the DiscoverScreen component to match the Athlo brand design:
+**Complete Redesign - Single Card Layout:**
+Replaced 2-column grid with Tinder-style single-card interface:
 
-**New UI Components:**
+**UI Components:**
 1. **Header Section**:
    - Profile avatar (top left) showing user's profile photo
    - Athlo logo with stylized heart icon (blue/green gradient) in center
    - "athlo" text in white with "Find your fit." tagline in green
    - Match counter badge (top right) showing number of matches with orange heart icon
 
-2. **Call-to-Action Button**:
-   - Blue "Find a Partner" button prominently displayed below header
-
-3. **Stats Dashboard**:
+2. **Stats Dashboard**:
    - Three-column stat display: Workouts, Distance (km), Hours
    - Separated by vertical dividers for clean layout
 
-4. **User Cards Grid**:
-   - 2-column responsive grid layout for user suggestions
-   - Each card shows:
-     - Profile photo (180px height)
-     - Name and age
-     - Distance indicator with green triangle icon
-     - Location with pin icon
-     - Orange "Connect" button for direct connection
-   - Cards use white background with rounded corners
-   - Replaced swipe-based interaction with direct Connect buttons
+3. **Single Profile Card**:
+   - Full-width card showing ONE user at a time
+   - Large profile photo (400px height)
+   - User info: name, age, distance, location
+   - Bio text display
+   - Like/Dislike buttons below card
 
-**Technical Changes:**
+**Swipe Flow Implementation:**
+- Uses `useRef` hooks to avoid closure/stale state issues
+- `suggestionsRef` and `currentIndexRef` synced with state via useEffect
+- Mutual exclusion prevents race conditions:
+  - `doSwipe` checks `if (swiping || loading) return`
+  - `load` checks `if (swiping || loading) return []`
+- Clearing `swiping` before calling `load()` prevents soft-lock at end of deck
+- When user reaches end of suggestions, new batch loads automatically
+
+**Technical Implementation:**
 - Added `user` prop to DiscoverScreen to display current user's profile photo
-- Replaced `doSwipe` callback with simplified `doConnect` callback
-- Removed photo browsing functionality (photoIdxById state)
-- Added comprehensive dark-theme styles for all new components:
-  - `discoverContainer`, `discoverContent`, `discoverHeader`
-  - `logoContainer`, `heartIcon`, `heartLeft`, `heartRight`
-  - `athloText`, `tagline`, `matchCounter`
-  - `findPartnerBtn`, `statsRow`, `cardsGrid`, `userCard`
-  - `cardPhotoContainer`, `cardInfo`, `connectBtn`
+- `doSwipe` callback handles Like/Dislike interactions
+- Refs prevent stale closures in async operations
+- Buttons disabled during loading/swiping states
+- Comprehensive dark-theme styles for all components
+
+**Race Condition Protection:**
+- Fixed soft-lock issue by clearing `swiping` state before calling `load()`
+- Mutual exclusion ensures load() and doSwipe() never run concurrently
+- At end of deck: clears swiping → calls load() → fetches fresh suggestions
+- On normal swipe: advances index → clears swiping
+- On error: shows alert → clears swiping
 
 **Design Rationale:**
-- Modern card-based layout improves scanability on mobile devices
-- Direct "Connect" buttons reduce friction in matching flow
-- Stats dashboard provides quick activity overview
-- Brand-focused header reinforces Athlo identity
+- Single-card Tinder-style interface provides focused user experience
+- Large profile photos showcase user's fitness activities
+- Like/Dislike buttons provide clear, simple interaction
+- Stats dashboard shows user's activity at a glance
 - Dark theme with vibrant accent colors (blue, green, orange) creates energetic feel
 
 ### Static File Serving (main.py)
