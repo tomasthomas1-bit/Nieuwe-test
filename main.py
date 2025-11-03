@@ -117,23 +117,15 @@ async def unexpected_exception_handler(request: Request, exc: Exception):
         content={"detail": t("internal_server_error", "en"), "error": str(exc)},
     )
 
-# CORS
-if _allowed_origins:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=_allowed_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"],
-    )
-else:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+# CORS - Allow all origins for Expo Snack compatibility
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 # ------------------------- DB Pool & Helpers -----------------------
 pool: Optional[ThreadedConnectionPool] = None
