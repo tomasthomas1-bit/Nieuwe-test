@@ -336,7 +336,7 @@ async def get_current_user(
         )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        username: Optional[str] = payload.get("sub")
         if not username:
             raise HTTPException(status_code=401, detail=t("token_invalid", "en"))
     except JWTError:

@@ -16,3 +16,16 @@ ruff==0.6.9
 pytest
 
 bcrypt==4.0.1
+jose
+cryptography
+fastapi
+haversine
+httpx
+passlib[bcrypt]
+psycopg2-binary
+pydantic
+pytest
+python-jose[cryptography]
+python-multipart
+ruff
+uvicorn

@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Sports Match App",
+    "slug": "sports-match-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.jpg",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/logo.jpg"
+    }
+  }
+}
