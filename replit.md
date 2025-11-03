@@ -165,10 +165,62 @@ Preferred communication style: Simple, everyday language.
    - Affected endpoints: `/token` (login) and `get_current_user` dependency
    - Now Expo Snack can successfully connect and authenticate
 
-3. **Test User Created**:
+3. **CORS Configuration Fix** (main.py):
+   - Fixed missing CORS headers by setting `allow_origins=["*"]` for Expo Snack compatibility
+   - Removed conditional CORS logic that was causing missing `Access-Control-Allow-Origin` headers
+   - All API responses now include proper CORS headers for cross-origin requests
+
+4. **Test User Created**:
    - Username: `testuser`
    - Password: `test123`
    - Ready for testing authentication flow
+
+### Discover Screen Redesign (App.js)
+
+Complete redesign of the DiscoverScreen component to match the Athlo brand design:
+
+**New UI Components:**
+1. **Header Section**:
+   - Profile avatar (top left) showing user's profile photo
+   - Athlo logo with stylized heart icon (blue/green gradient) in center
+   - "athlo" text in white with "Find your fit." tagline in green
+   - Match counter badge (top right) showing number of matches with orange heart icon
+
+2. **Call-to-Action Button**:
+   - Blue "Find a Partner" button prominently displayed below header
+
+3. **Stats Dashboard**:
+   - Three-column stat display: Workouts, Distance (km), Hours
+   - Separated by vertical dividers for clean layout
+
+4. **User Cards Grid**:
+   - 2-column responsive grid layout for user suggestions
+   - Each card shows:
+     - Profile photo (180px height)
+     - Name and age
+     - Distance indicator with green triangle icon
+     - Location with pin icon
+     - Orange "Connect" button for direct connection
+   - Cards use white background with rounded corners
+   - Replaced swipe-based interaction with direct Connect buttons
+
+**Technical Changes:**
+- Added `user` prop to DiscoverScreen to display current user's profile photo
+- Replaced `doSwipe` callback with simplified `doConnect` callback
+- Removed photo browsing functionality (photoIdxById state)
+- Added comprehensive dark-theme styles for all new components:
+  - `discoverContainer`, `discoverContent`, `discoverHeader`
+  - `logoContainer`, `heartIcon`, `heartLeft`, `heartRight`
+  - `athloText`, `tagline`, `matchCounter`
+  - `findPartnerBtn`, `statsRow`, `cardsGrid`, `userCard`
+  - `cardPhotoContainer`, `cardInfo`, `connectBtn`
+
+**Design Rationale:**
+- Modern card-based layout improves scanability on mobile devices
+- Direct "Connect" buttons reduce friction in matching flow
+- Stats dashboard provides quick activity overview
+- Brand-focused header reinforces Athlo identity
+- Dark theme with vibrant accent colors (blue, green, orange) creates energetic feel
 
 ### Configuration
 
