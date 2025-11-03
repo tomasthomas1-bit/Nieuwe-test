@@ -916,9 +916,27 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     user_id = current_user["id"]
     min_age = current_user.get("preferred_min_age")
     max_age = current_user.get("preferred_max_age")
+    
+    c.execute(
+        "SELECT preferred_gender, max_distance_km FROM user_settings WHERE user_id = %s",
+        (user_id,)
+    )
+    settings_row = c.fetchone()
+    if settings_row:
+        preferred_gender, max_distance_km = settings_row
+    else:
+        preferred_gender, max_distance_km = "any", 25
+    
+    c.execute(
+        "SELECT latitude, longitude FROM users WHERE id = %s",
+        (user_id,)
+    )
+    user_location = c.fetchone()
+    user_lat, user_lon = user_location if user_location else (None, None)
+    
     query = """
         SELECT
-            u.id, u.name, u.age, u.bio,
+            u.id, u.name, u.age, u.bio, u.gender, u.latitude, u.longitude, u.city,
             prof.photo_url AS profile_photo_url,
             photos.photos AS photos
         FROM users u
@@ -941,26 +959,44 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
           AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = %s AND s.swipee_id = u.id)
     """
     params: List[Any] = [user_id, user_id, user_id, user_id]
+    
+    if preferred_gender and preferred_gender != "any":
+        query += " AND u.gender = %s"
+        params.append(preferred_gender)
+    
     if min_age:
         query += " AND u.age >= %s"
         params.append(min_age)
     if max_age:
         query += " AND u.age <= %s"
         params.append(max_age)
+    
     query += " LIMIT 200"
     c.execute(query, tuple(params))
     rows = c.fetchall()
+    
     suggestions = []
     for r in rows:
-        _photos = r[5] if isinstance(r[5], list) else []
+        _photos = r[9] if isinstance(r[9], list) else []
+        
+        distance_km = None
+        if user_lat and user_lon and r[5] and r[6]:
+            distance_km = haversine((user_lat, user_lon), (r[5], r[6]), unit=Unit.KILOMETERS)
+            if max_distance_km and distance_km > max_distance_km:
+                continue
+        
         suggestions.append({
             "id": r[0],
             "name": r[1],
             "age": r[2],
             "bio": r[3],
-            "profile_photo_url": r[4],
+            "gender": r[4],
+            "city": r[7],
+            "distance_km": round(distance_km, 1) if distance_km else None,
+            "profile_photo_url": r[8],
             "photos": _photos,
         })
+    
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
     return {"suggestions": suggestions}
 

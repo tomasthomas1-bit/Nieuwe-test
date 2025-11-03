@@ -9,6 +9,7 @@ import React, {
   useCallback,
   useContext,
   createContext,
+  useRef,
 } from 'react';
 import {
   View,
@@ -553,41 +554,88 @@ function AuthScreen({ navigation, api, theme }) {
 function DiscoverScreen({ api, theme, user }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [suggestions, setSuggestions] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [swiping, setSwiping] = useState(false);
   const [matchCount, setMatchCount] = useState(12);
   const [stats, setStats] = useState({ workouts: 24, distance: 185, hours: 36 });
+  const suggestionsRef = useRef([]);
+  const currentIndexRef = useRef(0);
+
+  useEffect(() => {
+    suggestionsRef.current = suggestions;
+  }, [suggestions]);
+
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   const load = useCallback(async () => {
+    if (swiping || loading) return [];
+    
     try {
       setLoading(true);
       const res = await api.authFetch('/suggestions');
       const data = await res.json();
       const errMsg = data && data.detail ? data.detail : 'Fout';
       if (!res.ok) throw new Error(errMsg);
-      setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
+      const newSuggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      setSuggestions(newSuggestions);
+      setCurrentIndex(0);
+      return newSuggestions;
     } catch (e) {
       Alert.alert('Fout bij ophalen suggesties', e.message);
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [api, swiping, loading]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, []);
 
-  const doConnect = useCallback(async (id) => {
+  const doSwipe = useCallback(async (liked) => {
+    if (swiping || loading) return;
+    
+    const idx = currentIndexRef.current;
+    const suggs = suggestionsRef.current;
+    
+    if (idx >= suggs.length) return;
+    
+    const currentUser = suggs[idx];
+    
     try {
-      const res = await api.authFetch(`/swipe/${id}?liked=true`, { method: 'POST' });
+      setSwiping(true);
+      const res = await api.authFetch(`/swipe/${currentUser.id}?liked=${liked}`, { 
+        method: 'POST'
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.detail || 'Fout');
-      Alert.alert('Succes', data?.message ?? 'Verbonden!');
-      await load();
+      
+      if (data.match) {
+        Alert.alert('It\'s a Match! 🎉', `Je hebt een match met ${currentUser.name}!`);
+      }
+      
+      const nextIndex = idx + 1;
+      if (nextIndex < suggestionsRef.current.length) {
+        setCurrentIndex(nextIndex);
+        setSwiping(false);
+      } else {
+        setSwiping(false);
+        await load();
+      }
     } catch (e) {
-      Alert.alert('Fout bij verbinden', e.message);
+      Alert.alert('Fout bij swipen', e.message);
+      setSwiping(false);
     }
-  }, [api, load]);
+  }, [api, swiping, loading, load]);
+
+  const currentProfile = suggestions[currentIndex];
+  const photoUrl = currentProfile?.profile_photo_url || (currentProfile?.photos && currentProfile.photos[0]);
+  const distance = currentProfile?.distance_km || 0;
+  const city = currentProfile?.city || 'Amsterdam';
 
   return (
-    <ScrollView style={styles.discoverContainer} contentContainerStyle={styles.discoverContent}>
+    <View style={styles.discoverContainer}>
       <View style={styles.discoverHeader}>
         <View style={styles.headerLeft}>
           <Avatar theme={theme} size={44} uri={user?.profile_photo_url} />
@@ -612,10 +660,6 @@ function DiscoverScreen({ api, theme, user }) {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.findPartnerBtn}>
-        <Text style={styles.findPartnerText}>Find a Partner</Text>
-      </TouchableOpacity>
-
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statLabel}>Workouts</Text>
@@ -634,62 +678,86 @@ function DiscoverScreen({ api, theme, user }) {
       </View>
 
       {loading ? (
-        <LoaderBar theme={theme} />
-      ) : suggestions.length === 0 ? (
-        <EmptyState
-          theme={theme}
-          title="Nog geen suggesties"
-          subtitle="Tik op 'Vernieuw' om suggesties op te halen."
-        />
+        <View style={styles.swipeCardContainer}>
+          <LoaderBar theme={theme} />
+        </View>
+      ) : !currentProfile ? (
+        <View style={styles.swipeCardContainer}>
+          <EmptyState
+            theme={theme}
+            title="Geen suggesties meer"
+            subtitle="Kom later terug voor meer matches!"
+          />
+          <TouchableOpacity style={styles.reloadBtn} onPress={load}>
+            <Text style={styles.reloadBtnText}>Opnieuw laden</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
-        <View style={styles.cardsGrid}>
-          {suggestions.map((s) => {
-            const photoUrl = s.profile_photo_url || (s.photos && s.photos[0]);
-            const distance = Math.floor(Math.random() * 50) + 1;
-            const city = s.city || 'Amsterdam';
+        <>
+          <View style={styles.swipeCardContainer}>
+            <View style={styles.swipeCard}>
+              <View style={styles.swipePhotoContainer}>
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.swipePhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.swipePhotoPlaceholder}>
+                    <Ionicons name="person" size={80} color="#666" />
+                  </View>
+                )}
+              </View>
 
-            return (
-              <View key={s.id} style={styles.userCard}>
-                <View style={styles.cardPhotoContainer}>
-                  {photoUrl ? (
-                    <Image
-                      source={{ uri: photoUrl }}
-                      style={styles.cardPhoto}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.cardPhotoPlaceholder}>
-                      <Ionicons name="person" size={40} color="#666" />
+              <View style={styles.swipeInfo}>
+                <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
+                
+                {currentProfile.bio && (
+                  <Text style={styles.swipeBio} numberOfLines={2}>{currentProfile.bio}</Text>
+                )}
+                
+                <View style={styles.swipeDetails}>
+                  <View style={styles.swipeDetailItem}>
+                    <Ionicons name="location" size={16} color="#32D74B" />
+                    <Text style={styles.swipeDetailText}>{city}</Text>
+                  </View>
+                  
+                  {distance > 0 && (
+                    <View style={styles.swipeDetailItem}>
+                      <Ionicons name="triangle" size={14} color="#32D74B" />
+                      <Text style={styles.swipeDetailText}>{distance} km away</Text>
                     </View>
                   )}
                 </View>
-
-                <View style={styles.cardInfo}>
-                  <Text style={styles.cardName}>{s.name}, {s.age}</Text>
-                  
-                  <View style={styles.cardDetail}>
-                    <Ionicons name="triangle" size={12} color="#32D74B" />
-                    <Text style={styles.cardDistance}>{distance} km</Text>
-                  </View>
-
-                  <View style={styles.cardDetail}>
-                    <Ionicons name="location" size={12} color="#999" />
-                    <Text style={styles.cardCity}>{city}</Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity 
-                  style={styles.connectBtn}
-                  onPress={() => doConnect(s.id)}
-                >
-                  <Text style={styles.connectBtnText}>Connect</Text>
-                </TouchableOpacity>
               </View>
-            );
-          })}
-        </View>
+            </View>
+          </View>
+
+          <View style={styles.swipeButtons}>
+            <TouchableOpacity 
+              style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
+              onPress={() => doSwipe(false)}
+              disabled={swiping}
+            >
+              <Ionicons name="close" size={32} color="#FF6B35" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.likeBtn, swiping && styles.swipeBtnDisabled]}
+              onPress={() => doSwipe(true)}
+              disabled={swiping}
+            >
+              <Ionicons name="heart" size={32} color="#32D74B" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.swipeCounter}>
+            {currentIndex + 1} / {suggestions.length}
+          </Text>
+        </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -1904,6 +1972,130 @@ const createStyles = (THEME) => StyleSheet.create({
     marginTop: 8,
   },
   connectBtnText: {
+    fontSize: 16,
+    fontFamily: THEME.font.bodyBold,
+    color: '#FFFFFF',
+  },
+  // Swipe Interface
+  swipeCardContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  swipeCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  swipePhotoContainer: {
+    width: '100%',
+    height: 400,
+    backgroundColor: '#E5E7EB',
+  },
+  swipePhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  swipePhotoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E5E7EB',
+  },
+  swipeInfo: {
+    padding: 20,
+  },
+  swipeName: {
+    fontSize: 28,
+    fontFamily: THEME.font.bodyBold,
+    color: '#000',
+    marginBottom: 8,
+  },
+  swipeBio: {
+    fontSize: 16,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  swipeDetails: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  swipeDetailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  swipeDetailText: {
+    fontSize: 14,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#999',
+  },
+  swipeButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 40,
+    paddingVertical: 20,
+  },
+  dislikeBtn: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFF',
+    borderWidth: 3,
+    borderColor: '#FF6B35',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  likeBtn: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFF',
+    borderWidth: 3,
+    borderColor: '#32D74B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  swipeBtnDisabled: {
+    opacity: 0.5,
+  },
+  swipeCounter: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#999',
+    marginTop: 10,
+  },
+  reloadBtn: {
+    backgroundColor: '#0A84FF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  reloadBtnText: {
     fontSize: 16,
     fontFamily: THEME.font.bodyBold,
     color: '#FFFFFF',
