@@ -1,0 +1,150 @@
+# Sports Match App - Replit Configuration
+
+## Overview
+
+Sports Match App (Athlo) is a **mobile-first social matching platform** built with **React Native (Expo)** for the frontend and **FastAPI** for the backend. The application enables users to find sports partners based on location, preferences, and activity data from fitness platforms like Strava and Garmin. Core features include user authentication, profile management, swipe-based matching, real-time messaging, and route suggestions based on workout data.
+
+The app supports **internationalization (i18n)** with translations for Dutch (nl), English (en), French (fr), and German (de).
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## System Architecture
+
+### Frontend Architecture (React Native + Expo)
+
+**Technology Stack:**
+- **React Native 0.80.2** with **Expo 54.0.21** for cross-platform mobile development (iOS, Android, Web)
+- **React Navigation** (Native Stack + Bottom Tabs) for navigation flows
+- **Expo Vector Icons (Ionicons)** for iconography
+- **Expo Linear Gradient** for visual polish
+- **Expo Secure Store** for secure token storage
+- **Expo Google Fonts (Montserrat)** for typography
+
+**Design Decisions:**
+- **Theme System**: Custom theme context (`ThemeContext`) supporting multiple presets (iOS-style, WhatsApp-style) with automatic dark mode detection
+- **Gesture Handling**: Uses `react-native-gesture-handler` for swipe interactions (matching interface)
+- **Secure Authentication**: JWT tokens stored in Expo SecureStore for platform-specific secure storage
+- **Responsive UI**: Adaptive layouts using React Native's responsive components and color scheme detection
+
+**Rationale**: Expo provides rapid development with native capabilities while maintaining cross-platform compatibility. The theme system allows users to customize their experience while respecting system preferences.
+
+### Backend Architecture (FastAPI + Python)
+
+**Technology Stack:**
+- **FastAPI** - Modern async Python web framework for RESTful APIs
+- **PostgreSQL** with **psycopg2** - Relational database with connection pooling (ThreadedConnectionPool)
+- **JWT (python-jose)** - Token-based authentication
+- **bcrypt** - Password hashing
+- **Pydantic** - Request/response validation and serialization
+- **Cryptography (Fernet)** - Symmetric encryption for sensitive data
+
+**Core Architectural Patterns:**
+- **RESTful API Design**: Resource-based endpoints with proper HTTP methods
+- **JWT Authentication**: OAuth2PasswordBearer flow with secure token generation
+- **Connection Pooling**: ThreadedConnectionPool for efficient database connection management
+- **Email Verification Flow**: Token-based email verification with HTML templates
+- **Internationalization**: Server-side translation system (`translations.py`) matching user language preferences
+
+**Key Endpoints:**
+- Authentication: `/login`, `/register`, `/verify-email`
+- User Management: `/users/{user_id}`, `/users/{user_id}/settings`
+- Matching: Swipe-based matching logic, match management
+- Messaging: Real-time chat between matched users
+- Reporting: User reporting and blocking functionality
+
+**Security Measures:**
+- Password hashing with bcrypt
+- JWT token expiration
+- Secure token storage for email verification
+- CORS middleware for controlled frontend access
+- Input validation via Pydantic models
+
+**Rationale**: FastAPI offers excellent performance for async operations, automatic OpenAPI documentation, and native Pydantic integration. PostgreSQL provides robust relational data storage for user profiles, matches, and messages.
+
+### Data Architecture
+
+**Database Schema (PostgreSQL):**
+- **Users Table**: Core user data including credentials, profile information (name, age, bio), verification status, location data
+- **Matches Table**: Swipe interactions and mutual matches
+- **Messages Table**: Chat history between matched users
+- **User Settings**: Preferences including sports interests, location visibility, messaging permissions, fitness platform tokens, matching criteria (goals, gender preferences, max distance)
+- **Photos Table**: User profile photos with references
+- **Reports/Blocks**: User safety features
+
+**Data Models (Pydantic):**
+- `UserPublic`: Public-facing user profile with age constraints (18-99)
+- `UserUpdate`: Validated profile update schema
+- `UserSettings`: Comprehensive user preference model with enums for message preferences, match goals, and gender preferences
+
+**Location-Based Matching:**
+- Uses **haversine** library for distance calculations between users
+- Configurable max distance preference (default 50km)
+- Support for Strava/Garmin location data integration
+
+### Email System
+
+**Architecture:**
+- SMTP-based email delivery with SSL/TLS
+- Multi-format emails: Plain text + HTML with responsive design
+- Template system supporting 4 languages (nl, en, fr, de)
+- Token-based verification links pointing to frontend URL
+
+**Email Templates:**
+- `email_templates.py`: HTML email rendering with internationalization
+- `email_utils.py`: SMTP sending logic, token generation, plain text rendering
+- Configurable via environment variables (`FRONTEND_URL`, SMTP credentials)
+
+## External Dependencies
+
+### Third-Party Services
+
+**Fitness Platform Integrations:**
+- **Strava API**: Activity data fetching, route suggestions based on workout locations
+- **Garmin Connect**: Alternative fitness tracking integration
+- Both use OAuth tokens stored in user settings
+
+**Email Service:**
+- **SMTP Server**: Email delivery for verification and notifications
+- Configuration: Environment variables for SMTP host, port, credentials
+
+### Database
+
+**PostgreSQL:**
+- Primary relational data store
+- Connection managed via psycopg2 with connection pooling
+- Required for user data, matches, messages, settings persistence
+
+### Environment Configuration
+
+**Required Environment Variables:**
+- `DATABASE_URL` / PostgreSQL connection details
+- `SECRET_KEY`: JWT signing key
+- `FRONTEND_URL`: Base URL for email verification links
+- `SMTP_*`: Email server configuration (host, port, username, password)
+- `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`: Strava OAuth
+- `GARMIN_*`: Garmin integration credentials
+
+### Frontend Dependencies
+
+**React Native Ecosystem:**
+- **Expo SDK**: Core native functionality (secure storage, fonts, linear gradients)
+- **React Navigation**: Navigation library with stack and tab navigators
+- **Gesture Handler**: Touch interaction library for swipe mechanics
+- **Vector Icons**: Icon library from Expo
+
+**Web Compatibility:**
+- `react-native-web`: Enables web deployment of React Native codebase
+- Metro bundler for web builds
+
+### Development Tools
+
+**Backend:**
+- **Ruff 0.6.9**: Python linting and formatting
+- **Pytest**: Testing framework
+- **Uvicorn**: ASGI server for FastAPI
+
+**Deployment:**
+- Backend deployed on **Railway** (evidenced by Railway URL in README)
+- Frontend deployable via Expo build services or web hosting
