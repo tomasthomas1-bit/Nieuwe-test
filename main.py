@@ -251,11 +251,13 @@ class UserPublic(BaseModel):
     name: str
     age: int
     bio: Optional[str] = None
+    language: Optional[str] = "nl"
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     age: Optional[int] = None
     bio: Optional[str] = None
+    language: Optional[str] = None
 
 class UserSettingsModel(BaseModel):
     match_goal: Optional[str] = None
@@ -535,7 +537,7 @@ def on_shutdown():
 from email_utils import generate_verification_token, send_verification_email
 
 # ------------------------- Endpoints -------------------------------
-@app.get("/me", response_model=UserPublic)
+@app.get("/me")
 async def me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
@@ -543,6 +545,7 @@ async def me(current_user: dict = Depends(get_current_user)):
         "name": current_user["name"],
         "age": current_user["age"],
         "bio": current_user["bio"],
+        "language": current_user.get("language", "nl"),
     }
 
 @app.patch("/users/{user_id}", response_model=UserPublic)
@@ -568,11 +571,11 @@ async def patch_user(
         f"UPDATE users SET {', '.join(updates)} WHERE id=%s AND deleted_at IS NULL",
         tuple(values)
     )
-    c.execute("SELECT id, username, name, age, bio FROM users WHERE id=%s", (user_id,))
+    c.execute("SELECT id, username, name, age, bio, COALESCE(language,'nl') FROM users WHERE id=%s", (user_id,))
     row = c.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=t("user_not_found", lang))
-    return {"id": row[0], "username": row[1], "name": row[2], "age": row[3], "bio": row[4]}
+    return {"id": row[0], "username": row[1], "name": row[2], "age": row[3], "bio": row[4], "language": row[5]}
 
 @app.get("/users/{user_id}/settings")
 async def get_user_settings(
@@ -967,8 +970,10 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     params: List[Any] = [user_id, user_id, user_id, user_id]
     
     if preferred_gender and preferred_gender != "any":
+        gender_map = {"male": "man", "female": "woman", "non_binary": "non_binary"}
+        mapped_gender = gender_map.get(preferred_gender, preferred_gender)
         query += " AND u.gender = %s"
-        params.append(preferred_gender)
+        params.append(mapped_gender)
     
     if min_age:
         query += " AND u.age >= %s"

@@ -713,6 +713,24 @@ function DiscoverScreen({ api, theme, user }) {
                 )}
               </View>
 
+              <View style={styles.swipeButtons}>
+                <TouchableOpacity 
+                  style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
+                  onPress={() => doSwipe(false)}
+                  disabled={swiping}
+                >
+                  <Ionicons name="close" size={32} color="#FF6B35" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.likeBtn, swiping && styles.swipeBtnDisabled]}
+                  onPress={() => doSwipe(true)}
+                  disabled={swiping}
+                >
+                  <Ionicons name="heart" size={32} color="#32D74B" />
+                </TouchableOpacity>
+              </View>
+
               <View style={styles.swipeInfo}>
                 <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
                 
@@ -735,24 +753,6 @@ function DiscoverScreen({ api, theme, user }) {
                 </View>
               </View>
             </View>
-          </View>
-
-          <View style={styles.swipeButtons}>
-            <TouchableOpacity 
-              style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
-              onPress={() => doSwipe(false)}
-              disabled={swiping}
-            >
-              <Ionicons name="close" size={32} color="#FF6B35" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.likeBtn, swiping && styles.swipeBtnDisabled]}
-              onPress={() => doSwipe(true)}
-              disabled={swiping}
-            >
-              <Ionicons name="heart" size={32} color="#32D74B" />
-            </TouchableOpacity>
           </View>
 
           <Text style={styles.swipeCounter}>
@@ -1184,6 +1184,26 @@ function SettingsScreen({ api }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
         <Chip label="iOS" active={preset === 'ios'} onPress={() => setUserPreset('ios')} />
         <Chip label="WhatsApp" active={preset === 'whatsapp'} onPress={() => setUserPreset('whatsapp')} />
+      </View>
+
+      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Taal / Language</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        {[
+          { code: 'nl', label: 'Nederlands' },
+          { code: 'en', label: 'English' },
+          { code: 'fr', label: 'Français' },
+          { code: 'de', label: 'Deutsch' },
+          { code: 'es', label: 'Español' },
+          { code: 'it', label: 'Italiano' },
+          { code: 'pt', label: 'Português' }
+        ].map((lang) => (
+          <Chip 
+            key={lang.code} 
+            label={lang.label} 
+            active={profile.language === lang.code} 
+            onPress={() => setProfileField('language', lang.code)} 
+          />
+        ))}
       </View>
 
       <View style={{ marginTop: theme.gap.l }}>
