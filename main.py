@@ -782,7 +782,7 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
             """,
             (
                 user.username, password_hash, user.name, user.age, user.bio,
-                None, None, None
+                None, None, None, None
             )
         )
         user_id, lang = c.fetchone()
