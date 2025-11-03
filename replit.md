@@ -146,5 +146,39 @@ Preferred communication style: Simple, everyday language.
 - **Uvicorn**: ASGI server for FastAPI
 
 **Deployment:**
-- Backend deployed on **Railway** (evidenced by Railway URL in README)
-- Frontend deployable via Expo build services or web hosting
+- Backend deployed on **Replit** (port 8000) - publicly accessible at https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000
+- Frontend tested via **Expo Snack** (https://snack.expo.dev/@tomas.thomas1/07cfa1)
+- Frontend also deployable via Expo build services or web hosting
+
+## Recent Changes (November 3, 2025)
+
+### Critical Backend Fixes
+
+1. **Database Connection Pooling Fix** (main.py):
+   - Added automatic stale connection detection and recovery in `DB.__enter__` method
+   - Prevents "SSL connection has been closed unexpectedly" errors
+   - Ensures stable API responses without 500 errors
+
+2. **Expo Snack Compatibility Fix** (main.py):
+   - Removed `WWW-Authenticate: Bearer` headers from 401 responses
+   - Fixes iOS/Expo issue where requests with this header hang indefinitely
+   - Affected endpoints: `/token` (login) and `get_current_user` dependency
+   - Now Expo Snack can successfully connect and authenticate
+
+3. **Test User Created**:
+   - Username: `testuser`
+   - Password: `test123`
+   - Ready for testing authentication flow
+
+### Configuration
+
+**Backend URL for External Clients:**
+```
+https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000
+```
+
+**Expo Snack Configuration:**
+In App.js, set:
+```javascript
+const BASE_URL = 'https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000';
+```

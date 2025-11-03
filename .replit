@@ -16,23 +16,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "frontend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "backend"
-
-[[workflows.workflow]]
-name = "frontend"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "bash /tmp/start_frontend_with_trigger.sh"
-waitForPort = 5000
 
 [[workflows.workflow]]
 name = "backend"
@@ -53,7 +37,3 @@ externalPort = 80
 [[ports]]
 localPort = 8000
 externalPort = 8000
-
-[[ports]]
-localPort = 41837
-externalPort = 3000
