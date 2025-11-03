@@ -341,7 +341,6 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=t("token_missing", "en"),
-            headers={"WWW-Authenticate": "Bearer"},
         )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -747,7 +746,6 @@ async def login_for_access_token(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=t("incorrect_credentials", get_lang({"language": lang_guess})),
-                headers={"WWW-Authenticate": "Bearer"},
             )
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
