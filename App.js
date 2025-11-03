@@ -248,7 +248,7 @@ const makeBaseTheme = (mode) => {
 };
 
 /* ================= API HOOK ================= */
-const BASE_URL = 'https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev';
+const BASE_URL = 'https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000';
 function useApi() {
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
