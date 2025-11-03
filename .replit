@@ -1,4 +1,4 @@
-modules = ["python-3.12", "nodejs-20"]
+modules = ["python-3.12", "nodejs-20", "postgresql-16"]
 [agent]
 expertMode = true
 
@@ -47,9 +47,13 @@ args = "bash -c \"source .env.backend && uvicorn main:app --host 0.0.0.0 --port 
 waitForPort = 8000
 
 [[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
 localPort = 8000
 externalPort = 8000
 
 [[ports]]
-localPort = 40621
-externalPort = 80
+localPort = 33461
+externalPort = 3000
