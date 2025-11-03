@@ -465,7 +465,7 @@ function AuthScreen({ navigation, api, theme }) {
     setErrors(e);
     if (Object.keys(e).length) return;
 
-    const { ok, error } = await api.register({
+    const { ok, error, data } = await api.register({
       username: form.username,
       name: form.name,
       age: ageNum,
@@ -473,9 +473,12 @@ function AuthScreen({ navigation, api, theme }) {
       password: form.password,
     });
     if (!ok) return Alert.alert('Registratie mislukt', error);
-    Alert.alert('Registratie gelukt', 'Account is aangemaakt.');
-    await handleLogin();
-  }, [api, form, handleLogin]);
+    Alert.alert(
+      'Registratie gelukt! 📧', 
+      data?.message || 'Een verificatiemail is verzonden. Controleer je inbox en klik op de link om je account te activeren.',
+      [{ text: 'OK', onPress: () => setIsLogin(true) }]
+    );
+  }, [api, form]);
 
   const LOGO_TRANSPARENT = 'https://i.imgur.com/hEpZh82.png';
   return (
