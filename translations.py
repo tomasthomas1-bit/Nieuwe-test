@@ -15,6 +15,7 @@ Het Athlo Team
         "email_verified": "E-mailadres succesvol bevestigd.",
         "email_already_verified": "Gebruiker is al geverifieerd.",
         "email_sent": "Verificatiemail verzonden. Controleer je inbox.",
+        "email_not_verified": "Je e-mailadres is nog niet geverifieerd. Controleer je inbox voor de verificatielink.",
 
         # --- API keys (NL) ---
         "ok": "OK",
@@ -69,6 +70,7 @@ The Athlo Team
         "email_verified": "Email address successfully verified.",
         "email_already_verified": "User is already verified.",
         "email_sent": "Verification email sent. Please check your inbox.",
+        "email_not_verified": "Your email address is not yet verified. Please check your inbox for the verification link.",
 
         # --- API keys (EN) ---
         "ok": "OK",
@@ -123,6 +125,7 @@ L'équipe Athlo
         "email_verified": "Adresse e-mail confirmée avec succès.",
         "email_already_verified": "L'utilisateur est déjà vérifié.",
         "email_sent": "E-mail de vérification envoyé. Veuillez vérifier votre boîte de réception.",
+        "email_not_verified": "Votre adresse e-mail n'est pas encore vérifiée. Veuillez vérifier votre boîte de réception pour le lien de vérification.",
 
         # --- API keys (FR) ---
         "ok": "OK",
@@ -177,6 +180,7 @@ Das Athlo-Team
         "email_verified": "E-Mail-Adresse erfolgreich bestätigt.",
         "email_already_verified": "Benutzer ist bereits verifiziert.",
         "email_sent": "Bestätigungs-E-Mail gesendet. Bitte überprüfen Sie Ihren Posteingang.",
+        "email_not_verified": "Ihre E-Mail-Adresse ist noch nicht bestätigt. Bitte überprüfen Sie Ihren Posteingang für den Bestätigungslink.",
 
         # --- API keys (DE) ---
         "ok": "OK",

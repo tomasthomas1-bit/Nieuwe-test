@@ -739,7 +739,7 @@ async def login_for_access_token(
     conn, c = db
     try:
         c.execute(
-            "SELECT password_hash, COALESCE(language,'nl') FROM users WHERE username = %s AND deleted_at IS NULL",
+            "SELECT password_hash, COALESCE(language,'nl'), is_verified FROM users WHERE username = %s AND deleted_at IS NULL",
             (form_data.username,),
         )
         row = c.fetchone()
@@ -748,6 +748,12 @@ async def login_for_access_token(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=t("incorrect_credentials", get_lang({"language": lang_guess})),
+            )
+        is_verified = row[2] if len(row) > 2 else False
+        if not is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=t("email_not_verified", get_lang({"language": lang_guess})),
             )
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(data={"sub": form_data.username}, expires_delta=access_token_expires)
