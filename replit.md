@@ -222,11 +222,55 @@ Complete redesign of the DiscoverScreen component to match the Athlo brand desig
 - Brand-focused header reinforces Athlo identity
 - Dark theme with vibrant accent colors (blue, green, orange) creates energetic feel
 
+### Static File Serving (main.py)
+
+**Profile Photos & Images:**
+- Added FastAPI StaticFiles mount at `/static` endpoint
+- Serves images from `attached_assets/stock_images/` directory
+- Images accessible via: `https://backend-url/static/<filename>.jpg`
+- CORS configured to allow Expo Snack to fetch images
+- 20 stock sports/fitness photos added for test users
+
+**Implementation:**
+- Imported `StaticFiles` from `fastapi.staticfiles`
+- Mounted static directory after CORS middleware
+- Directory path resolved using `os.path.join` for Replit compatibility
+- Automatic logging on successful mount or missing directory warning
+
+### Test Users & Data
+
+**10 Test Users Created:**
+All users have password: `Test123!`
+
+| Username | Name | Age | Sport | Profile Photos |
+|----------|------|-----|-------|----------------|
+| sofia27 | Sofia | 27 | Running & Cycling | 2 photos |
+| marco_athlete | Marco | 32 | CrossFit | 2 photos |
+| emma_yoga | Emma | 24 | Yoga & Hiking | 2 photos |
+| lucas_bike | Lucas | 29 | Mountain Biking | 2 photos |
+| nina_swim | Nina | 26 | Triathlon | 2 photos |
+| david_tennis | David | 35 | Tennis | 2 photos |
+| lisa_climb | Lisa | 28 | Rock Climbing | 2 photos |
+| alex_soccer | Alex | 30 | Soccer | 2 photos |
+| mia_fitness | Mia | 23 | Fitness Coaching | 2 photos |
+| ryan_runner | Ryan | 31 | Marathon Running | 2 photos |
+
+**Photo Details:**
+- Each user has 1 profile picture (is_profile_pic=1) + 1 additional photo
+- All photos are sport/activity-specific stock images
+- Images served via `/static` endpoint from backend
+- Photos display correctly in suggestions and user profiles
+
 ### Configuration
 
 **Backend URL for External Clients:**
 ```
 https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000
+```
+
+**Static Images URL Pattern:**
+```
+https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev:8000/static/<filename>.jpg
 ```
 
 **Expo Snack Configuration:**

@@ -34,6 +34,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 from haversine import Unit, haversine
 from jose import JWTError, jwt
 from psycopg2.pool import ThreadedConnectionPool
@@ -126,6 +127,15 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# ------------------------- Static Files ----------------------------
+# Mount static files to serve profile photos
+static_dir = os.path.join(os.path.dirname(__file__), "attached_assets", "stock_images")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+    logger.info("Static files mounted at /static from %s", static_dir)
+else:
+    logger.warning("Static images directory not found: %s", static_dir)
 
 # ------------------------- DB Pool & Helpers -----------------------
 pool: Optional[ThreadedConnectionPool] = None
