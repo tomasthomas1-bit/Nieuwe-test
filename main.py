@@ -151,11 +151,20 @@ class DB:
         if pool is None:
             raise RuntimeError("DB pool is niet geïnitialiseerd.")
         self.conn = pool.getconn()
-        self.cur = self.conn.cursor()
-        # Belangrijk: forceer schema-resolutie naar 'public'
-        # Zo voorkom je dat PostgreSQL eerst in "$user"-schema zoekt (search_path = "$user", public)
-        self.cur.execute("SET search_path TO public;")
-        return self.conn, self.cur
+        try:
+            self.cur = self.conn.cursor()
+            self.cur.execute("SET search_path TO public;")
+            return self.conn, self.cur
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            logger.warning(f"Stale connection detected, getting fresh connection: {e}")
+            try:
+                pool.putconn(self.conn, close=True)
+            except Exception:
+                pass
+            self.conn = pool.getconn()
+            self.cur = self.conn.cursor()
+            self.cur.execute("SET search_path TO public;")
+            return self.conn, self.cur
     def __exit__(self, exc_type, exc, tb):
         try:
             if exc:
