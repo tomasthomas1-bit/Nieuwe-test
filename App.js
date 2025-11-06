@@ -59,7 +59,8 @@ const translations = {
     coaching: 'coaching', any: 'elk', male: 'man', female: 'vrouw', non_binary: 'non-binair',
     profileSettings: 'Profielinstellingen', language: 'Taal / Language',
     ageRange18to99: 'Leeftijd moet tussen 18 en 99 zijn', nameRequired: 'Naam is verplicht',
-    allFieldsRequired: 'Alle velden zijn verplicht', passwordMin6: 'Wachtwoord min 6 tekens',
+    allFieldsRequired: 'Alle velden zijn verplicht', passwordMin6: 'Wachtwoord min 8 tekens',
+    findYourFit: 'Vind je sportmaatje.',
     verificationSent: 'Een verificatiemail is verzonden. Controleer je inbox en klik op de link om je account te activeren.',
     enterVerificationCode: 'Voer de verificatiecode in uit je e-mail',
     code: 'Code', verify: 'Verifiëren', resendCode: 'Code opnieuw versturen',
@@ -82,7 +83,8 @@ const translations = {
     coaching: 'coaching', any: 'any', male: 'male', female: 'female', non_binary: 'non-binary',
     profileSettings: 'Profile Settings', language: 'Language / Taal',
     ageRange18to99: 'Age must be between 18 and 99', nameRequired: 'Name is required',
-    allFieldsRequired: 'All fields are required', passwordMin6: 'Password min 6 chars',
+    allFieldsRequired: 'All fields are required', passwordMin6: 'Password min 8 chars',
+    findYourFit: 'Find your fit.',
     verificationSent: 'A verification email has been sent. Check your inbox and click the link to activate your account.',
     enterVerificationCode: 'Enter the verification code from your email',
     code: 'Code', verify: 'Verify', resendCode: 'Resend Code',
@@ -105,7 +107,8 @@ const translations = {
     coaching: 'coaching', any: 'tout', male: 'homme', female: 'femme', non_binary: 'non-binaire',
     profileSettings: 'Paramètres du profil', language: 'Langue / Language',
     ageRange18to99: 'L\'âge doit être entre 18 et 99', nameRequired: 'Le nom est requis',
-    allFieldsRequired: 'Tous les champs sont requis', passwordMin6: 'Mot de passe min 6 caractères',
+    allFieldsRequired: 'Tous les champs sont requis', passwordMin6: 'Mot de passe min 8 caractères',
+    findYourFit: 'Trouvez votre partenaire.',
     verificationSent: 'Un email de vérification a été envoyé. Vérifiez votre boîte de réception.',
     enterVerificationCode: 'Entrez le code de vérification de votre email',
     code: 'Code', verify: 'Vérifier', resendCode: 'Renvoyer le code',
@@ -128,7 +131,8 @@ const translations = {
     coaching: 'Coaching', any: 'alle', male: 'Mann', female: 'Frau', non_binary: 'nicht-binär',
     profileSettings: 'Profileinstellungen', language: 'Sprache / Language',
     ageRange18to99: 'Alter muss zwischen 18 und 99 liegen', nameRequired: 'Name ist erforderlich',
-    allFieldsRequired: 'Alle Felder sind erforderlich', passwordMin6: 'Passwort mind. 6 Zeichen',
+    allFieldsRequired: 'Alle Felder sind erforderlich', passwordMin6: 'Passwort mind. 8 Zeichen',
+    findYourFit: 'Finde deinen Sportpartner.',
     verificationSent: 'Eine Verifizierungs-E-Mail wurde gesendet. Überprüfen Sie Ihren Posteingang.',
     enterVerificationCode: 'Geben Sie den Verifizierungscode aus Ihrer E-Mail ein',
     code: 'Code', verify: 'Verifizieren', resendCode: 'Code erneut senden',
@@ -151,7 +155,8 @@ const translations = {
     coaching: 'coaching', any: 'cualquiera', male: 'hombre', female: 'mujer', non_binary: 'no binario',
     profileSettings: 'Ajustes del perfil', language: 'Idioma / Language',
     ageRange18to99: 'La edad debe estar entre 18 y 99', nameRequired: 'El nombre es obligatorio',
-    allFieldsRequired: 'Todos los campos son obligatorios', passwordMin6: 'Contraseña mín 6 caracteres',
+    allFieldsRequired: 'Todos los campos son obligatorios', passwordMin6: 'Contraseña mín 8 caracteres',
+    findYourFit: 'Encuentra tu compañero.',
     verificationSent: 'Se ha enviado un correo de verificación. Revisa tu bandeja de entrada.',
     enterVerificationCode: 'Ingresa el código de verificación de tu correo',
     code: 'Código', verify: 'Verificar', resendCode: 'Reenviar código',
@@ -174,7 +179,8 @@ const translations = {
     coaching: 'coaching', any: 'qualsiasi', male: 'uomo', female: 'donna', non_binary: 'non binario',
     profileSettings: 'Impostazioni profilo', language: 'Lingua / Language',
     ageRange18to99: 'L\'età deve essere tra 18 e 99', nameRequired: 'Il nome è obbligatorio',
-    allFieldsRequired: 'Tutti i campi sono obbligatori', passwordMin6: 'Password min 6 caratteri',
+    allFieldsRequired: 'Tutti i campi sono obbligatori', passwordMin6: 'Password min 8 caratteri',
+    findYourFit: 'Trova il tuo compagno.',
     verificationSent: 'È stata inviata un\'email di verifica. Controlla la tua casella di posta.',
     enterVerificationCode: 'Inserisci il codice di verifica dalla tua email',
     code: 'Codice', verify: 'Verifica', resendCode: 'Invia di nuovo',
@@ -197,7 +203,8 @@ const translations = {
     coaching: 'coaching', any: 'qualquer', male: 'homem', female: 'mulher', non_binary: 'não-binário',
     profileSettings: 'Configurações do perfil', language: 'Idioma / Language',
     ageRange18to99: 'A idade deve estar entre 18 e 99', nameRequired: 'O nome é obrigatório',
-    allFieldsRequired: 'Todos os campos são obrigatórios', passwordMin6: 'Senha mín 6 caracteres',
+    allFieldsRequired: 'Todos os campos são obrigatórios', passwordMin6: 'Senha mín 8 caracteres',
+    findYourFit: 'Encontre seu parceiro.',
     verificationSent: 'Um email de verificação foi enviado. Verifique sua caixa de entrada.',
     enterVerificationCode: 'Digite o código de verificação do seu email',
     code: 'Código', verify: 'Verificar', resendCode: 'Reenviar código',
@@ -205,6 +212,18 @@ const translations = {
 };
 
 const LanguageContext = createContext({ lang: 'nl', setLang: () => {}, t: (key) => key });
+
+function LanguageProvider({ children }) {
+  const [lang, setLang] = useState('nl');
+  
+  const t = useCallback((key) => {
+    return translations[lang]?.[key] || key;
+  }, [lang]);
+  
+  const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
+  
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}
 
 /* ================= THEME CONTEXT ================= */
 const ThemeContext = createContext(null);
@@ -599,6 +618,7 @@ const Tabs = createBottomTabNavigator();
 
 /* ---- AuthScreen ---- */
 function AuthScreen({ navigation, api, theme }) {
+  const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [isLogin, setIsLogin] = useState(true);
   const [form, setForm] = useState({
@@ -614,21 +634,21 @@ function AuthScreen({ navigation, api, theme }) {
   const handleLogin = useCallback(async () => {
     const { ok, error } = await api.login(form.username, form.password);
     if (ok) {
-      Alert.alert('Login gelukt', 'Je bent ingelogd.');
+      Alert.alert(t('login'), t('login'));
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } else {
-      Alert.alert('Login mislukt', error);
+      Alert.alert(t('login'), error);
     }
-  }, [api, form.username, form.password, navigation]);
+  }, [api, form.username, form.password, navigation, t]);
 
   const handleRegister = useCallback(async () => {
     const e = {};
     ['username', 'name', 'age', 'password'].forEach((r) => {
-      if (!form[r] || String(form[r]).trim() === '') e[r] = 'Verplicht veld';
+      if (!form[r] || String(form[r]).trim() === '') e[r] = t('allFieldsRequired');
     });
     const ageNum = parseInt(form.age, 10);
-    if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) e.age = 'Leeftijd moet tussen 18 en 99 zijn';
-    if ((form.password ?? '').length < 8) e.password = 'Minimaal 8 karakters';
+    if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) e.age = t('ageRange18to99');
+    if ((form.password ?? '').length < 8) e.password = t('passwordMin6');
     setErrors(e);
     if (Object.keys(e).length) return;
 
@@ -639,24 +659,24 @@ function AuthScreen({ navigation, api, theme }) {
       bio: form.bio,
       password: form.password,
     });
-    if (!ok) return Alert.alert('Registratie mislukt', error);
+    if (!ok) return Alert.alert(t('register'), error);
     Alert.alert(
-      'Registratie gelukt! 📧', 
-      data?.message || 'Een verificatiemail is verzonden. Controleer je inbox en klik op de link om je account te activeren.',
+      t('register'), 
+      data?.message || t('verificationSent'),
       [{ text: 'OK', onPress: () => setIsLogin(true) }]
     );
-  }, [api, form]);
+  }, [api, form, t]);
 
   const LOGO_TRANSPARENT = 'https://i.imgur.com/hEpZh82.png';
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.color.surface }}>
       <ScrollView contentContainerStyle={styles.authContainer}>
         <LogoBox theme={theme} uri={LOGO_TRANSPARENT} size={120} />
-        <Text style={styles.authTitle}>{isLogin ? 'Inloggen' : 'Registreren'}</Text>
+        <Text style={styles.authTitle}>{isLogin ? t('login') : t('register')}</Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Gebruikersnaam"
+          placeholder={t('username')}
           value={form.username}
           onChangeText={(v) => set('username', v)}
           autoCapitalize="none"
@@ -668,7 +688,7 @@ function AuthScreen({ navigation, api, theme }) {
           <>
             <TextInput
               style={styles.input}
-              placeholder="Naam"
+              placeholder={t('name')}
               value={form.name}
               onChangeText={(v) => set('name', v)}
               placeholderTextColor={theme.color.textSecondary}
@@ -677,7 +697,7 @@ function AuthScreen({ navigation, api, theme }) {
 
             <TextInput
               style={styles.input}
-              placeholder="Leeftijd"
+              placeholder={t('age')}
               keyboardType="numeric"
               value={form.age}
               onChangeText={(v) => set('age', v)}
@@ -687,7 +707,7 @@ function AuthScreen({ navigation, api, theme }) {
 
             <TextInput
               style={styles.input}
-              placeholder="Bio"
+              placeholder={t('bio')}
               value={form.bio}
               onChangeText={(v) => set('bio', v)}
               placeholderTextColor={theme.color.textSecondary}
@@ -697,7 +717,7 @@ function AuthScreen({ navigation, api, theme }) {
 
         <TextInput
           style={styles.input}
-          placeholder="Wachtwoord"
+          placeholder={t('password')}
           secureTextEntry
           autoCapitalize="none"
           value={form.password}
@@ -707,12 +727,12 @@ function AuthScreen({ navigation, api, theme }) {
         {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
 
         <TouchableOpacity onPress={isLogin ? handleLogin : handleRegister} style={styles.primaryBtn}>
-          <Text style={styles.primaryBtnText}>{isLogin ? 'Inloggen' : 'Registreren'}</Text>
+          <Text style={styles.primaryBtnText}>{isLogin ? t('login') : t('register')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={{ marginTop: theme.gap.m }}>
           <Text style={styles.switchText}>
-            {isLogin ? 'Nog geen account? Registreer hier.' : 'Heb je al een account? Log in.'}
+            {isLogin ? t('login') : t('register')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -722,6 +742,7 @@ function AuthScreen({ navigation, api, theme }) {
 
 /* ---- DiscoverScreen ---- */
 function DiscoverScreen({ api, theme, user }) {
+  const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [suggestions, setSuggestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -754,7 +775,7 @@ function DiscoverScreen({ api, theme, user }) {
       setCurrentIndex(0);
       return newSuggestions;
     } catch (e) {
-      Alert.alert('Fout bij ophalen suggesties', e.message);
+      Alert.alert(t('discover'), e.message);
       return [];
     } finally {
       setLoading(false);
@@ -782,7 +803,7 @@ function DiscoverScreen({ api, theme, user }) {
       if (!res.ok) throw new Error(data?.detail || 'Fout');
       
       if (data.match) {
-        Alert.alert('It\'s a Match! 🎉', `Je hebt een match met ${currentUser.name}!`);
+        Alert.alert(t('itsAMatch'), `${currentUser.name}!`);
       }
       
       const nextIndex = idx + 1;
@@ -794,7 +815,7 @@ function DiscoverScreen({ api, theme, user }) {
         await load();
       }
     } catch (e) {
-      Alert.alert('Fout bij swipen', e.message);
+      Alert.alert(t('discover'), e.message);
       setSwiping(false);
     }
   }, [api, swiping, loading, load]);
@@ -819,7 +840,7 @@ function DiscoverScreen({ api, theme, user }) {
             </View>
           </View>
           <Text style={styles.athloText}>athlo</Text>
-          <Text style={styles.tagline}>Find your fit.</Text>
+          <Text style={styles.tagline}>{t('findYourFit')}</Text>
         </View>
 
         <View style={styles.headerRight}>
@@ -832,17 +853,17 @@ function DiscoverScreen({ api, theme, user }) {
 
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Workouts</Text>
+          <Text style={styles.statLabel}>{t('workouts')}</Text>
           <Text style={styles.statValue}>{stats.workouts}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Distance</Text>
+          <Text style={styles.statLabel}>{t('distance')}</Text>
           <Text style={styles.statValue}>{stats.distance} km</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Hours</Text>
+          <Text style={styles.statLabel}>{t('hours')}</Text>
           <Text style={styles.statValue}>{stats.hours}</Text>
         </View>
       </View>
@@ -855,11 +876,11 @@ function DiscoverScreen({ api, theme, user }) {
         <View style={styles.swipeCardContainer}>
           <EmptyState
             theme={theme}
-            title="Geen suggesties meer"
-            subtitle="Kom later terug voor meer matches!"
+            title={t('noMoreProfiles')}
+            subtitle={t('noMoreProfiles')}
           />
           <TouchableOpacity style={styles.reloadBtn} onPress={load}>
-            <Text style={styles.reloadBtnText}>Opnieuw laden</Text>
+            <Text style={styles.reloadBtnText}>{t('discover')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -1047,6 +1068,7 @@ const BLOCKS = Object.freeze([
 /* ================= SETTINGS (PROFIEL) ================= */
 function SettingsScreen({ api }) {
   const { theme, mode, setUserMode, preset, setUserPreset } = useContext(ThemeContext);
+  const { t, setLang } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Herbruikbare Chip
@@ -1153,11 +1175,15 @@ function SettingsScreen({ api }) {
         name: data?.name ?? '',
         age: data?.age != null ? String(data.age) : '',
         bio: data?.bio ?? '',
+        language: data?.language ?? 'nl',
       });
+      if (data?.language) {
+        setLang(data.language);
+      }
     } catch (e) {
       setProfileError(e.message);
     }
-  }, [api]);
+  }, [api, setLang]);
 
   useEffect(() => { loadProfile(); }, [loadProfile]);
 
@@ -1380,18 +1406,18 @@ function SettingsScreen({ api }) {
       </View>
 
       {/* PROFIEL (naam, leeftijd, bio) */}
-      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Profiel</Text>
+      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('profile')}</Text>
       <View style={[styles.card, { gap: 10 }]}>
         <TextInput
           style={styles.input}
-          placeholder="Naam"
+          placeholder={t('name')}
           placeholderTextColor={theme.color.textSecondary}
           value={profile.name}
           onChangeText={(v) => setProfileField('name', v)}
         />
         <TextInput
           style={styles.input}
-          placeholder="Leeftijd"
+          placeholder={t('age')}
           keyboardType="numeric"
           placeholderTextColor={theme.color.textSecondary}
           value={profile.age}
@@ -1399,7 +1425,7 @@ function SettingsScreen({ api }) {
         />
         <TextInput
           style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-          placeholder="Bio"
+          placeholder={t('bio')}
           multiline
           placeholderTextColor={theme.color.textSecondary}
           value={profile.bio}
@@ -1409,12 +1435,12 @@ function SettingsScreen({ api }) {
           <Text style={{ color: theme.color.danger, fontFamily: theme.font.bodyFamily }}>{profileError}</Text>
         ) : null}
         <TouchableOpacity onPress={saveProfile} style={[styles.primaryBtn, { marginTop: theme.gap.s }]}>
-          <Text style={styles.primaryBtnText}>Profiel opslaan</Text>
+          <Text style={styles.primaryBtnText}>{t('saveProfile')}</Text>
         </TouchableOpacity>
       </View>
 
       {/* FOTO'S */}
-      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Foto's</Text>
+      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('photos')}</Text>
       <View style={[styles.card, { gap: 10 }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
           {photos.map((p) => (
@@ -1483,22 +1509,22 @@ function SettingsScreen({ api }) {
         <ActivityIndicator style={{ margin: 16 }} />
       ) : (
         <>
-          <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Profielinstellingen</Text>
-          <Text style={{ marginBottom: 8 }}>Match‑doel</Text>
+          <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('profileSettings')}</Text>
+          <Text style={{ marginBottom: 8 }}>{t('matchGoal')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {['friendship', 'training_partner', 'competition', 'coaching'].map((goal) => (
-              <Chip key={goal} label={goal} active={settings.match_goal === goal} onPress={() => updateField('match_goal', goal)} />
+              <Chip key={goal} label={t(goal)} active={settings.match_goal === goal} onPress={() => updateField('match_goal', goal)} />
             ))}
           </View>
 
-          <Text style={{ marginTop: 16, marginBottom: 8 }}>Voorkeur geslacht</Text>
+          <Text style={{ marginTop: 16, marginBottom: 8 }}>{t('preferredGender')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {['any', 'male', 'female', 'non_binary'].map((gender) => (
-              <Chip key={gender} label={gender} active={settings.preferred_gender === gender} onPress={() => updateField('preferred_gender', gender)} />
+              <Chip key={gender} label={t(gender)} active={settings.preferred_gender === gender} onPress={() => updateField('preferred_gender', gender)} />
             ))}
           </View>
 
-          <Text style={{ marginTop: 16 }}>Maximale afstand (km)</Text>
+          <Text style={{ marginTop: 16 }}>{t('maxDistance')}</Text>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -1511,8 +1537,42 @@ function SettingsScreen({ api }) {
             placeholderTextColor={theme.color.textSecondary}
           />
 
+          <Text style={{ marginTop: 16 }}>{t('minAge')}</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(settings.preferred_min_age ?? '')}
+            onChangeText={(v) => {
+              const n = parseInt(v, 10);
+              if (Number.isFinite(n) && n >= 18 && n <= 99) {
+                updateField('preferred_min_age', n);
+              } else if (v === '') {
+                updateField('preferred_min_age', null);
+              }
+            }}
+            placeholder="18"
+            placeholderTextColor={theme.color.textSecondary}
+          />
+
+          <Text style={{ marginTop: 16 }}>{t('maxAge')}</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={String(settings.preferred_max_age ?? '')}
+            onChangeText={(v) => {
+              const n = parseInt(v, 10);
+              if (Number.isFinite(n) && n >= 18 && n <= 99) {
+                updateField('preferred_max_age', n);
+              } else if (v === '') {
+                updateField('preferred_max_age', null);
+              }
+            }}
+            placeholder="99"
+            placeholderTextColor={theme.color.textSecondary}
+          />
+
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 16 }}>
-            <Text style={{ flex: 1 }}>Pushmeldingen</Text>
+            <Text style={{ flex: 1 }}>{t('notifications')}</Text>
             <Switch
               value={!!settings.notifications_enabled}
               onValueChange={(v) => updateField('notifications_enabled', v)}
@@ -1520,7 +1580,7 @@ function SettingsScreen({ api }) {
           </View>
 
           <TouchableOpacity onPress={saveSettings} style={[styles.primaryBtn, { marginTop: theme.gap.m }]}>
-            <Text style={styles.primaryBtnText}>Instellingen opslaan</Text>
+            <Text style={styles.primaryBtnText}>{t('saveSettings')}</Text>
           </TouchableOpacity>
         </>
       )}
@@ -1528,7 +1588,7 @@ function SettingsScreen({ api }) {
       {/* Uitloggen */}
       <View style={{ height: theme.gap.l }} />
       <TouchableOpacity onPress={handleLogout} style={[styles.primaryBtn, { backgroundColor: theme.color.danger }]}>
-        <Text style={styles.primaryBtnText}>Uitloggen</Text>
+        <Text style={styles.primaryBtnText}>{t('logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -1538,11 +1598,30 @@ function SettingsScreen({ api }) {
 function AppContent() {
   const api = useApi();
   const { theme } = useContext(ThemeContext);
+  const { setLang } = useContext(LanguageContext);
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_600SemiBold,
     Montserrat_700Bold,
   });
+
+  // Load user's language preference on startup
+  useEffect(() => {
+    if (api.isAuthenticated && api.userId) {
+      (async () => {
+        try {
+          const res = await api.authFetch('/me');
+          const data = await res.json().catch(() => null);
+          if (data?.language && data.language !== '') {
+            setLang(data.language);
+          }
+        } catch (e) {
+          // Silent fail - language will default to 'nl'
+        }
+      })();
+    }
+  }, [api.isAuthenticated, api.userId, api.authFetch, setLang]);
+
   if (!fontsLoaded) return null;
 
   const headerOptions = {
@@ -1623,6 +1702,7 @@ function AppContent() {
 
 /* ================= TABS ================= */
 function MainTabs({ api, theme }) {
+  const { t } = useContext(LanguageContext);
   const tabHeader = {
     headerBackground: () => (
       <LinearGradient
@@ -1687,13 +1767,13 @@ function MainTabs({ api, theme }) {
         },
       })}
     >
-      <Tabs.Screen name="Ontdekken" options={{ title: 'Ontdekken' }}>
+      <Tabs.Screen name="Ontdekken" options={{ title: t('discover') }}>
         {(props) => <DiscoverScreen {...props} api={api} theme={theme} user={{ profile_photo_url: profilePhotoUrl }} />}
       </Tabs.Screen>
-      <Tabs.Screen name="Matches" options={{ title: 'Matches' }}>
+      <Tabs.Screen name="Matches" options={{ title: t('matches') }}>
         {(props) => <MatchesScreen {...props} api={api} theme={theme} />}
       </Tabs.Screen>
-      <Tabs.Screen name="Profiel" options={{ title: 'Profiel' }}>
+      <Tabs.Screen name="Profiel" options={{ title: t('profile') }}>
         {(props) => <SettingsScreen {...props} api={api} />}
       </Tabs.Screen>
     </Tabs.Navigator>
@@ -2294,6 +2374,7 @@ const createStyles = (THEME) => StyleSheet.create({
 
 /* ---- MatchesScreen ---- */
 function MatchesScreen({ api, theme, navigation }) {
+  const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -2303,10 +2384,10 @@ function MatchesScreen({ api, theme, navigation }) {
       setLoading(true);
       const res = await api.authFetch('/matches');
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.detail ?? 'Kon matches niet laden');
+      if (!res.ok) throw new Error(data?.detail ?? t('matches'));
       setMatches(Array.isArray(data?.matches) ? data.matches : []);
     } catch (e) {
-      Alert.alert('Matches', e.message);
+      Alert.alert(t('matches'), e.message);
     } finally {
       setLoading(false);
     }
@@ -2317,17 +2398,17 @@ function MatchesScreen({ api, theme, navigation }) {
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
       <View style={styles.rowBetween}>
-        <Text style={styles.sectionTitle}>Matches</Text>
+        <Text style={styles.sectionTitle}>{t('matches')}</Text>
         <TouchableOpacity onPress={load} style={styles.ghostBtn}>
-          <Text style={styles.ghostBtnText}>Vernieuw</Text>
+          <Text style={styles.ghostBtnText}>{t('discover')}</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? <LoaderBar theme={theme} /> : null}
 
       {(!matches || matches.length === 0) ? (
-        <EmptyState theme={theme} title="Nog geen matches"
-          subtitle="Ga naar Ontdekken en like iemand terug om te matchen." />
+        <EmptyState theme={theme} title={t('matches')}
+          subtitle={t('discover')} />
       ) : (
         <View style={styles.listCard}>
           {matches.map((m, idx) => (
@@ -2383,8 +2464,10 @@ function RouteScreen({ route, theme }) {
 /* ================= APP EXPORT ================= */
 export default function App() {
   return (
-    <ThemeProvider makeBaseTheme={makeBaseTheme}>
-      <AppContent />
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider makeBaseTheme={makeBaseTheme}>
+        <AppContent />
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
