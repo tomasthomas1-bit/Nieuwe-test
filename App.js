@@ -55,6 +55,9 @@ const translations = {
     saveSettings: 'Instellingen opslaan', settingsSaved: 'Instellingen opgeslagen!', saveProfile: 'Profiel opslaan', photos: 'Foto\'s',
     uploadPhoto: 'Upload foto', setAsProfile: 'Als profielfoto', deletePhoto: 'Verwijder',
     availability: 'Beschikbaarheid', saveAvailability: 'Beschikbaarheden opslaan',
+    availabilities: 'Beschikbaarheden', availabilitySaved: 'Opgeslagen',
+    addViaUrl: 'Voeg toe via URL', notSupported: 'Niet ondersteund',
+    addViaUrlMessage: '"Voeg toe via URL" is beschikbaar op web en iOS. Voeg voorlopig foto\'s toe via toestel-upload of web.',
     friendship: 'vriendschap', training_partner: 'trainingspartner', competition: 'competitie',
     coaching: 'coaching', any: 'elk', male: 'man', female: 'vrouw', non_binary: 'non-binair',
     profileSettings: 'Profielinstellingen', language: 'Taal / Language',
@@ -89,6 +92,9 @@ const translations = {
     saveSettings: 'Save Settings', settingsSaved: 'Settings saved!', saveProfile: 'Save Profile', photos: 'Photos',
     uploadPhoto: 'Upload photo', setAsProfile: 'Set as profile', deletePhoto: 'Delete',
     availability: 'Availability', saveAvailability: 'Save Availability',
+    availabilities: 'Availabilities', availabilitySaved: 'Saved',
+    addViaUrl: 'Add via URL', notSupported: 'Not supported',
+    addViaUrlMessage: '"Add via URL" is available on web and iOS. For now, add photos via device upload or web.',
     friendship: 'friendship', training_partner: 'training partner', competition: 'competition',
     coaching: 'coaching', any: 'any', male: 'male', female: 'female', non_binary: 'non-binary',
     profileSettings: 'Profile Settings', language: 'Language / Taal',
@@ -123,6 +129,9 @@ const translations = {
     saveSettings: 'Enregistrer', settingsSaved: 'Paramètres enregistrés!', saveProfile: 'Enregistrer le profil', photos: 'Photos',
     uploadPhoto: 'Télécharger photo', setAsProfile: 'Définir comme profil', deletePhoto: 'Supprimer',
     availability: 'Disponibilité', saveAvailability: 'Enregistrer',
+    availabilities: 'Disponibilités', availabilitySaved: 'Enregistré',
+    addViaUrl: 'Ajouter via URL', notSupported: 'Non supporté',
+    addViaUrlMessage: '"Ajouter via URL" est disponible sur web et iOS. Pour l\'instant, ajoutez des photos via le téléchargement depuis l\'appareil ou le web.',
     friendship: 'amitié', training_partner: 'partenaire d\'entraînement', competition: 'compétition',
     coaching: 'coaching', any: 'tout', male: 'homme', female: 'femme', non_binary: 'non-binaire',
     profileSettings: 'Paramètres du profil', language: 'Langue / Language',
@@ -157,6 +166,9 @@ const translations = {
     saveSettings: 'Einstellungen speichern', settingsSaved: 'Einstellungen gespeichert!', saveProfile: 'Profil speichern', photos: 'Fotos',
     uploadPhoto: 'Foto hochladen', setAsProfile: 'Als Profil', deletePhoto: 'Löschen',
     availability: 'Verfügbarkeit', saveAvailability: 'Verfügbarkeit speichern',
+    availabilities: 'Verfügbarkeiten', availabilitySaved: 'Gespeichert',
+    addViaUrl: 'Per URL hinzufügen', notSupported: 'Nicht unterstützt',
+    addViaUrlMessage: '"Per URL hinzufügen" ist auf Web und iOS verfügbar. Fügen Sie vorerst Fotos über Geräte-Upload oder Web hinzu.',
     friendship: 'Freundschaft', training_partner: 'Trainingspartner', competition: 'Wettbewerb',
     coaching: 'Coaching', any: 'alle', male: 'Mann', female: 'Frau', non_binary: 'nicht-binär',
     profileSettings: 'Profileinstellungen', language: 'Sprache / Language',
@@ -191,6 +203,9 @@ const translations = {
     saveSettings: 'Guardar ajustes', settingsSaved: '¡Ajustes guardados!', saveProfile: 'Guardar perfil', photos: 'Fotos',
     uploadPhoto: 'Subir foto', setAsProfile: 'Como perfil', deletePhoto: 'Eliminar',
     availability: 'Disponibilidad', saveAvailability: 'Guardar disponibilidad',
+    availabilities: 'Disponibilidades', availabilitySaved: 'Guardado',
+    addViaUrl: 'Añadir por URL', notSupported: 'No soportado',
+    addViaUrlMessage: '"Añadir por URL" está disponible en web e iOS. Por ahora, añade fotos mediante carga desde dispositivo o web.',
     friendship: 'amistad', training_partner: 'compañero de entrenamiento', competition: 'competición',
     coaching: 'coaching', any: 'cualquiera', male: 'hombre', female: 'mujer', non_binary: 'no binario',
     profileSettings: 'Ajustes del perfil', language: 'Idioma / Language',
@@ -225,6 +240,9 @@ const translations = {
     saveSettings: 'Salva impostazioni', settingsSaved: 'Impostazioni salvate!', saveProfile: 'Salva profilo', photos: 'Foto',
     uploadPhoto: 'Carica foto', setAsProfile: 'Come profilo', deletePhoto: 'Elimina',
     availability: 'Disponibilità', saveAvailability: 'Salva disponibilità',
+    availabilities: 'Disponibilità', availabilitySaved: 'Salvato',
+    addViaUrl: 'Aggiungi tramite URL', notSupported: 'Non supportato',
+    addViaUrlMessage: '"Aggiungi tramite URL" è disponibile su web e iOS. Per ora, aggiungi foto tramite caricamento dal dispositivo o web.',
     friendship: 'amicizia', training_partner: 'compagno di allenamento', competition: 'competizione',
     coaching: 'coaching', any: 'qualsiasi', male: 'uomo', female: 'donna', non_binary: 'non binario',
     profileSettings: 'Impostazioni profilo', language: 'Lingua / Language',
@@ -259,6 +277,9 @@ const translations = {
     saveSettings: 'Salvar configurações', settingsSaved: 'Configurações salvas!', saveProfile: 'Salvar perfil', photos: 'Fotos',
     uploadPhoto: 'Carregar foto', setAsProfile: 'Como perfil', deletePhoto: 'Excluir',
     availability: 'Disponibilidade', saveAvailability: 'Salvar disponibilidade',
+    availabilities: 'Disponibilidades', availabilitySaved: 'Salvo',
+    addViaUrl: 'Adicionar via URL', notSupported: 'Não suportado',
+    addViaUrlMessage: '"Adicionar via URL" está disponível na web e iOS. Por enquanto, adicione fotos através de upload do dispositivo ou web.',
     friendship: 'amizade', training_partner: 'parceiro de treino', competition: 'competição',
     coaching: 'coaching', any: 'qualquer', male: 'homem', female: 'mulher', non_binary: 'não-binário',
     profileSettings: 'Configurações do perfil', language: 'Idioma / Language',
@@ -1481,7 +1502,7 @@ function SettingsScreen({ api }) {
       return;
     }
 
-    Alert.alert('Niet ondersteund', '“Voeg toe via URL” is beschikbaar op web en iOS. Voeg voorlopig foto’s toe via toestel-upload of web.');
+    const t = tFunctionRef.current; Alert.alert(t('notSupported'), t('addViaUrlMessage'));
   }, [api, loadPhotos]);
 
   /* ---- Beschikbaarheden ---- */
@@ -1534,9 +1555,11 @@ function SettingsScreen({ api }) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.detail ?? 'Opslaan mislukt');
-      Alert.alert('Beschikbaarheden', 'Opgeslagen');
+      const t = tFunctionRef.current;
+      Alert.alert(t('availabilities'), t('availabilitySaved'));
     } catch (e) {
-      Alert.alert('Beschikbaarheden', e.message);
+      const t = tFunctionRef.current;
+      Alert.alert(t('availabilities'), e.message);
     }
   }, [api, availabilityGrid]);
 
@@ -1565,7 +1588,7 @@ function SettingsScreen({ api }) {
         <Chip label="WhatsApp" active={preset === 'whatsapp'} onPress={() => setUserPreset('whatsapp')} />
       </View>
 
-      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Taal / Language</Text>
+      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('language')}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
         {[
           { code: 'nl', label: 'Nederlands' },
@@ -1652,12 +1675,12 @@ function SettingsScreen({ api }) {
           ))}
         </ScrollView>
         <View style={{ flexDirection: 'row', gap: 10 }}>
-          <SmallChip theme={theme} color={theme.color.secondary} label="Voeg toe via URL" onPress={addPhotoByUrl} />
+          <SmallChip theme={theme} color={theme.color.secondary} label={t('addViaUrl')} onPress={addPhotoByUrl} />
         </View>
       </View>
 
       {/* BESCHIKBAARHEDEN */}
-      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>Beschikbaarheden</Text>
+      <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('availabilities')}</Text>
       <View style={[styles.card, { gap: 12 }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
           {DAY_LABELS.map((dLabel, d) => (
@@ -1689,7 +1712,7 @@ function SettingsScreen({ api }) {
           ))}
         </ScrollView>
         <TouchableOpacity onPress={saveAvailability} style={[styles.primaryBtn, { marginTop: theme.gap.s }]}>
-          <Text style={styles.primaryBtnText}>Beschikbaarheden opslaan</Text>
+          <Text style={styles.primaryBtnText}>{t('saveAvailability')}</Text>
         </TouchableOpacity>
       </View>
 
