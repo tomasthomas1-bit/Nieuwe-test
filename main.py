@@ -359,7 +359,7 @@ async def get_current_user(
 
     c.execute(
         """
-        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl')
+        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl'), latitude, longitude, city
         FROM users
         WHERE username = %s AND deleted_at IS NULL
         """,
@@ -378,6 +378,9 @@ async def get_current_user(
         "preferred_max_age": row[6],
         "strava_token": row[7],
         "language": row[8],
+        "latitude": row[9],
+        "longitude": row[10],
+        "city": row[11],
     }
 
 # ------------------------- Startup / Shutdown ----------------------
@@ -549,6 +552,9 @@ async def me(current_user: dict = Depends(get_current_user)):
         "age": current_user["age"],
         "bio": current_user["bio"],
         "language": current_user.get("language", "nl"),
+        "latitude": current_user.get("latitude"),
+        "longitude": current_user.get("longitude"),
+        "city": current_user.get("city"),
     }
 
 @app.patch("/users/{user_id}", response_model=UserPublic)

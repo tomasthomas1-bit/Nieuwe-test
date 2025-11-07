@@ -38,6 +38,7 @@ import {
   Montserrat_700Bold,
 } from '@expo-google-fonts/montserrat';
 import * as SecureStore from 'expo-secure-store';
+import * as Location from 'expo-location';
 
 /* ================= TRANSLATIONS ================= */
 const translations = {
@@ -1296,6 +1297,10 @@ function SettingsScreen({ api }) {
   const [profileError, setProfileError] = useState(null);
   const [ownId, setOwnId] = useState(null);
   
+  // Location state
+  const [location, setLocation] = useState({ latitude: null, longitude: null, city: null });
+  const [locationLoading, setLocationLoading] = useState(false);
+  
   // Language state (separate from profile for clarity)
   const [selectedLanguage, setSelectedLanguage] = useState('nl');
   
@@ -1321,6 +1326,14 @@ function SettingsScreen({ api }) {
         age: data?.age != null ? String(data.age) : '',
         bio: data?.bio ?? '',
       });
+      // Load location if available
+      if (data?.latitude && data?.longitude) {
+        setLocation({
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.city || null,
+        });
+      }
       // Only update language if user hasn't manually changed it
       if (data?.language && !languageDirtyRef.current) {
         setSelectedLanguage(data.language);
@@ -1463,6 +1476,60 @@ function SettingsScreen({ api }) {
       setProfileError(e.message);
     }
   }, [api, ownId, validateAndBuildProfilePayload, loadProfile]);
+
+  /* ---- Location ---- */
+  const getCurrentLocation = useCallback(async () => {
+    try {
+      setLocationLoading(true);
+      
+      // Request foreground permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(t('locationPermissionDenied'), t('locationPermissionDeniedMessage'));
+        return;
+      }
+
+      // Get current position
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      const { latitude, longitude } = currentLocation.coords;
+      
+      // Reverse geocoding to get city name
+      let city = null;
+      try {
+        const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
+        if (addresses && addresses.length > 0) {
+          city = addresses[0].city || addresses[0].subregion || addresses[0].region;
+        }
+      } catch (e) {
+        if (__DEV__) console.debug('Reverse geocoding failed', e);
+      }
+      
+      setLocation({ latitude, longitude, city });
+      
+      // Save location to backend
+      const uid = ownId ?? api.userId;
+      if (uid) {
+        const res = await api.authFetch(`/users/${uid}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ latitude, longitude, city }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.detail ?? t('locationError'));
+        }
+        Alert.alert(t('location'), t('locationSaved'));
+      }
+    } catch (e) {
+      Alert.alert(t('locationError'), e.message || t('locationNotAvailable'));
+    } finally {
+      setLocationLoading(false);
+    }
+  }, [api, ownId, t]);
 
   /* ---- Foto's ---- */
   const [photos, setPhotos] = useState([]); // [{id, photo_url, is_profile_pic}]
@@ -1772,6 +1839,31 @@ function SettingsScreen({ api }) {
       ) : (
         <>
           <Text style={[styles.sectionTitle, { marginTop: theme.gap.l }]}>{t('profileSettings')}</Text>
+          
+          {/* Location Section */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ marginBottom: 8, fontFamily: theme.font.bodySemibold }}>{t('location')}</Text>
+            {location.city && (
+              <Text style={{ marginBottom: 8, color: theme.color.textSecondary }}>
+                {t('currentLocation')}: {location.city}
+              </Text>
+            )}
+            <TouchableOpacity 
+              onPress={getCurrentLocation} 
+              disabled={locationLoading}
+              style={[styles.primaryBtn, locationLoading && { opacity: 0.5 }]}
+            >
+              {locationLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name="location" size={20} color="#fff" />
+                  <Text style={styles.primaryBtnText}>{t('getLocation')}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
           <Text style={{ marginBottom: 8 }}>{t('matchGoal')}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {['friendship', 'training_partner', 'competition', 'coaching'].map((goal) => (
