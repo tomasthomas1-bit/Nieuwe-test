@@ -64,6 +64,16 @@ const translations = {
     verificationSent: 'Een verificatiemail is verzonden. Controleer je inbox en klik op de link om je account te activeren.',
     enterVerificationCode: 'Voer de verificatiecode in uit je e-mail',
     code: 'Code', verify: 'Verifiëren', resendCode: 'Code opnieuw versturen',
+    sessionExpired: 'Sessie verlopen', sessionExpiredMessage: 'Log opnieuw in a.u.b.',
+    logoutConfirm: 'Weet je zeker dat je wil uitloggen?',
+    profilePhoto: 'Profielfoto',
+    theme: 'Thema', system: 'Systeem', light: 'Licht', dark: 'Donker',
+    chatStyle: 'Chat-stijl',
+    preferencesStored: 'Je keuzes worden lokaal opgeslagen en blijven behouden bij de volgende app-start.',
+    ageExample: 'bv. 25',
+    loginFailed: 'Login mislukt', registrationFailed: 'Registratie mislukt',
+    profileLoadFailed: 'Profiel laden mislukt', profileSaveFailed: 'Profiel opslaan mislukt',
+    noUserIdAvailable: 'Geen userId beschikbaar',
   },
   en: {
     login: 'Login', register: 'Register', username: 'Username', password: 'Password',
@@ -88,6 +98,16 @@ const translations = {
     verificationSent: 'A verification email has been sent. Check your inbox and click the link to activate your account.',
     enterVerificationCode: 'Enter the verification code from your email',
     code: 'Code', verify: 'Verify', resendCode: 'Resend Code',
+    sessionExpired: 'Session expired', sessionExpiredMessage: 'Please log in again.',
+    logoutConfirm: 'Are you sure you want to log out?',
+    profilePhoto: 'Profile photo',
+    theme: 'Theme', system: 'System', light: 'Light', dark: 'Dark',
+    chatStyle: 'Chat style',
+    preferencesStored: 'Your choices are stored locally and will be retained on next app start.',
+    ageExample: 'e.g. 25',
+    loginFailed: 'Login failed', registrationFailed: 'Registration failed',
+    profileLoadFailed: 'Failed to load profile', profileSaveFailed: 'Failed to save profile',
+    noUserIdAvailable: 'No user ID available',
   },
   fr: {
     login: 'Connexion', register: 'S\'inscrire', username: 'Nom d\'utilisateur', password: 'Mot de passe',
@@ -112,6 +132,16 @@ const translations = {
     verificationSent: 'Un email de vérification a été envoyé. Vérifiez votre boîte de réception.',
     enterVerificationCode: 'Entrez le code de vérification de votre email',
     code: 'Code', verify: 'Vérifier', resendCode: 'Renvoyer le code',
+    sessionExpired: 'Session expirée', sessionExpiredMessage: 'Veuillez vous reconnecter.',
+    logoutConfirm: 'Voulez-vous vraiment vous déconnecter?',
+    profilePhoto: 'Photo de profil',
+    theme: 'Thème', system: 'Système', light: 'Clair', dark: 'Sombre',
+    chatStyle: 'Style de chat',
+    preferencesStored: 'Vos choix sont stockés localement et seront conservés au prochain démarrage.',
+    ageExample: 'ex. 25',
+    loginFailed: 'Connexion échouée', registrationFailed: 'Inscription échouée',
+    profileLoadFailed: 'Échec du chargement du profil', profileSaveFailed: 'Échec de l\'enregistrement du profil',
+    noUserIdAvailable: 'Aucun ID utilisateur disponible',
   },
   de: {
     login: 'Anmelden', register: 'Registrieren', username: 'Benutzername', password: 'Passwort',
@@ -136,6 +166,16 @@ const translations = {
     verificationSent: 'Eine Verifizierungs-E-Mail wurde gesendet. Überprüfen Sie Ihren Posteingang.',
     enterVerificationCode: 'Geben Sie den Verifizierungscode aus Ihrer E-Mail ein',
     code: 'Code', verify: 'Verifizieren', resendCode: 'Code erneut senden',
+    sessionExpired: 'Sitzung abgelaufen', sessionExpiredMessage: 'Bitte melden Sie sich erneut an.',
+    logoutConfirm: 'Möchten Sie sich wirklich abmelden?',
+    profilePhoto: 'Profilfoto',
+    theme: 'Thema', system: 'System', light: 'Hell', dark: 'Dunkel',
+    chatStyle: 'Chat-Stil',
+    preferencesStored: 'Ihre Einstellungen werden lokal gespeichert und beim nächsten Start beibehalten.',
+    ageExample: 'z.B. 25',
+    loginFailed: 'Anmeldung fehlgeschlagen', registrationFailed: 'Registrierung fehlgeschlagen',
+    profileLoadFailed: 'Profil konnte nicht geladen werden', profileSaveFailed: 'Profil konnte nicht gespeichert werden',
+    noUserIdAvailable: 'Keine Benutzer-ID verfügbar',
   },
   es: {
     login: 'Iniciar sesión', register: 'Registrarse', username: 'Nombre de usuario', password: 'Contraseña',
@@ -160,6 +200,16 @@ const translations = {
     verificationSent: 'Se ha enviado un correo de verificación. Revisa tu bandeja de entrada.',
     enterVerificationCode: 'Ingresa el código de verificación de tu correo',
     code: 'Código', verify: 'Verificar', resendCode: 'Reenviar código',
+    sessionExpired: 'Sesión expirada', sessionExpiredMessage: 'Por favor, inicia sesión nuevamente.',
+    logoutConfirm: '¿Estás seguro de que quieres cerrar sesión?',
+    profilePhoto: 'Foto de perfil',
+    theme: 'Tema', system: 'Sistema', light: 'Claro', dark: 'Oscuro',
+    chatStyle: 'Estilo de chat',
+    preferencesStored: 'Tus opciones se guardan localmente y se mantendrán en el próximo inicio.',
+    ageExample: 'ej. 25',
+    loginFailed: 'Inicio de sesión fallido', registrationFailed: 'Registro fallido',
+    profileLoadFailed: 'Error al cargar el perfil', profileSaveFailed: 'Error al guardar el perfil',
+    noUserIdAvailable: 'ID de usuario no disponible',
   },
   it: {
     login: 'Accedi', register: 'Registrati', username: 'Nome utente', password: 'Password',
@@ -184,6 +234,16 @@ const translations = {
     verificationSent: 'È stata inviata un\'email di verifica. Controlla la tua casella di posta.',
     enterVerificationCode: 'Inserisci il codice di verifica dalla tua email',
     code: 'Codice', verify: 'Verifica', resendCode: 'Invia di nuovo',
+    sessionExpired: 'Sessione scaduta', sessionExpiredMessage: 'Effettua nuovamente l\'accesso.',
+    logoutConfirm: 'Sei sicuro di voler uscire?',
+    profilePhoto: 'Foto profilo',
+    theme: 'Tema', system: 'Sistema', light: 'Chiaro', dark: 'Scuro',
+    chatStyle: 'Stile chat',
+    preferencesStored: 'Le tue preferenze sono salvate localmente e saranno conservate al prossimo avvio.',
+    ageExample: 'es. 25',
+    loginFailed: 'Accesso fallito', registrationFailed: 'Registrazione fallita',
+    profileLoadFailed: 'Impossibile caricare il profilo', profileSaveFailed: 'Impossibile salvare il profilo',
+    noUserIdAvailable: 'ID utente non disponibile',
   },
   pt: {
     login: 'Entrar', register: 'Registrar', username: 'Nome de usuário', password: 'Senha',
@@ -208,10 +268,23 @@ const translations = {
     verificationSent: 'Um email de verificação foi enviado. Verifique sua caixa de entrada.',
     enterVerificationCode: 'Digite o código de verificação do seu email',
     code: 'Código', verify: 'Verificar', resendCode: 'Reenviar código',
+    sessionExpired: 'Sessão expirada', sessionExpiredMessage: 'Por favor, faça login novamente.',
+    logoutConfirm: 'Tem certeza de que deseja sair?',
+    profilePhoto: 'Foto de perfil',
+    theme: 'Tema', system: 'Sistema', light: 'Claro', dark: 'Escuro',
+    chatStyle: 'Estilo de chat',
+    preferencesStored: 'Suas escolhas são armazenadas localmente e serão mantidas no próximo início.',
+    ageExample: 'ex. 25',
+    loginFailed: 'Login falhou', registrationFailed: 'Registro falhou',
+    profileLoadFailed: 'Falha ao carregar perfil', profileSaveFailed: 'Falha ao salvar perfil',
+    noUserIdAvailable: 'ID de usuário não disponível',
   },
 };
 
 const LanguageContext = createContext({ lang: 'nl', setLang: () => {}, t: (key) => key });
+
+// Global ref to access t() function from outside React components
+const tFunctionRef = { current: (key) => key };
 
 function LanguageProvider({ children }) {
   const [lang, setLang] = useState('nl');
@@ -245,6 +318,11 @@ function LanguageProvider({ children }) {
   const t = useCallback((key) => {
     return translations[lang]?.[key] || key;
   }, [lang]);
+  
+  // Update global ref whenever t() changes
+  useEffect(() => {
+    tFunctionRef.current = t;
+  }, [t]);
   
   const value = useMemo(() => ({ lang, setLang: setLangPersistent, t }), [lang, setLangPersistent, t]);
   
@@ -504,7 +582,8 @@ function useApi() {
         setToken(null);
         setIsAuthenticated(false);
         setUserId(null);
-        Alert.alert('Sessie verlopen', 'Log opnieuw in a.u.b.');
+        const t = tFunctionRef.current;
+        Alert.alert(t('sessionExpired'), t('sessionExpiredMessage'));
       }
       return res;
     },
@@ -546,7 +625,8 @@ function useApi() {
         try { await fetchMe(); } catch (e) { if (__DEV__) console.debug('fetchMe after login failed', e); }
         return { ok: true };
       }
-      const errMsg = data && data.detail ? data.detail : 'Login mislukt';
+      const t = tFunctionRef.current;
+      const errMsg = data && data.detail ? data.detail : t('loginFailed');
       return { ok: false, error: errMsg };
     },
     [fetchMe]
@@ -561,7 +641,8 @@ function useApi() {
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      return { ok: false, error: data?.detail ?? 'Registratie mislukt' };
+      const t = tFunctionRef.current;
+      return { ok: false, error: data?.detail ?? t('registrationFailed') };
     }
     return { ok: true, data };
   }, []);
@@ -582,20 +663,29 @@ function useApi() {
   const getProfile = useCallback(async () => {
     const res = await authFetch('/me');
     const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.detail ?? `Profiel laden mislukt (status ${res.status})`);
+    if (!res.ok) {
+      const t = tFunctionRef.current;
+      throw new Error(data?.detail ?? `${t('profileLoadFailed')} (status ${res.status})`);
+    }
     return data; // { id, username, name, age, bio }
   }, [authFetch]);
 
   const updateProfile = useCallback(async (partial) => {
     const uid = userId;
-    if (!uid) throw new Error('Geen userId beschikbaar');
+    if (!uid) {
+      const t = tFunctionRef.current;
+      throw new Error(t('noUserIdAvailable'));
+    }
     const res = await authFetch(`/users/${uid}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(partial),
     });
     const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.detail ?? `Profiel opslaan mislukt (status ${res.status})`);
+    if (!res.ok) {
+      const t = tFunctionRef.current;
+      throw new Error(data?.detail ?? `${t('profileSaveFailed')} (status ${res.status})`);
+    }
     return data;
   }, [authFetch, userId]);
 
@@ -859,14 +949,10 @@ function DiscoverScreen({ api, theme, user }) {
         </View>
 
         <View style={styles.headerCenter}>
-          <View style={styles.logoContainer}>
-            <View style={styles.heartIcon}>
-              <View style={styles.heartLeft} />
-              <View style={styles.heartRight} />
-            </View>
-          </View>
-          <Text style={styles.athloText}>athlo</Text>
-          <Text style={styles.tagline}>{t('findYourFit')}</Text>
+          <Image 
+            source={require('./attached_assets/c892efa944_1762507124461.png')} 
+            style={{ width: 120, height: 120, resizeMode: 'contain' }}
+          />
         </View>
 
         <View style={styles.headerRight}>
@@ -1138,6 +1224,9 @@ function SettingsScreen({ api }) {
   // Language state (separate from profile for clarity)
   const [selectedLanguage, setSelectedLanguage] = useState('nl');
   
+  // Track if user manually changed language (prevent loadProfile from overwriting)
+  const languageDirtyRef = useRef(false);
+  
   const setProfileField = (k, v) => setProfile((prev) => ({ ...prev, [k]: v }));
   const updateField = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
 
@@ -1147,14 +1236,18 @@ function SettingsScreen({ api }) {
       setProfileError(null);
       const res = await api.authFetch('/me');
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.detail ?? `Profiel laden mislukt (status ${res.status})`);
+      if (!res.ok) {
+        const t = tFunctionRef.current;
+        throw new Error(data?.detail ?? `${t('profileLoadFailed')} (status ${res.status})`);
+      }
       setOwnId(data?.id ?? null);
       setProfile({
         name: data?.name ?? '',
         age: data?.age != null ? String(data.age) : '',
         bio: data?.bio ?? '',
       });
-      if (data?.language) {
+      // Only update language if user hasn't manually changed it
+      if (data?.language && !languageDirtyRef.current) {
         setSelectedLanguage(data.language);
         setLang(data.language);
       }
@@ -1186,7 +1279,8 @@ function SettingsScreen({ api }) {
   /* ================= UNIFIED SAVE FUNCTION ================= */
   const saveAll = useCallback(async () => {
     if (!USER_ID) { 
-      Alert.alert('Instellingen', 'Geen userId beschikbaar. Log opnieuw in.'); 
+      const t = tFunctionRef.current;
+      Alert.alert(t('settings'), `${t('noUserIdAvailable')}. ${t('sessionExpiredMessage')}`); 
       return; 
     }
     
@@ -1241,6 +1335,7 @@ function SettingsScreen({ api }) {
       }
       
       // Reload both settings and profile from backend
+      languageDirtyRef.current = false;  // Reset dirty flag after successful save
       await Promise.all([loadSettings(), loadProfile()]);
       
       Alert.alert(t('settings'), t('settingsSaved') || 'Instellingen opgeslagen');
@@ -1273,14 +1368,20 @@ function SettingsScreen({ api }) {
     try {
       setProfileError(null);
       const uid = ownId ?? api.userId;
-      if (!uid) throw new Error('Geen userId beschikbaar (is /me succesvol?)');
+      if (!uid) {
+        const t = tFunctionRef.current;
+        throw new Error(t('noUserIdAvailable'));
+      }
       const res = await api.authFetch(`/users/${uid}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.detail ?? `Profiel opslaan mislukt (status ${res.status})`);
+      if (!res.ok) {
+        const t = tFunctionRef.current;
+        throw new Error(data?.detail ?? `${t('profileSaveFailed')} (status ${res.status})`);
+      }
       Alert.alert('Profiel', 'Profiel opgeslagen');
       await loadProfile();
     } catch (e) {
@@ -1436,24 +1537,24 @@ function SettingsScreen({ api }) {
 
   /* ---- Uitloggen ---- */
   const handleLogout = useCallback(() => {
-    Alert.alert('Uitloggen', 'Weet je zeker dat je wil uitloggen?', [
-      { text: 'Annuleer', style: 'cancel' },
-      { text: 'Uitloggen', style: 'destructive', onPress: async () => { await api.logout(); } },
+    Alert.alert(t('logout'), t('logoutConfirm'), [
+      { text: t('cancel'), style: 'cancel' },
+      { text: t('logout'), style: 'destructive', onPress: async () => { await api.logout(); } },
     ]);
-  }, [api]);
+  }, [api, t]);
 
   /* ================= RENDER ================= */
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
       {/* THEMA */}
-      <Text style={styles.sectionTitle}>Thema</Text>
+      <Text style={styles.sectionTitle}>{t('theme')}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: theme.gap.m, flexWrap: 'wrap' }}>
-        <Chip label="Systeem" active={mode === 'system'} onPress={() => setUserMode('system')} />
-        <Chip label="Licht" active={mode === 'light'} onPress={() => setUserMode('light')} />
-        <Chip label="Donker" active={mode === 'dark'} onPress={() => setUserMode('dark')} />
+        <Chip label={t('system')} active={mode === 'system'} onPress={() => setUserMode('system')} />
+        <Chip label={t('light')} active={mode === 'light'} onPress={() => setUserMode('light')} />
+        <Chip label={t('dark')} active={mode === 'dark'} onPress={() => setUserMode('dark')} />
       </View>
 
-      <Text style={styles.sectionTitle}>Chat‑stijl</Text>
+      <Text style={styles.sectionTitle}>{t('chatStyle')}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
         <Chip label="iOS" active={preset === 'ios'} onPress={() => setUserPreset('ios')} />
         <Chip label="WhatsApp" active={preset === 'whatsapp'} onPress={() => setUserPreset('whatsapp')} />
@@ -1475,6 +1576,7 @@ function SettingsScreen({ api }) {
             label={lang.label} 
             active={selectedLanguage === lang.code} 
             onPress={() => {
+              languageDirtyRef.current = true;  // Mark as manually changed
               setSelectedLanguage(lang.code);
               setLang(lang.code);
             }} 
@@ -1484,7 +1586,7 @@ function SettingsScreen({ api }) {
 
       <View style={{ marginTop: theme.gap.l }}>
         <Text style={{ color: theme.color.textSecondary, fontFamily: theme.font.bodyFamily }}>
-          Je keuzes worden lokaal opgeslagen en blijven behouden bij de volgende app‑start.
+          {t('preferencesStored')}
         </Text>
       </View>
 
@@ -1533,7 +1635,7 @@ function SettingsScreen({ api }) {
                 style={{ width: 120, height: 120, borderRadius: 12, borderWidth: 1, borderColor: theme.color.border }}
               />
               <Text style={{ marginTop: 6, color: theme.color.textSecondary, fontFamily: theme.font.bodyFamily }}>
-                {p.is_profile_pic ? 'Profielfoto' : '—'}
+                {p.is_profile_pic ? t('profilePhoto') : '—'}
               </Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
                 {!p.is_profile_pic && (
@@ -1616,7 +1718,7 @@ function SettingsScreen({ api }) {
               const n = parseInt(v, 10);
               updateField('max_distance_km', Number.isFinite(n) ? n : 0);
             }}
-            placeholder="bv. 25"
+            placeholder={t('ageExample')}
             placeholderTextColor={theme.color.textSecondary}
           />
 
