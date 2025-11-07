@@ -258,6 +258,9 @@ class UserUpdate(BaseModel):
     age: Optional[int] = None
     bio: Optional[str] = None
     language: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
 
 class UserSettingsModel(BaseModel):
     match_goal: Optional[str] = None

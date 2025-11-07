@@ -79,6 +79,9 @@ const translations = {
     loginFailed: 'Login mislukt', registrationFailed: 'Registratie mislukt',
     profileLoadFailed: 'Profiel laden mislukt', profileSaveFailed: 'Profiel opslaan mislukt',
     noUserIdAvailable: 'Geen userId beschikbaar',
+    location: 'Locatie', currentLocation: 'Huidige locatie', getLocation: 'Locatie ophalen',
+    locationPermissionDenied: 'Locatietoegang geweigerd', locationPermissionDeniedMessage: 'Je moet locatietoegang toestaan om je huidige locatie op te halen.',
+    locationError: 'Locatiefout', locationSaved: 'Locatie opgeslagen!', locationNotAvailable: 'Locatie niet beschikbaar',
   },
   en: {
     login: 'Login', register: 'Register', username: 'Username', password: 'Password',
@@ -118,6 +121,9 @@ const translations = {
     loginFailed: 'Login failed', registrationFailed: 'Registration failed',
     profileLoadFailed: 'Failed to load profile', profileSaveFailed: 'Failed to save profile',
     noUserIdAvailable: 'No user ID available',
+    location: 'Location', currentLocation: 'Current location', getLocation: 'Get location',
+    locationPermissionDenied: 'Location permission denied', locationPermissionDeniedMessage: 'You must allow location access to get your current location.',
+    locationError: 'Location error', locationSaved: 'Location saved!', locationNotAvailable: 'Location not available',
   },
   fr: {
     login: 'Connexion', register: 'S\'inscrire', username: 'Nom d\'utilisateur', password: 'Mot de passe',
@@ -157,6 +163,9 @@ const translations = {
     loginFailed: 'Connexion échouée', registrationFailed: 'Inscription échouée',
     profileLoadFailed: 'Échec du chargement du profil', profileSaveFailed: 'Échec de l\'enregistrement du profil',
     noUserIdAvailable: 'Aucun ID utilisateur disponible',
+    location: 'Localisation', currentLocation: 'Localisation actuelle', getLocation: 'Obtenir la localisation',
+    locationPermissionDenied: 'Permission de localisation refusée', locationPermissionDeniedMessage: 'Vous devez autoriser l\'accès à la localisation pour obtenir votre position actuelle.',
+    locationError: 'Erreur de localisation', locationSaved: 'Localisation enregistrée !', locationNotAvailable: 'Localisation non disponible',
   },
   de: {
     login: 'Anmelden', register: 'Registrieren', username: 'Benutzername', password: 'Passwort',
@@ -196,6 +205,9 @@ const translations = {
     loginFailed: 'Anmeldung fehlgeschlagen', registrationFailed: 'Registrierung fehlgeschlagen',
     profileLoadFailed: 'Profil konnte nicht geladen werden', profileSaveFailed: 'Profil konnte nicht gespeichert werden',
     noUserIdAvailable: 'Keine Benutzer-ID verfügbar',
+    location: 'Standort', currentLocation: 'Aktueller Standort', getLocation: 'Standort abrufen',
+    locationPermissionDenied: 'Standortzugriff verweigert', locationPermissionDeniedMessage: 'Sie müssen den Standortzugriff zulassen, um Ihren aktuellen Standort abzurufen.',
+    locationError: 'Standortfehler', locationSaved: 'Standort gespeichert!', locationNotAvailable: 'Standort nicht verfügbar',
   },
   es: {
     login: 'Iniciar sesión', register: 'Registrarse', username: 'Nombre de usuario', password: 'Contraseña',
@@ -235,6 +247,9 @@ const translations = {
     loginFailed: 'Inicio de sesión fallido', registrationFailed: 'Registro fallido',
     profileLoadFailed: 'Error al cargar el perfil', profileSaveFailed: 'Error al guardar el perfil',
     noUserIdAvailable: 'ID de usuario no disponible',
+    location: 'Ubicación', currentLocation: 'Ubicación actual', getLocation: 'Obtener ubicación',
+    locationPermissionDenied: 'Permiso de ubicación denegado', locationPermissionDeniedMessage: 'Debe permitir el acceso a la ubicación para obtener su ubicación actual.',
+    locationError: 'Error de ubicación', locationSaved: '¡Ubicación guardada!', locationNotAvailable: 'Ubicación no disponible',
   },
   it: {
     login: 'Accedi', register: 'Registrati', username: 'Nome utente', password: 'Password',
@@ -274,6 +289,9 @@ const translations = {
     loginFailed: 'Accesso fallito', registrationFailed: 'Registrazione fallita',
     profileLoadFailed: 'Impossibile caricare il profilo', profileSaveFailed: 'Impossibile salvare il profilo',
     noUserIdAvailable: 'ID utente non disponibile',
+    location: 'Posizione', currentLocation: 'Posizione attuale', getLocation: 'Ottieni posizione',
+    locationPermissionDenied: 'Permesso di posizione negato', locationPermissionDeniedMessage: 'Devi consentire l\'accesso alla posizione per ottenere la tua posizione attuale.',
+    locationError: 'Errore di posizione', locationSaved: 'Posizione salvata!', locationNotAvailable: 'Posizione non disponibile',
   },
   pt: {
     login: 'Entrar', register: 'Registrar', username: 'Nome de usuário', password: 'Senha',
@@ -313,6 +331,9 @@ const translations = {
     loginFailed: 'Login falhou', registrationFailed: 'Registro falhou',
     profileLoadFailed: 'Falha ao carregar perfil', profileSaveFailed: 'Falha ao salvar perfil',
     noUserIdAvailable: 'ID de usuário não disponível',
+    location: 'Localização', currentLocation: 'Localização atual', getLocation: 'Obter localização',
+    locationPermissionDenied: 'Permissão de localização negada', locationPermissionDeniedMessage: 'Você deve permitir o acesso à localização para obter sua localização atual.',
+    locationError: 'Erro de localização', locationSaved: 'Localização salva!', locationNotAvailable: 'Localização não disponível',
   },
 };
 
