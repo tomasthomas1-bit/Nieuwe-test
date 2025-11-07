@@ -52,7 +52,7 @@ const translations = {
     typeMessage: 'Typ een bericht...', send: 'Verstuur', noMessages: 'Nog geen berichten',
     matchGoal: 'Match-doel', preferredGender: 'Voorkeur geslacht', maxDistance: 'Maximale afstand (km)',
     minAge: 'Minimum leeftijd', maxAge: 'Maximum leeftijd', notifications: 'Pushmeldingen',
-    saveSettings: 'Instellingen opslaan', saveProfile: 'Profiel opslaan', photos: 'Foto\'s',
+    saveSettings: 'Instellingen opslaan', settingsSaved: 'Instellingen opgeslagen!', saveProfile: 'Profiel opslaan', photos: 'Foto\'s',
     uploadPhoto: 'Upload foto', setAsProfile: 'Als profielfoto', deletePhoto: 'Verwijder',
     availability: 'Beschikbaarheid', saveAvailability: 'Beschikbaarheden opslaan',
     friendship: 'vriendschap', training_partner: 'trainingspartner', competition: 'competitie',
@@ -76,7 +76,7 @@ const translations = {
     typeMessage: 'Type a message...', send: 'Send', noMessages: 'No messages yet',
     matchGoal: 'Match goal', preferredGender: 'Preferred gender', maxDistance: 'Max distance (km)',
     minAge: 'Minimum age', maxAge: 'Maximum age', notifications: 'Push notifications',
-    saveSettings: 'Save Settings', saveProfile: 'Save Profile', photos: 'Photos',
+    saveSettings: 'Save Settings', settingsSaved: 'Settings saved!', saveProfile: 'Save Profile', photos: 'Photos',
     uploadPhoto: 'Upload photo', setAsProfile: 'Set as profile', deletePhoto: 'Delete',
     availability: 'Availability', saveAvailability: 'Save Availability',
     friendship: 'friendship', training_partner: 'training partner', competition: 'competition',
@@ -100,7 +100,7 @@ const translations = {
     typeMessage: 'Tapez un message...', send: 'Envoyer', noMessages: 'Pas encore de messages',
     matchGoal: 'Objectif de match', preferredGender: 'Genre préféré', maxDistance: 'Distance max (km)',
     minAge: 'Âge minimum', maxAge: 'Âge maximum', notifications: 'Notifications push',
-    saveSettings: 'Enregistrer', saveProfile: 'Enregistrer le profil', photos: 'Photos',
+    saveSettings: 'Enregistrer', settingsSaved: 'Paramètres enregistrés!', saveProfile: 'Enregistrer le profil', photos: 'Photos',
     uploadPhoto: 'Télécharger photo', setAsProfile: 'Définir comme profil', deletePhoto: 'Supprimer',
     availability: 'Disponibilité', saveAvailability: 'Enregistrer',
     friendship: 'amitié', training_partner: 'partenaire d\'entraînement', competition: 'compétition',
@@ -124,7 +124,7 @@ const translations = {
     typeMessage: 'Nachricht eingeben...', send: 'Senden', noMessages: 'Noch keine Nachrichten',
     matchGoal: 'Match-Ziel', preferredGender: 'Bevorzugtes Geschlecht', maxDistance: 'Max. Entfernung (km)',
     minAge: 'Mindestalter', maxAge: 'Höchstalter', notifications: 'Push-Benachrichtigungen',
-    saveSettings: 'Einstellungen speichern', saveProfile: 'Profil speichern', photos: 'Fotos',
+    saveSettings: 'Einstellungen speichern', settingsSaved: 'Einstellungen gespeichert!', saveProfile: 'Profil speichern', photos: 'Fotos',
     uploadPhoto: 'Foto hochladen', setAsProfile: 'Als Profil', deletePhoto: 'Löschen',
     availability: 'Verfügbarkeit', saveAvailability: 'Verfügbarkeit speichern',
     friendship: 'Freundschaft', training_partner: 'Trainingspartner', competition: 'Wettbewerb',
@@ -148,7 +148,7 @@ const translations = {
     typeMessage: 'Escribe un mensaje...', send: 'Enviar', noMessages: 'Sin mensajes aún',
     matchGoal: 'Objetivo de match', preferredGender: 'Género preferido', maxDistance: 'Distancia máx (km)',
     minAge: 'Edad mínima', maxAge: 'Edad máxima', notifications: 'Notificaciones push',
-    saveSettings: 'Guardar ajustes', saveProfile: 'Guardar perfil', photos: 'Fotos',
+    saveSettings: 'Guardar ajustes', settingsSaved: '¡Ajustes guardados!', saveProfile: 'Guardar perfil', photos: 'Fotos',
     uploadPhoto: 'Subir foto', setAsProfile: 'Como perfil', deletePhoto: 'Eliminar',
     availability: 'Disponibilidad', saveAvailability: 'Guardar disponibilidad',
     friendship: 'amistad', training_partner: 'compañero de entrenamiento', competition: 'competición',
@@ -172,7 +172,7 @@ const translations = {
     typeMessage: 'Scrivi un messaggio...', send: 'Invia', noMessages: 'Nessun messaggio ancora',
     matchGoal: 'Obiettivo match', preferredGender: 'Genere preferito', maxDistance: 'Distanza max (km)',
     minAge: 'Età minima', maxAge: 'Età massima', notifications: 'Notifiche push',
-    saveSettings: 'Salva impostazioni', saveProfile: 'Salva profilo', photos: 'Foto',
+    saveSettings: 'Salva impostazioni', settingsSaved: 'Impostazioni salvate!', saveProfile: 'Salva profilo', photos: 'Foto',
     uploadPhoto: 'Carica foto', setAsProfile: 'Come profilo', deletePhoto: 'Elimina',
     availability: 'Disponibilità', saveAvailability: 'Salva disponibilità',
     friendship: 'amicizia', training_partner: 'compagno di allenamento', competition: 'competizione',
@@ -196,7 +196,7 @@ const translations = {
     typeMessage: 'Digite uma mensagem...', send: 'Enviar', noMessages: 'Sem mensagens ainda',
     matchGoal: 'Objetivo de match', preferredGender: 'Gênero preferido', maxDistance: 'Distância máx (km)',
     minAge: 'Idade mínima', maxAge: 'Idade máxima', notifications: 'Notificações push',
-    saveSettings: 'Salvar configurações', saveProfile: 'Salvar perfil', photos: 'Fotos',
+    saveSettings: 'Salvar configurações', settingsSaved: 'Configurações salvas!', saveProfile: 'Salvar perfil', photos: 'Fotos',
     uploadPhoto: 'Carregar foto', setAsProfile: 'Como perfil', deletePhoto: 'Excluir',
     availability: 'Disponibilidade', saveAvailability: 'Salvar disponibilidade',
     friendship: 'amizade', training_partner: 'parceiro de treino', competition: 'competição',
@@ -216,11 +216,37 @@ const LanguageContext = createContext({ lang: 'nl', setLang: () => {}, t: (key) 
 function LanguageProvider({ children }) {
   const [lang, setLang] = useState('nl');
   
+  // Load saved language from SecureStore on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const saved = await SecureStore.getItemAsync('user_language');
+        if (saved && translations[saved]) {
+          setLang(saved);
+        }
+      } catch (e) {
+        // Ignore - default to 'nl'
+      }
+    })();
+  }, []);
+  
+  // Custom setLang that also saves to SecureStore
+  const setLangPersistent = useCallback(async (newLang) => {
+    if (newLang && translations[newLang]) {
+      setLang(newLang);
+      try {
+        await SecureStore.setItemAsync('user_language', newLang);
+      } catch (e) {
+        // Ignore storage errors
+      }
+    }
+  }, []);
+  
   const t = useCallback((key) => {
     return translations[lang]?.[key] || key;
   }, [lang]);
   
-  const value = useMemo(() => ({ lang, setLang, t }), [lang, t]);
+  const value = useMemo(() => ({ lang, setLang: setLangPersistent, t }), [lang, setLangPersistent, t]);
   
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
@@ -1134,13 +1160,17 @@ function SettingsScreen({ api }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.detail ?? 'Fout bij opslaan instellingen');
-      Alert.alert('Instellingen', 'Instellingen opgeslagen');
+      
+      // Reload settings from backend to reflect saved changes
+      await loadSettings();
+      
+      Alert.alert(t('settings'), t('settingsSaved') || 'Instellingen opgeslagen');
     } catch (e) {
       Alert.alert('Instellingen', e.message);
     } finally {
       setLoading(false);
     }
-  }, [api, settings, USER_ID]);
+  }, [api, settings, USER_ID, loadSettings, t]);
 
   /* ---- Profiel (naam, leeftijd, bio) ---- */
   const [profile, setProfile] = useState({ name: '', age: '', bio: '' });
