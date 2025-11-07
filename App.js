@@ -58,6 +58,8 @@ const translations = {
     availabilities: 'Beschikbaarheden', availabilitySaved: 'Opgeslagen',
     addViaUrl: 'Voeg toe via URL', notSupported: 'Niet ondersteund',
     addViaUrlMessage: '"Voeg toe via URL" is beschikbaar op web en iOS. Voeg voorlopig foto\'s toe via toestel-upload of web.',
+    monday: 'Ma', tuesday: 'Di', wednesday: 'Wo', thursday: 'Do', friday: 'Vr', saturday: 'Za', sunday: 'Zo',
+    morning: 'Ochtend', afternoon: 'Middag', evening: 'Avond',
     friendship: 'vriendschap', training_partner: 'trainingspartner', competition: 'competitie',
     coaching: 'coaching', any: 'elk', male: 'man', female: 'vrouw', non_binary: 'non-binair',
     profileSettings: 'Profielinstellingen', language: 'Taal / Language',
@@ -95,6 +97,8 @@ const translations = {
     availabilities: 'Availabilities', availabilitySaved: 'Saved',
     addViaUrl: 'Add via URL', notSupported: 'Not supported',
     addViaUrlMessage: '"Add via URL" is available on web and iOS. For now, add photos via device upload or web.',
+    monday: 'Mo', tuesday: 'Tu', wednesday: 'We', thursday: 'Th', friday: 'Fr', saturday: 'Sa', sunday: 'Su',
+    morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening',
     friendship: 'friendship', training_partner: 'training partner', competition: 'competition',
     coaching: 'coaching', any: 'any', male: 'male', female: 'female', non_binary: 'non-binary',
     profileSettings: 'Profile Settings', language: 'Language / Taal',
@@ -132,6 +136,8 @@ const translations = {
     availabilities: 'Disponibilités', availabilitySaved: 'Enregistré',
     addViaUrl: 'Ajouter via URL', notSupported: 'Non supporté',
     addViaUrlMessage: '"Ajouter via URL" est disponible sur web et iOS. Pour l\'instant, ajoutez des photos via le téléchargement depuis l\'appareil ou le web.',
+    monday: 'Lu', tuesday: 'Ma', wednesday: 'Me', thursday: 'Je', friday: 'Ve', saturday: 'Sa', sunday: 'Di',
+    morning: 'Matin', afternoon: 'Après-midi', evening: 'Soir',
     friendship: 'amitié', training_partner: 'partenaire d\'entraînement', competition: 'compétition',
     coaching: 'coaching', any: 'tout', male: 'homme', female: 'femme', non_binary: 'non-binaire',
     profileSettings: 'Paramètres du profil', language: 'Langue / Language',
@@ -169,6 +175,8 @@ const translations = {
     availabilities: 'Verfügbarkeiten', availabilitySaved: 'Gespeichert',
     addViaUrl: 'Per URL hinzufügen', notSupported: 'Nicht unterstützt',
     addViaUrlMessage: '"Per URL hinzufügen" ist auf Web und iOS verfügbar. Fügen Sie vorerst Fotos über Geräte-Upload oder Web hinzu.',
+    monday: 'Mo', tuesday: 'Di', wednesday: 'Mi', thursday: 'Do', friday: 'Fr', saturday: 'Sa', sunday: 'So',
+    morning: 'Morgen', afternoon: 'Nachmittag', evening: 'Abend',
     friendship: 'Freundschaft', training_partner: 'Trainingspartner', competition: 'Wettbewerb',
     coaching: 'Coaching', any: 'alle', male: 'Mann', female: 'Frau', non_binary: 'nicht-binär',
     profileSettings: 'Profileinstellungen', language: 'Sprache / Language',
@@ -206,6 +214,8 @@ const translations = {
     availabilities: 'Disponibilidades', availabilitySaved: 'Guardado',
     addViaUrl: 'Añadir por URL', notSupported: 'No soportado',
     addViaUrlMessage: '"Añadir por URL" está disponible en web e iOS. Por ahora, añade fotos mediante carga desde dispositivo o web.',
+    monday: 'Lu', tuesday: 'Ma', wednesday: 'Mi', thursday: 'Ju', friday: 'Vi', saturday: 'Sá', sunday: 'Do',
+    morning: 'Mañana', afternoon: 'Tarde', evening: 'Noche',
     friendship: 'amistad', training_partner: 'compañero de entrenamiento', competition: 'competición',
     coaching: 'coaching', any: 'cualquiera', male: 'hombre', female: 'mujer', non_binary: 'no binario',
     profileSettings: 'Ajustes del perfil', language: 'Idioma / Language',
@@ -243,6 +253,8 @@ const translations = {
     availabilities: 'Disponibilità', availabilitySaved: 'Salvato',
     addViaUrl: 'Aggiungi tramite URL', notSupported: 'Non supportato',
     addViaUrlMessage: '"Aggiungi tramite URL" è disponibile su web e iOS. Per ora, aggiungi foto tramite caricamento dal dispositivo o web.',
+    monday: 'Lu', tuesday: 'Ma', wednesday: 'Me', thursday: 'Gi', friday: 'Ve', saturday: 'Sa', sunday: 'Do',
+    morning: 'Mattina', afternoon: 'Pomeriggio', evening: 'Sera',
     friendship: 'amicizia', training_partner: 'compagno di allenamento', competition: 'competizione',
     coaching: 'coaching', any: 'qualsiasi', male: 'uomo', female: 'donna', non_binary: 'non binario',
     profileSettings: 'Impostazioni profilo', language: 'Lingua / Language',
@@ -280,6 +292,8 @@ const translations = {
     availabilities: 'Disponibilidades', availabilitySaved: 'Salvo',
     addViaUrl: 'Adicionar via URL', notSupported: 'Não suportado',
     addViaUrlMessage: '"Adicionar via URL" está disponível na web e iOS. Por enquanto, adicione fotos através de upload do dispositivo ou web.',
+    monday: 'Seg', tuesday: 'Ter', wednesday: 'Qua', thursday: 'Qui', friday: 'Sex', saturday: 'Sáb', sunday: 'Dom',
+    morning: 'Manhã', afternoon: 'Tarde', evening: 'Noite',
     friendship: 'amizade', training_partner: 'parceiro de treino', competition: 'competição',
     coaching: 'coaching', any: 'qualquer', male: 'homem', female: 'mulher', non_binary: 'não-binário',
     profileSettings: 'Configurações do perfil', language: 'Idioma / Language',
@@ -1182,7 +1196,7 @@ function ChatModal({ route, navigation, api, theme }) {
       <View style={styles.chatInputRow}>
         <TextInput
           style={styles.chatInput}
-          placeholder="Typ je bericht…"
+          placeholder={t('typeMessage')}
           placeholderTextColor={theme.color.textSecondary}
           value={chatInput}
           onChangeText={setChatInput}
@@ -1195,19 +1209,33 @@ function ChatModal({ route, navigation, api, theme }) {
   );
 }
 
-// ==== Module-scope constants (stabiel, geen deps-ruis) ====
-const DAY_LABELS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
-const BLOCKS = Object.freeze([
-  { key: 'morning',  label: 'Ochtend',  start: '06:00', end: '12:00' },
-  { key: 'afternoon',label: 'Middag',   start: '12:00', end: '18:00' },
-  { key: 'evening',  label: 'Avond',    start: '18:00', end: '22:00' },
-]);
+// ==== Language-aware helpers for dropdown options ====
+function useDayLabels() {
+  const { t } = useContext(LanguageContext);
+  return useMemo(() => [
+    t('monday'), t('tuesday'), t('wednesday'), t('thursday'), 
+    t('friday'), t('saturday'), t('sunday')
+  ], [t]);
+}
+
+function useAvailabilityBlocks() {
+  const { t } = useContext(LanguageContext);
+  return useMemo(() => [
+    { key: 'morning',   label: t('morning'),   start: '06:00', end: '12:00' },
+    { key: 'afternoon', label: t('afternoon'), start: '12:00', end: '18:00' },
+    { key: 'evening',   label: t('evening'),   start: '18:00', end: '22:00' },
+  ], [t]);
+}
 
 /* ================= SETTINGS (PROFIEL) ================= */
 function SettingsScreen({ api }) {
   const { theme, mode, setUserMode, preset, setUserPreset } = useContext(ThemeContext);
   const { t, setLang } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
+  
+  // Language-aware dropdown options
+  const DAY_LABELS = useDayLabels();
+  const BLOCKS = useAvailabilityBlocks();
 
   // Herbruikbare Chip
   const Chip = ({ active, label, onPress }) => (
