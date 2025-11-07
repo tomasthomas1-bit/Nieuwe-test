@@ -706,14 +706,17 @@ function useApi() {
 
   // Uitloggen
   const logout = useCallback(async () => {
+    // State resetten
+    setToken(null);
+    setIsAuthenticated(false);
+    setUserId(null);
+    
+    // SecureStore opruimen
     try {
       await SecureStore.deleteItemAsync('access_token');
     } catch (e) {
       if (__DEV__) console.debug('SecureStore delete failed', e);
     }
-    setToken(null);
-    setIsAuthenticated(false);
-    setUserId(null);
   }, []);
 
   // Profiel helpers
@@ -752,6 +755,20 @@ function useApi() {
     getProfile, updateProfile,
     profileVersion, notifyProfilePhotoChanged,
   };
+}
+
+/* ================= API CONTEXT ================= */
+const ApiContext = createContext(null);
+
+function ApiProvider({ children }) {
+  const api = useApi();
+  return <ApiContext.Provider value={api}>{children}</ApiContext.Provider>;
+}
+
+function useApiContext() {
+  const context = useContext(ApiContext);
+  if (!context) throw new Error('useApiContext must be used within ApiProvider');
+  return context;
 }
 
 /* ================= REUSABLE: LogoBox ================= */
@@ -1250,7 +1267,8 @@ function useAvailabilityBlocks() {
 }
 
 /* ================= SETTINGS (PROFIEL) ================= */
-function SettingsScreen({ api }) {
+function SettingsScreen() {
+  const api = useApiContext();
   const { theme, mode, setUserMode, preset, setUserPreset } = useContext(ThemeContext);
   const { t, setLang } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -1683,7 +1701,16 @@ function SettingsScreen({ api }) {
   const handleLogout = useCallback(() => {
     Alert.alert(t('logout'), t('logoutConfirm'), [
       { text: t('cancel'), style: 'cancel' },
-      { text: t('logout'), style: 'destructive', onPress: async () => { await api.logout(); } },
+      { 
+        text: t('logout'), 
+        style: 'destructive', 
+        onPress: () => {
+          // Direct de logout aanroepen zonder async/await in de Alert callback
+          api.logout().catch((e) => {
+            if (__DEV__) console.debug('Logout error:', e);
+          });
+        }
+      },
     ]);
   }, [api, t]);
 
@@ -1954,7 +1981,7 @@ function SettingsScreen({ api }) {
 
 /* ================= NAVIGATION WRAPPER ================= */
 function AppContent() {
-  const api = useApi();
+  const api = useApiContext();
   const { theme } = useContext(ThemeContext);
   const { setLang } = useContext(LanguageContext);
   const [fontsLoaded] = useFonts({
@@ -2132,7 +2159,7 @@ function MainTabs({ api, theme }) {
         {(props) => <MatchesScreen {...props} api={api} theme={theme} />}
       </Tabs.Screen>
       <Tabs.Screen name="Profiel" options={{ title: t('profile') }}>
-        {(props) => <SettingsScreen {...props} api={api} />}
+        {(props) => <SettingsScreen {...props} />}
       </Tabs.Screen>
     </Tabs.Navigator>
   );
@@ -2824,7 +2851,9 @@ export default function App() {
   return (
     <LanguageProvider>
       <ThemeProvider makeBaseTheme={makeBaseTheme}>
-        <AppContent />
+        <ApiProvider>
+          <AppContent />
+        </ApiProvider>
       </ThemeProvider>
     </LanguageProvider>
   );
