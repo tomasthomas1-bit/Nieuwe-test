@@ -869,7 +869,7 @@ function AuthScreen({ navigation, api, theme }) {
 
         <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={{ marginTop: theme.gap.m }}>
           <Text style={styles.switchText}>
-            {isLogin ? t('login') : t('register')}
+            {isLogin ? t('register') : t('login')}
           </Text>
         </TouchableOpacity>
       </ScrollView>
