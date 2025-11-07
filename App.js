@@ -1123,10 +1123,45 @@ function SettingsScreen({ api }) {
     </TouchableOpacity>
   );
 
-  /* ---- User settings (match_goal, gender, distance, notifications) ---- */
+  /* ================= ALL STATE HOOKS FIRST ================= */
   const USER_ID = api.userId;
+  
+  // Settings state
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  // Profile state
+  const [profile, setProfile] = useState({ name: '', age: '', bio: '' });
+  const [profileError, setProfileError] = useState(null);
+  const [ownId, setOwnId] = useState(null);
+  
+  // Language state (separate from profile for clarity)
+  const [selectedLanguage, setSelectedLanguage] = useState('nl');
+  
+  const setProfileField = (k, v) => setProfile((prev) => ({ ...prev, [k]: v }));
+  const updateField = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
+
+  /* ================= LOAD FUNCTIONS (minimal dependencies) ================= */
+  const loadProfile = useCallback(async () => {
+    try {
+      setProfileError(null);
+      const res = await api.authFetch('/me');
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.detail ?? `Profiel laden mislukt (status ${res.status})`);
+      setOwnId(data?.id ?? null);
+      setProfile({
+        name: data?.name ?? '',
+        age: data?.age != null ? String(data.age) : '',
+        bio: data?.bio ?? '',
+      });
+      if (data?.language) {
+        setSelectedLanguage(data.language);
+        setLang(data.language);
+      }
+    } catch (e) {
+      setProfileError(e.message);
+    }
+  }, [api, setLang]);
 
   const loadSettings = useCallback(async () => {
     if (!USER_ID) return;
@@ -1144,25 +1179,69 @@ function SettingsScreen({ api }) {
   }, [api, USER_ID]);
 
   useEffect(() => {
+    loadProfile();
     if (USER_ID) loadSettings();
-  }, [USER_ID, loadSettings]);
+  }, [loadProfile, loadSettings, USER_ID]);
 
-  const updateField = (key, value) => setSettings((prev) => ({ ...prev, [key]: value }));
-
-  const saveSettings = useCallback(async () => {
-    if (!USER_ID) { Alert.alert('Instellingen', 'Geen userId beschikbaar. Log opnieuw in.'); return; }
+  /* ================= UNIFIED SAVE FUNCTION ================= */
+  const saveAll = useCallback(async () => {
+    if (!USER_ID) { 
+      Alert.alert('Instellingen', 'Geen userId beschikbaar. Log opnieuw in.'); 
+      return; 
+    }
+    
+    // Validate age range before saving
+    const minAge = settings?.preferred_min_age;
+    const maxAge = settings?.preferred_max_age;
+    if (minAge != null && (minAge < 18 || minAge > 99)) {
+      Alert.alert(t('settings'), t('ageRange18to99') || 'Leeftijd moet tussen 18 en 99 zijn');
+      return;
+    }
+    if (maxAge != null && (maxAge < 18 || maxAge > 99)) {
+      Alert.alert(t('settings'), t('ageRange18to99') || 'Leeftijd moet tussen 18 en 99 zijn');
+      return;
+    }
+    
     try {
       setLoading(true);
-      const res = await api.authFetch(`/users/${USER_ID}/settings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(settings),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail ?? 'Fout bij opslaan instellingen');
       
-      // Reload settings from backend to reflect saved changes
-      await loadSettings();
+      // Save both settings AND language in parallel
+      const promises = [];
+      
+      // Save settings if present
+      if (settings) {
+        promises.push(
+          api.authFetch(`/users/${USER_ID}/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings),
+          })
+        );
+      }
+      
+      // Save language if different from current
+      if (selectedLanguage) {
+        promises.push(
+          api.authFetch(`/users/${USER_ID}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: selectedLanguage }),
+          })
+        );
+      }
+      
+      const results = await Promise.all(promises);
+      
+      // Check all results
+      for (const res of results) {
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          throw new Error(data?.detail ?? 'Fout bij opslaan');
+        }
+      }
+      
+      // Reload both settings and profile from backend
+      await Promise.all([loadSettings(), loadProfile()]);
       
       Alert.alert(t('settings'), t('settingsSaved') || 'Instellingen opgeslagen');
     } catch (e) {
@@ -1170,15 +1249,9 @@ function SettingsScreen({ api }) {
     } finally {
       setLoading(false);
     }
-  }, [api, settings, USER_ID, loadSettings, t]);
+  }, [api, settings, selectedLanguage, USER_ID, loadSettings, loadProfile, t]);
 
-  /* ---- Profiel (naam, leeftijd, bio) ---- */
-  const [profile, setProfile] = useState({ name: '', age: '', bio: '' });
-  const [profileError, setProfileError] = useState(null);
-  const [ownId, setOwnId] = useState(null);
-
-  const setProfileField = (k, v) => setProfile((prev) => ({ ...prev, [k]: v }));
-
+  /* ---- Profiel validation and save logic ---- */
   const validateAndBuildProfilePayload = useCallback(() => {
     const errs = {};
     const payload = {};
@@ -1193,29 +1266,6 @@ function SettingsScreen({ api }) {
     payload.bio = bio;
     return { ok: true, payload };
   }, [profile]);
-
-  const loadProfile = useCallback(async () => {
-    try {
-      setProfileError(null);
-      const res = await api.authFetch('/me');
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.detail ?? `Profiel laden mislukt (status ${res.status})`);
-      setOwnId(data?.id ?? null);
-      setProfile({
-        name: data?.name ?? '',
-        age: data?.age != null ? String(data.age) : '',
-        bio: data?.bio ?? '',
-        language: data?.language ?? 'nl',
-      });
-      if (data?.language) {
-        setLang(data.language);
-      }
-    } catch (e) {
-      setProfileError(e.message);
-    }
-  }, [api, setLang]);
-
-  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   const saveProfile = useCallback(async () => {
     const { ok, errs, payload } = validateAndBuildProfilePayload();
@@ -1423,8 +1473,11 @@ function SettingsScreen({ api }) {
           <Chip 
             key={lang.code} 
             label={lang.label} 
-            active={profile.language === lang.code} 
-            onPress={() => setProfileField('language', lang.code)} 
+            active={selectedLanguage === lang.code} 
+            onPress={() => {
+              setSelectedLanguage(lang.code);
+              setLang(lang.code);
+            }} 
           />
         ))}
       </View>
@@ -1573,11 +1626,13 @@ function SettingsScreen({ api }) {
             keyboardType="numeric"
             value={String(settings.preferred_min_age ?? '')}
             onChangeText={(v) => {
-              const n = parseInt(v, 10);
-              if (Number.isFinite(n) && n >= 18 && n <= 99) {
-                updateField('preferred_min_age', n);
-              } else if (v === '') {
+              if (v === '') {
                 updateField('preferred_min_age', null);
+              } else {
+                const n = parseInt(v, 10);
+                if (Number.isFinite(n)) {
+                  updateField('preferred_min_age', n);
+                }
               }
             }}
             placeholder="18"
@@ -1590,11 +1645,13 @@ function SettingsScreen({ api }) {
             keyboardType="numeric"
             value={String(settings.preferred_max_age ?? '')}
             onChangeText={(v) => {
-              const n = parseInt(v, 10);
-              if (Number.isFinite(n) && n >= 18 && n <= 99) {
-                updateField('preferred_max_age', n);
-              } else if (v === '') {
+              if (v === '') {
                 updateField('preferred_max_age', null);
+              } else {
+                const n = parseInt(v, 10);
+                if (Number.isFinite(n)) {
+                  updateField('preferred_max_age', n);
+                }
               }
             }}
             placeholder="99"
@@ -1609,7 +1666,7 @@ function SettingsScreen({ api }) {
             />
           </View>
 
-          <TouchableOpacity onPress={saveSettings} style={[styles.primaryBtn, { marginTop: theme.gap.m }]}>
+          <TouchableOpacity onPress={saveAll} style={[styles.primaryBtn, { marginTop: theme.gap.m }]}>
             <Text style={styles.primaryBtnText}>{t('saveSettings')}</Text>
           </TouchableOpacity>
         </>
