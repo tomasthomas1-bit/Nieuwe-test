@@ -2385,7 +2385,7 @@ const createStyles = (THEME) => StyleSheet.create({
   matchCount: {
     fontSize: 16,
     fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
+    color: THEME.color.textPrimary,
   },
   findPartnerBtn: {
     backgroundColor: '#0A84FF',
@@ -2410,14 +2410,14 @@ const createStyles = (THEME) => StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: THEME.color.textSecondary,
     fontFamily: THEME.font.bodyFamily,
     marginBottom: 4,
   },
   statValue: {
     fontSize: 24,
     fontFamily: THEME.font.bodyBold,
-    color: '#FFFFFF',
+    color: THEME.color.textPrimary,
   },
   statDivider: {
     width: 1,
