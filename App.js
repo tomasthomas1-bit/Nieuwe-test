@@ -896,9 +896,9 @@ function DiscoverScreen({ api, theme, user }) {
     } finally {
       setLoading(false);
     }
-  }, [api, swiping, loading]);
+  }, [api, swiping, loading, t]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const doSwipe = useCallback(async (liked) => {
     if (swiping || loading) return;
@@ -934,7 +934,7 @@ function DiscoverScreen({ api, theme, user }) {
       Alert.alert(t('discover'), e.message);
       setSwiping(false);
     }
-  }, [api, swiping, loading, load]);
+  }, [api, swiping, loading, load, t]);
 
   const currentProfile = suggestions[currentIndex];
   const photoUrl = currentProfile?.profile_photo_url || (currentProfile?.photos && currentProfile.photos[0]);
@@ -949,10 +949,15 @@ function DiscoverScreen({ api, theme, user }) {
         </View>
 
         <View style={styles.headerCenter}>
-          <Image 
-            source={require('./attached_assets/c892efa944_1762507124461.png')} 
-            style={{ width: 120, height: 120, resizeMode: 'contain' }}
-          />
+          <View style={{ alignItems: 'center' }}>
+            <Ionicons name="heart-circle" size={48} color="#FF6B35" />
+            <Text style={{ 
+              fontSize: 10, 
+              color: theme.color.textSecondary, 
+              marginTop: 2,
+              fontFamily: 'Montserrat_600SemiBold'
+            }}>ATHLO</Text>
+          </View>
         </View>
 
         <View style={styles.headerRight}>
@@ -1510,7 +1515,7 @@ function SettingsScreen({ api }) {
     } catch (e) {
       if (__DEV__) console.debug('loadAvailability failed', e);
     }
-  }, [api, BLOCKS]);
+  }, [api]);
 
   useEffect(() => { loadAvailability(); }, [loadAvailability, api.userId]);
 
@@ -1533,7 +1538,7 @@ function SettingsScreen({ api }) {
     } catch (e) {
       Alert.alert('Beschikbaarheden', e.message);
     }
-  }, [api, availabilityGrid, BLOCKS]);
+  }, [api, availabilityGrid]);
 
   /* ---- Uitloggen ---- */
   const handleLogout = useCallback(() => {
@@ -1809,7 +1814,7 @@ function AppContent() {
         }
       })();
     }
-  }, [api.isAuthenticated, api.userId, api.authFetch, setLang]);
+  }, [api, setLang]);
 
   if (!fontsLoaded) return null;
 
@@ -2580,7 +2585,7 @@ function MatchesScreen({ api, theme, navigation }) {
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, [api, t]);
 
   useEffect(() => { load(); }, [load]);
 
