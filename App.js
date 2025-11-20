@@ -1699,15 +1699,21 @@ function SettingsScreen() {
 
   /* ---- Uitloggen ---- */
   const handleLogout = useCallback(() => {
+    console.log('🔵 handleLogout aangeroepen - knop werkt!');
+    console.log('🔵 api object:', api);
+    console.log('🔵 logout functie:', typeof api.logout);
+    
     Alert.alert(t('logout'), t('logoutConfirm'), [
-      { text: t('cancel'), style: 'cancel' },
+      { text: t('cancel'), style: 'cancel', onPress: () => console.log('🔵 Cancel pressed') },
       { 
         text: t('logout'), 
         style: 'destructive', 
         onPress: () => {
-          // Direct de logout aanroepen zonder async/await in de Alert callback
-          api.logout().catch((e) => {
-            if (__DEV__) console.debug('Logout error:', e);
+          console.log('🔴 Logout bevestigd!');
+          api.logout().then(() => {
+            console.log('✅ Logout succesvol uitgevoerd');
+          }).catch((e) => {
+            console.error('❌ Logout error:', e);
           });
         }
       },
@@ -1972,6 +1978,19 @@ function SettingsScreen() {
 
       {/* Uitloggen */}
       <View style={{ height: theme.gap.l }} />
+      
+      {/* TEST: Direct logout zonder Alert */}
+      <TouchableOpacity 
+        onPress={() => {
+          console.log('🟢 TEST KNOP GEKLIKT!');
+          api.logout();
+        }} 
+        style={[styles.primaryBtn, { backgroundColor: '#FF9500', marginBottom: 12 }]}
+      >
+        <Text style={styles.primaryBtnText}>🧪 TEST: Direct uitloggen</Text>
+      </TouchableOpacity>
+      
+      {/* Normale logout met Alert */}
       <TouchableOpacity onPress={handleLogout} style={[styles.primaryBtn, { backgroundColor: theme.color.danger }]}>
         <Text style={styles.primaryBtnText}>{t('logout')}</Text>
       </TouchableOpacity>
