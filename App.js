@@ -1699,25 +1699,23 @@ function SettingsScreen() {
 
   /* ---- Uitloggen ---- */
   const handleLogout = useCallback(() => {
-    console.log('🔵 handleLogout aangeroepen - knop werkt!');
-    console.log('🔵 api object:', api);
-    console.log('🔵 logout functie:', typeof api.logout);
-    
-    Alert.alert(t('logout'), t('logoutConfirm'), [
-      { text: t('cancel'), style: 'cancel', onPress: () => console.log('🔵 Cancel pressed') },
-      { 
-        text: t('logout'), 
-        style: 'destructive', 
-        onPress: () => {
-          console.log('🔴 Logout bevestigd!');
-          api.logout().then(() => {
-            console.log('✅ Logout succesvol uitgevoerd');
-          }).catch((e) => {
-            console.error('❌ Logout error:', e);
-          });
-        }
-      },
-    ]);
+    // Gebruik window.confirm voor web compatibility (werkt in Expo Snack)
+    // Alert.alert werkt niet goed in web preview
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('logoutConfirm'))) {
+        api.logout();
+      }
+    } else {
+      // Native platforms: gebruik Alert.alert
+      Alert.alert(t('logout'), t('logoutConfirm'), [
+        { text: t('cancel'), style: 'cancel' },
+        { 
+          text: t('logout'), 
+          style: 'destructive', 
+          onPress: () => api.logout()
+        },
+      ]);
+    }
   }, [api, t]);
 
   /* ================= RENDER ================= */
@@ -1978,19 +1976,6 @@ function SettingsScreen() {
 
       {/* Uitloggen */}
       <View style={{ height: theme.gap.l }} />
-      
-      {/* TEST: Direct logout zonder Alert */}
-      <TouchableOpacity 
-        onPress={() => {
-          console.log('🟢 TEST KNOP GEKLIKT!');
-          api.logout();
-        }} 
-        style={[styles.primaryBtn, { backgroundColor: '#FF9500', marginBottom: 12 }]}
-      >
-        <Text style={styles.primaryBtnText}>🧪 TEST: Direct uitloggen</Text>
-      </TouchableOpacity>
-      
-      {/* Normale logout met Alert */}
       <TouchableOpacity onPress={handleLogout} style={[styles.primaryBtn, { backgroundColor: theme.color.danger }]}>
         <Text style={styles.primaryBtnText}>{t('logout')}</Text>
       </TouchableOpacity>
