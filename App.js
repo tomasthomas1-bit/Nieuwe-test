@@ -1324,6 +1324,10 @@ function SettingsScreen() {
   // Language state (separate from profile for clarity)
   const [selectedLanguage, setSelectedLanguage] = useState('nl');
   
+  // Strava state
+  const [stravaLinked, setStravaLinked] = useState(false);
+  const [stravaLoading, setStravaLoading] = useState(false);
+  
   // Track if user manually changed language (prevent loadProfile from overwriting)
   const languageDirtyRef = useRef(false);
   
@@ -1699,6 +1703,118 @@ function SettingsScreen() {
     }
   }, [api, availabilityGrid]);
 
+  /* ================= STRAVA HANDLERS ================= */
+  const checkStravaStatus = useCallback(async () => {
+    try {
+      const res = await api.authFetch('/users/me');
+      const data = await res.json();
+      setStravaLinked(!!data.strava_athlete_id);
+    } catch (e) {
+      console.error('Failed to check Strava status:', e);
+    }
+  }, [api]);
+  
+  useEffect(() => {
+    if (USER_ID) checkStravaStatus();
+  }, [checkStravaStatus, USER_ID]);
+  
+  const linkStrava = useCallback(async () => {
+    try {
+      setStravaLoading(true);
+      const res = await api.authFetch('/strava/auth-url');
+      const data = await res.json();
+      
+      if (!data.auth_url) {
+        throw new Error('Geen auth URL ontvangen');
+      }
+      
+      // Universal polling function voor beide platforms
+      const startPolling = () => {
+        let pollCount = 0;
+        const maxPolls = 20; // 60 seconden max
+        
+        const pollInterval = setInterval(async () => {
+          pollCount++;
+          
+          try {
+            const statusRes = await api.authFetch('/users/me');
+            if (statusRes.ok) {
+              const userData = await statusRes.json();
+              
+              if (userData.strava_athlete_id) {
+                // Success!
+                setStravaLinked(true);
+                clearInterval(pollInterval);
+                setStravaLoading(false);
+                Alert.alert('Strava', 'Strava succesvol gekoppeld!');
+                return;
+              }
+            }
+          } catch (e) {
+            console.error('Status check failed:', e);
+          }
+          
+          // Timeout na max polls
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            setStravaLoading(false);
+            // Laatste check zonder Alert als gebruiker al heeft gesloten
+            checkStravaStatus();
+          }
+        }, 3000);
+      };
+      
+      // Platform-specific opening
+      if (Platform.OS === 'web') {
+        const authWindow = window.open(data.auth_url, '_blank', 'width=600,height=700');
+        if (!authWindow) {
+          throw new Error('Popup geblokkeerd - sta popups toe voor Strava OAuth');
+        }
+        startPolling();
+      } else {
+        // Native: open en start polling
+        const { Linking } = require('react-native');
+        const opened = await Linking.openURL(data.auth_url).catch((err) => {
+          Alert.alert('Strava', 'Kon browser niet openen: ' + err.message);
+          return false;
+        });
+        
+        if (opened !== false) {
+          // Start polling voor native ook
+          Alert.alert(
+            'Strava', 
+            'Autoriseer Strava in je browser en keer terug naar de app. De status wordt automatisch bijgewerkt.'
+          );
+          startPolling();
+        } else {
+          setStravaLoading(false);
+        }
+      }
+    } catch (e) {
+      Alert.alert('Strava', e.message || 'Kon Strava koppeling niet starten');
+      setStravaLoading(false);
+    }
+  }, [api, checkStravaStatus]);
+  
+  const unlinkStrava = useCallback(async () => {
+    try {
+      setStravaLoading(true);
+      const res = await api.authFetch('/strava/disconnect', { method: 'POST' });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setStravaLinked(false);
+        Alert.alert('Strava', data.message || 'Strava ontkoppeld');
+      } else {
+        throw new Error(data.detail || 'Ontkoppelen mislukt');
+      }
+    } catch (e) {
+      Alert.alert('Strava', e.message);
+    } finally {
+      setStravaLoading(false);
+    }
+  }, [api]);
+
   /* ---- Uitloggen ---- */
   const handleLogout = useCallback(() => {
     // Gebruik window.confirm voor web compatibility (werkt in Expo Snack)
@@ -1892,6 +2008,51 @@ function SettingsScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Ionicons name="location" size={20} color="#fff" />
                   <Text style={styles.primaryBtnText}>{t('getLocation')}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          {/* Strava Section */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={{ marginBottom: 8, fontFamily: theme.font.bodySemibold }}>Strava</Text>
+            <Text style={{ marginBottom: 12, color: theme.color.textSecondary, fontSize: 13 }}>
+              {t('stravaConnectDescription') || 'Koppel je Strava account om automatisch je sportactiviteiten te delen.'}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ marginRight: 8, color: theme.color.textSecondary }}>
+                Status:
+              </Text>
+              {stravaLinked ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="checkmark-circle" size={18} color={theme.color.success || '#4CAF50'} />
+                  <Text style={{ color: theme.color.success || '#4CAF50', fontFamily: theme.font.bodySemibold }}>
+                    {t('stravaLinked') || 'Gekoppeld'}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={{ color: theme.color.textSecondary }}>
+                  Niet gekoppeld
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity 
+              onPress={stravaLinked ? unlinkStrava : linkStrava}
+              disabled={stravaLoading}
+              style={[
+                styles.primaryBtn, 
+                stravaLoading && { opacity: 0.5 },
+                stravaLinked && { backgroundColor: theme.color.danger || '#f44336' }
+              ]}
+            >
+              {stravaLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Ionicons name={stravaLinked ? "unlink" : "link"} size={20} color="#fff" />
+                  <Text style={styles.primaryBtnText}>
+                    {stravaLinked ? (t('stravaUnlink') || 'Ontkoppel Strava') : (t('stravaLink') || 'Koppel Strava')}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>

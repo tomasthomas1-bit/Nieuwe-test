@@ -1545,14 +1545,122 @@ async def get_strava_activities(current_user: dict = Depends(get_current_user), 
     
     encrypted_access, encrypted_refresh, expires_at = row
     
+    # Check if refresh token exists
+    if not encrypted_access or not encrypted_refresh:
+        # Cleanup incomplete Strava linking
+        c.execute(
+            """
+            UPDATE users 
+            SET strava_token = NULL, 
+                strava_refresh_token = NULL,
+                strava_expires_at = NULL,
+                strava_athlete_id = NULL
+            WHERE id = %s
+            """,
+            (user_id,)
+        )
+        conn.commit()
+        raise HTTPException(status_code=400, detail="Strava niet volledig gekoppeld - probeer opnieuw")
+    
     # Decrypt access token
     try:
         access_token = cipher_suite.decrypt(encrypted_access.encode()).decode()
+        refresh_token = cipher_suite.decrypt(encrypted_refresh.encode()).decode()
     except Exception as e:
         logger.error("Failed to decrypt Strava token: %s", e)
-        raise HTTPException(status_code=500, detail="Token decryptie mislukt")
+        # Cleanup corrupted tokens
+        c.execute(
+            """
+            UPDATE users 
+            SET strava_token = NULL, 
+                strava_refresh_token = NULL,
+                strava_expires_at = NULL,
+                strava_athlete_id = NULL
+            WHERE id = %s
+            """,
+            (user_id,)
+        )
+        conn.commit()
+        raise HTTPException(status_code=500, detail="Token decryptie mislukt - koppel Strava opnieuw")
     
-    # TODO: Check if token expired en refresh indien nodig
+    # Check if token expired and refresh if needed
+    import time
+    current_time = int(time.time())
+    if expires_at and current_time >= expires_at:
+        logger.info("Strava token expired, refreshing for user %s", user_id)
+        
+        # Exchange refresh token for new access token
+        async with httpx.AsyncClient() as client:
+            refresh_response = await client.post(
+                "https://www.strava.com/oauth/token",
+                data={
+                    "client_id": STRAVA_CLIENT_ID,
+                    "client_secret": STRAVA_CLIENT_SECRET,
+                    "grant_type": "refresh_token",
+                    "refresh_token": refresh_token,
+                }
+            )
+        
+        if refresh_response.status_code != 200:
+            error_detail = refresh_response.text
+            logger.error("Strava token refresh failed (status %d): %s", refresh_response.status_code, error_detail)
+            
+            # Alleen cleanup bij permanente failures (401/403 = revoked access)
+            if refresh_response.status_code in [401, 403]:
+                logger.warning("Strava access revoked for user %s, cleaning up", user_id)
+                c.execute(
+                    """
+                    UPDATE users 
+                    SET strava_token = NULL, 
+                        strava_refresh_token = NULL,
+                        strava_expires_at = NULL,
+                        strava_athlete_id = NULL
+                    WHERE id = %s
+                    """,
+                    (user_id,)
+                )
+                conn.commit()
+                raise HTTPException(
+                    status_code=401, 
+                    detail="Strava toegang ingetrokken - koppel opnieuw"
+                )
+            else:
+                # Transient error - behoud tokens, return error
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Strava tijdelijk onbereikbaar (status {refresh_response.status_code}) - probeer later"
+                )
+        
+        token_data = refresh_response.json()
+        access_token = token_data.get("access_token")
+        new_refresh_token = token_data.get("refresh_token")
+        new_expires_at = token_data.get("expires_at")
+        
+        # Validate refresh response
+        if not access_token or not new_refresh_token:
+            logger.error("Strava refresh response missing tokens: %s", token_data)
+            # Dit duidt op een Strava API probleem - behoud bestaande tokens
+            raise HTTPException(
+                status_code=503, 
+                detail="Strava API error - probeer later opnieuw"
+            )
+        
+        # Update database with new tokens
+        encrypted_access = cipher_suite.encrypt(access_token.encode()).decode()
+        encrypted_refresh_new = cipher_suite.encrypt(new_refresh_token.encode()).decode()
+        
+        c.execute(
+            """
+            UPDATE users 
+            SET strava_token = %s, 
+                strava_refresh_token = %s,
+                strava_expires_at = %s
+            WHERE id = %s
+            """,
+            (encrypted_access, encrypted_refresh_new, new_expires_at, user_id)
+        )
+        conn.commit()
+        logger.info("Strava token refreshed successfully for user %s", user_id)
     
     # Haal activiteiten op van Strava API
     async with httpx.AsyncClient() as client:
