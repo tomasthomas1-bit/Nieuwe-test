@@ -37,3 +37,13 @@ externalPort = 80
 [[ports]]
 localPort = 8000
 externalPort = 8000
+
+[[ports]]
+localPort = 40155
+externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+STRAVA_CLIENT_ID = "placeholder_client_id"
+STRAVA_CLIENT_SECRET = "placeholder_client_secret"

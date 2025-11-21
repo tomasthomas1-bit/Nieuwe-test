@@ -29,3 +29,4 @@ python-jose[cryptography]
 python-multipart
 ruff
 uvicorn
+httpx

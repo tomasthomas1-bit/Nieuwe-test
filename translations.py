@@ -43,6 +43,14 @@ Het Athlo Team
         "no_profile_photo": "Gebruiker heeft geen profielfoto meer.",
         "route_suggestion_error": "Kon geen recente Strava-locaties bepalen. Zorg dat beide gebruikers een geldig strava_token hebben of gebruik 'mock:LAT,LNG' voor testen.",
         "route_suggestion_success": "Voorstel gegenereerd op basis van Strava-activiteit.",
+        
+        # Strava
+        "strava_link": "Koppel Strava",
+        "strava_linked": "Strava Gekoppeld",
+        "strava_unlink": "Ontkoppel Strava",
+        "strava_activities": "Recente activiteiten",
+        "strava_not_configured": "Strava integratie is niet geconfigureerd",
+        "strava_connect_description": "Koppel je Strava account om automatisch je sportactiviteiten te delen en betere matches te vinden.",
 
         # Validatie/overige
         "no_fields_to_update": "Geen velden om bij te werken.",
@@ -98,6 +106,14 @@ The Athlo Team
         "no_profile_photo": "User has no profile photo anymore.",
         "route_suggestion_error": "Could not determine recent Strava locations. Ensure both users have a valid strava_token or use 'mock:LAT,LNG' for testing.",
         "route_suggestion_success": "Suggestion generated based on Strava activity.",
+        
+        # Strava
+        "strava_link": "Link Strava",
+        "strava_linked": "Strava Linked",
+        "strava_unlink": "Unlink Strava",
+        "strava_activities": "Recent activities",
+        "strava_not_configured": "Strava integration not configured",
+        "strava_connect_description": "Connect your Strava account to automatically share your sports activities and find better matches.",
 
         # Validation/other
         "no_fields_to_update": "No fields to update.",
@@ -153,6 +169,14 @@ L'équipe Athlo
         "no_profile_photo": "L'utilisateur n'a plus de photo de profil.",
         "route_suggestion_error": "Impossible de déterminer des positions Strava récentes. Assurez-vous que les deux utilisateurs possèdent un strava_token valide ou utilisez 'mock:LAT,LNG' pour les tests.",
         "route_suggestion_success": "Suggestion générée sur la base de l'activité Strava.",
+        
+        # Strava
+        "strava_link": "Lier Strava",
+        "strava_linked": "Strava Lié",
+        "strava_unlink": "Dissocier Strava",
+        "strava_activities": "Activités récentes",
+        "strava_not_configured": "Intégration Strava non configurée",
+        "strava_connect_description": "Connectez votre compte Strava pour partager automatiquement vos activités sportives et trouver de meilleures correspondances.",
 
         # Validation/other
         "no_fields_to_update": "Aucun champ à mettre à jour.",
@@ -208,6 +232,14 @@ Das Athlo-Team
         "no_profile_photo": "Benutzer hat kein Profilfoto mehr.",
         "route_suggestion_error": "Konnte keine aktuellen Strava-Positionen ermitteln. Stellen Sie sicher, dass beide Benutzer ein gültiges strava_token haben oder verwenden Sie 'mock:LAT,LNG' zum Testen.",
         "route_suggestion_success": "Vorschlag basierend auf Strava-Aktivität erstellt.",
+        
+        # Strava
+        "strava_link": "Strava verbinden",
+        "strava_linked": "Strava Verbunden",
+        "strava_unlink": "Strava trennen",
+        "strava_activities": "Aktuelle Aktivitäten",
+        "strava_not_configured": "Strava-Integration nicht konfiguriert",
+        "strava_connect_description": "Verbinden Sie Ihr Strava-Konto, um Ihre Sportaktivitäten automatisch zu teilen und bessere Matches zu finden.",
 
         # Validierung/sonstiges
         "no_fields_to_update": "Keine Felder zum Aktualisieren.",
@@ -262,6 +294,14 @@ El equipo de Athlo
         "no_profile_photo": "El usuario ya no tiene foto de perfil.",
         "route_suggestion_error": "No se pudieron determinar ubicaciones recientes de Strava. Asegúrate de que ambos usuarios tengan un strava_token válido o usa 'mock:LAT,LNG' para pruebas.",
         "route_suggestion_success": "Sugerencia generada según la actividad de Strava.",
+        
+        # Strava
+        "strava_link": "Vincular Strava",
+        "strava_linked": "Strava Vinculado",
+        "strava_unlink": "Desvincular Strava",
+        "strava_activities": "Actividades recientes",
+        "strava_not_configured": "Integración de Strava no configurada",
+        "strava_connect_description": "Conecta tu cuenta de Strava para compartir automáticamente tus actividades deportivas y encontrar mejores coincidencias.",
 
         # Validación/otros
         "no_fields_to_update": "No hay campos para actualizar.",
@@ -316,6 +356,14 @@ Equipe Athlo
         "no_profile_photo": "O usuário não possui mais foto de perfil.",
         "route_suggestion_error": "Não foi possível determinar locais recentes do Strava. Garanta que ambos os usuários tenham um strava_token válido ou use 'mock:LAT,LNG' para testes.",
         "route_suggestion_success": "Sugestão gerada com base na atividade do Strava.",
+        
+        # Strava
+        "strava_link": "Vincular Strava",
+        "strava_linked": "Strava Vinculado",
+        "strava_unlink": "Desvincular Strava",
+        "strava_activities": "Atividades recentes",
+        "strava_not_configured": "Integração Strava não configurada",
+        "strava_connect_description": "Conecte sua conta Strava para compartilhar automaticamente suas atividades esportivas e encontrar melhores correspondências.",
 
         # Validação/outros
         "no_fields_to_update": "Nenhum campo para atualizar.",
@@ -370,6 +418,14 @@ Il team di Athlo
         "no_profile_photo": "L'utente non ha più una foto del profilo.",
         "route_suggestion_error": "Impossibile determinare posizioni recenti di Strava. Assicurati che entrambi gli utenti abbiano un strava_token valido o usa 'mock:LAT,LNG' per i test.",
         "route_suggestion_success": "Suggerimento generato in base all'attività Strava.",
+        
+        # Strava
+        "strava_link": "Collega Strava",
+        "strava_linked": "Strava Collegato",
+        "strava_unlink": "Scollega Strava",
+        "strava_activities": "Attività recenti",
+        "strava_not_configured": "Integrazione Strava non configurata",
+        "strava_connect_description": "Collega il tuo account Strava per condividere automaticamente le tue attività sportive e trovare migliori corrispondenze.",
 
         # Validazione/altro
         "no_fields_to_update": "Nessun campo da aggiornare.",

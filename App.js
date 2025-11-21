@@ -83,6 +83,8 @@ const translations = {
     location: 'Locatie', currentLocation: 'Huidige locatie', getLocation: 'Locatie ophalen',
     locationPermissionDenied: 'Locatietoegang geweigerd', locationPermissionDeniedMessage: 'Je moet locatietoegang toestaan om je huidige locatie op te halen.',
     locationError: 'Locatiefout', locationSaved: 'Locatie opgeslagen!', locationNotAvailable: 'Locatie niet beschikbaar',
+    stravaLink: 'Koppel Strava', stravaLinked: 'Strava Gekoppeld', stravaUnlink: 'Ontkoppel Strava',
+    stravaConnectDescription: 'Koppel je Strava account om automatisch je sportactiviteiten te delen.',
   },
   en: {
     login: 'Login', register: 'Register', username: 'Username', password: 'Password',

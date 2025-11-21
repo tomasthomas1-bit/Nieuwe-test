@@ -73,6 +73,12 @@ GOOGLE_MAPS_API_KEY = os.environ.get("GOOGLE_MAPS_API_KEY")  # optioneel
 FRONTEND_ORIGINS = os.environ.get("FRONTEND_ORIGINS", "")  # bv. "https://app...,https://staging..."
 _allowed_origins = [o.strip() for o in FRONTEND_ORIGINS.split(",") if o.strip()]
 
+# Strava OAuth configuratie
+STRAVA_CLIENT_ID = os.environ.get("STRAVA_CLIENT_ID")
+STRAVA_CLIENT_SECRET = os.environ.get("STRAVA_CLIENT_SECRET")
+STRAVA_REDIRECT_URI = os.environ.get("STRAVA_REDIRECT_URI", "http://localhost:8000/strava/callback")
+REPLIT_DEV_DOMAIN = os.environ.get("REPLIT_DEV_DOMAIN", "")
+
 # ------------------------- App init --------------------------------
 app = FastAPI(title="Sports Match API", version="2.2.0")
 
@@ -1399,6 +1405,184 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     }
     logger.info("Routevoorstel gegenereerd voor match %s-%s.", user_id, match_id)
     return {"status": "success", "message": t("route_suggestion_success", lang), "route_suggestion": popular_route}
+
+# ------------------------- STRAVA OAUTH ---------------------------
+import urllib.parse
+import httpx
+
+@app.get("/strava/auth-url")
+async def get_strava_auth_url(current_user: dict = Depends(get_current_user)):
+    """Genereer de Strava OAuth authorization URL"""
+    if not STRAVA_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Strava niet geconfigureerd")
+    
+    # Bouw redirect URI op basis van Replit domain
+    if REPLIT_DEV_DOMAIN:
+        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}:8000/strava/callback"
+    else:
+        redirect_uri = STRAVA_REDIRECT_URI
+    
+    # State bevat user_id voor later
+    state = str(current_user["id"])
+    
+    params = {
+        "client_id": STRAVA_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "read,activity:read_all",
+        "state": state,
+    }
+    auth_url = f"https://www.strava.com/oauth/authorize?{urllib.parse.urlencode(params)}"
+    return {"auth_url": auth_url}
+
+@app.get("/strava/callback")
+async def strava_callback(code: str, state: str, db=Depends(get_db)):
+    """Strava OAuth callback - wissel code om voor access token"""
+    if not STRAVA_CLIENT_ID or not STRAVA_CLIENT_SECRET:
+        raise HTTPException(status_code=500, detail="Strava niet geconfigureerd")
+    
+    conn, c = db
+    user_id = int(state)
+    
+    # Wissel authorization code om voor access token
+    if REPLIT_DEV_DOMAIN:
+        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}:8000/strava/callback"
+    else:
+        redirect_uri = STRAVA_REDIRECT_URI
+    
+    async with httpx.AsyncClient() as client:
+        token_response = await client.post(
+            "https://www.strava.com/oauth/token",
+            data={
+                "client_id": STRAVA_CLIENT_ID,
+                "client_secret": STRAVA_CLIENT_SECRET,
+                "code": code,
+                "grant_type": "authorization_code",
+            }
+        )
+    
+    if token_response.status_code != 200:
+        logger.error("Strava token exchange failed: %s", token_response.text)
+        raise HTTPException(status_code=400, detail="Strava authenticatie mislukt")
+    
+    token_data = token_response.json()
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    expires_at = token_data.get("expires_at")
+    athlete = token_data.get("athlete", {})
+    
+    # Sla tokens op in database (encrypted)
+    encrypted_access = cipher_suite.encrypt(access_token.encode()).decode()
+    encrypted_refresh = cipher_suite.encrypt(refresh_token.encode()).decode()
+    
+    c.execute(
+        """
+        UPDATE users 
+        SET strava_token = %s, 
+            strava_refresh_token = %s,
+            strava_expires_at = %s,
+            strava_athlete_id = %s
+        WHERE id = %s
+        """,
+        (encrypted_access, encrypted_refresh, expires_at, athlete.get("id"), user_id)
+    )
+    conn.commit()
+    
+    logger.info("Strava gekoppeld voor user %s (athlete: %s)", user_id, athlete.get("id"))
+    
+    # Redirect terug naar app
+    return HTMLResponse("""
+        <html>
+            <head><title>Strava Gekoppeld</title></head>
+            <body style="font-family: sans-serif; text-align: center; margin-top: 50px;">
+                <h1>✅ Strava Account Gekoppeld!</h1>
+                <p>Je kunt dit venster sluiten en terugkeren naar de app.</p>
+                <script>
+                    setTimeout(function() {
+                        window.close();
+                    }, 2000);
+                </script>
+            </body>
+        </html>
+    """)
+
+@app.post("/strava/disconnect")
+async def disconnect_strava(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    """Ontkoppel Strava account"""
+    conn, c = db
+    user_id = current_user["id"]
+    
+    c.execute(
+        """
+        UPDATE users 
+        SET strava_token = NULL, 
+            strava_refresh_token = NULL,
+            strava_expires_at = NULL,
+            strava_athlete_id = NULL
+        WHERE id = %s
+        """,
+        (user_id,)
+    )
+    conn.commit()
+    
+    logger.info("Strava ontkoppeld voor user %s", user_id)
+    return {"status": "success", "message": "Strava account ontkoppeld"}
+
+@app.get("/strava/activities")
+async def get_strava_activities(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    """Haal recente Strava activiteiten op"""
+    conn, c = db
+    user_id = current_user["id"]
+    
+    # Haal Strava tokens op
+    c.execute(
+        "SELECT strava_token, strava_refresh_token, strava_expires_at FROM users WHERE id = %s",
+        (user_id,)
+    )
+    row = c.fetchone()
+    if not row or not row[0]:
+        raise HTTPException(status_code=400, detail="Strava niet gekoppeld")
+    
+    encrypted_access, encrypted_refresh, expires_at = row
+    
+    # Decrypt access token
+    try:
+        access_token = cipher_suite.decrypt(encrypted_access.encode()).decode()
+    except Exception as e:
+        logger.error("Failed to decrypt Strava token: %s", e)
+        raise HTTPException(status_code=500, detail="Token decryptie mislukt")
+    
+    # TODO: Check if token expired en refresh indien nodig
+    
+    # Haal activiteiten op van Strava API
+    async with httpx.AsyncClient() as client:
+        activities_response = await client.get(
+            "https://www.strava.com/api/v3/athlete/activities",
+            headers={"Authorization": f"Bearer {access_token}"},
+            params={"per_page": 10}
+        )
+    
+    if activities_response.status_code != 200:
+        logger.error("Strava activities fetch failed: %s", activities_response.text)
+        raise HTTPException(status_code=400, detail="Kan activiteiten niet ophalen")
+    
+    activities = activities_response.json()
+    
+    # Formatteer activiteiten
+    formatted = []
+    for activity in activities:
+        formatted.append({
+            "id": activity.get("id"),
+            "name": activity.get("name"),
+            "type": activity.get("type"),
+            "distance": round(activity.get("distance", 0) / 1000, 2),  # meters naar km
+            "moving_time": activity.get("moving_time"),
+            "elapsed_time": activity.get("elapsed_time"),
+            "start_date": activity.get("start_date"),
+            "start_latlng": activity.get("start_latlng"),
+        })
+    
+    return {"status": "success", "activities": formatted}
 
 # ------------------------- Health & Home ---------------------------
 @app.get("/healthz")
