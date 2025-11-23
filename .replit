@@ -23,20 +23,20 @@ name = "backend"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash -c \"source .env.backend && uvicorn main:app --host 0.0.0.0 --port 8000\""
-waitForPort = 8000
+args = "bash -c \"source .env.backend && uvicorn main:app --host 0.0.0.0 --port 5000\""
+waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 8000
-externalPort = 8000
+localPort = 37609
+externalPort = 3000
 
 [userenv]
 
