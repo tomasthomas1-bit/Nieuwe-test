@@ -954,10 +954,13 @@ function DiscoverScreen({ api, theme, user }) {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
+  const loadRef = useRef(false);
+
   const load = useCallback(async () => {
-    if (swiping || loading) return [];
+    if (swiping || loadRef.current) return [];
     
     try {
+      loadRef.current = true;
       setLoading(true);
       const res = await api.authFetch('/suggestions');
       const data = await res.json();
@@ -972,10 +975,11 @@ function DiscoverScreen({ api, theme, user }) {
       return [];
     } finally {
       setLoading(false);
+      loadRef.current = false;
     }
-  }, [api, swiping, loading, t]);
+  }, [api, swiping, t]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); }, []);
 
   const fetchActivitiesForUser = useCallback(async (userId) => {
     try {
