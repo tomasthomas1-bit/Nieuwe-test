@@ -979,14 +979,14 @@ function DiscoverScreen({ api, theme, user }) {
 
   const fetchActivitiesForUser = useCallback(async (userId) => {
     try {
-      const res = await api.authFetch(`/users/${userId}/activities`);
+      const res = await api.authFetch(`/strava/activities`);
       const data = await res.json();
       if (res.ok && data.activities) {
         setActivitiesData(prev => ({
           ...prev,
           [userId]: {
             activities: data.activities,
-            stats: data.stats || {}
+            slice: data.stats || {}
           }
         }));
       }
@@ -1108,7 +1108,7 @@ function DiscoverScreen({ api, theme, user }) {
           <View style={styles.swipeCardContainer}>
             <View style={styles.swipeCard}>
               {/* SPORTPRESTATIES OVERZICHT */}
-              {activitiesData[currentProfile?.id] && (
+              {activitiesData[currentProfile?.id]?.activities?.length > 0 && (
                 <View style={styles.activitiesSection}>
                   <Text style={styles.activitiesSectionTitle}>Sportprestaties</Text>
                   {activitiesData[currentProfile.id].activities.slice(0, 3).map((activity, idx) => (
