@@ -1706,7 +1706,7 @@ function SettingsScreen() {
   /* ================= STRAVA HANDLERS ================= */
   const checkStravaStatus = useCallback(async () => {
     try {
-      const res = await api.authFetch('/users/me');
+      const res = await api.authFetch('/me');
       const data = await res.json();
       setStravaLinked(!!data.strava_athlete_id);
     } catch (e) {
@@ -1737,7 +1737,7 @@ function SettingsScreen() {
           pollCount++;
           
           try {
-            const statusRes = await api.authFetch('/users/me');
+            const statusRes = await api.authFetch('/me');
             if (statusRes.ok) {
               const userData = await statusRes.json();
               
