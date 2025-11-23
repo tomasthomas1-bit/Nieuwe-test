@@ -979,8 +979,6 @@ function DiscoverScreen({ api, theme, user }) {
     }
   }, [api, swiping, t]);
 
-  useEffect(() => { load(); }, []);
-
   const fetchActivitiesForUser = useCallback(async (userId) => {
     try {
       const res = await api.authFetch(`/strava/activities`);
@@ -1052,7 +1050,9 @@ function DiscoverScreen({ api, theme, user }) {
     <View style={styles.discoverContainer}>
       <View style={styles.discoverHeader}>
         <View style={styles.headerLeft}>
-          <Avatar theme={theme} size={44} uri={user?.profile_photo_url} />
+          <TouchableOpacity onPress={load} disabled={loading}>
+            <Ionicons name="refresh" size={24} color={loading ? "#ccc" : "#FF6B35"} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.headerCenter}>
