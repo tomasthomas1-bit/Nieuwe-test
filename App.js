@@ -1001,7 +1001,7 @@ function DiscoverScreen({ api, theme, user }) {
         fetchActivitiesForUser(currentProfile.id);
       }
     }
-  }, [currentProfile, activitiesData, fetchActivitiesForUser]);
+  }, [currentProfile?.id]);
 
   const doSwipe = useCallback(async (liked) => {
     if (swiping || loading) return;
