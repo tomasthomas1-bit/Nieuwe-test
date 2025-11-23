@@ -562,6 +562,7 @@ async def me(current_user: dict = Depends(get_current_user)):
         "latitude": current_user.get("latitude"),
         "longitude": current_user.get("longitude"),
         "city": current_user.get("city"),
+        "strava_athlete_id": current_user.get("strava_athlete_id"),
     }
 
 @app.patch("/users/{user_id}", response_model=UserPublic)
