@@ -1418,7 +1418,7 @@ async def get_strava_auth_url(current_user: dict = Depends(get_current_user)):
     
     # Bouw redirect URI op basis van Replit domain
     if REPLIT_DEV_DOMAIN:
-        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}:8000/strava/callback"
+        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}/strava/callback"
     else:
         redirect_uri = STRAVA_REDIRECT_URI
     
@@ -1446,7 +1446,7 @@ async def strava_callback(code: str, state: str, db=Depends(get_db)):
     
     # Wissel authorization code om voor access token
     if REPLIT_DEV_DOMAIN:
-        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}:8000/strava/callback"
+        redirect_uri = f"https://{REPLIT_DEV_DOMAIN}/strava/callback"
     else:
         redirect_uri = STRAVA_REDIRECT_URI
     
