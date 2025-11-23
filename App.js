@@ -942,6 +942,7 @@ function DiscoverScreen({ api, theme, user }) {
   const [swiping, setSwiping] = useState(false);
   const [matchCount, setMatchCount] = useState(12);
   const [stats, setStats] = useState({ workouts: 24, distance: 185, hours: 36 });
+  const [activitiesData, setActivitiesData] = useState({});
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
 
@@ -975,6 +976,32 @@ function DiscoverScreen({ api, theme, user }) {
   }, [api, swiping, loading, t]);
 
   useEffect(() => { load(); }, [load]);
+
+  const fetchActivitiesForUser = useCallback(async (userId) => {
+    try {
+      const res = await api.authFetch(`/users/${userId}/activities`);
+      const data = await res.json();
+      if (res.ok && data.activities) {
+        setActivitiesData(prev => ({
+          ...prev,
+          [userId]: {
+            activities: data.activities,
+            stats: data.stats || {}
+          }
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to fetch activities:', e);
+    }
+  }, [api]);
+
+  useEffect(() => {
+    if (currentProfile && currentProfile.id) {
+      if (!activitiesData[currentProfile.id]) {
+        fetchActivitiesForUser(currentProfile.id);
+      }
+    }
+  }, [currentProfile, activitiesData, fetchActivitiesForUser]);
 
   const doSwipe = useCallback(async (liked) => {
     if (swiping || loading) return;
@@ -1080,6 +1107,31 @@ function DiscoverScreen({ api, theme, user }) {
         <>
           <View style={styles.swipeCardContainer}>
             <View style={styles.swipeCard}>
+              {/* SPORTPRESTATIES OVERZICHT */}
+              {activitiesData[currentProfile?.id] && (
+                <View style={styles.activitiesSection}>
+                  <Text style={styles.activitiesSectionTitle}>Sportprestaties</Text>
+                  {activitiesData[currentProfile.id].activities.slice(0, 3).map((activity, idx) => (
+                    <View key={idx} style={styles.activityItem}>
+                      <View style={styles.activityIconContainer}>
+                        <Ionicons name="flash" size={16} color="#32D74B" />
+                      </View>
+                      <View style={styles.activityInfo}>
+                        <Text style={styles.activityType}>{activity.name}</Text>
+                        <Text style={styles.activityDetails}>
+                          {activity.distance ? `${(activity.distance / 1000).toFixed(1)} km` : ''} 
+                          {activity.distance && activity.moving_time ? ' • ' : ''}
+                          {activity.moving_time ? `${Math.floor(activity.moving_time / 60)} min` : ''}
+                        </Text>
+                      </View>
+                      <Text style={styles.activityDate}>
+                        {new Date(activity.start_date).toLocaleDateString('nl-NL', {month: 'short', day: 'numeric'})}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
               <View style={styles.swipePhotoContainer}>
                 {photoUrl ? (
                   <Image
@@ -2862,6 +2914,48 @@ const createStyles = (THEME) => StyleSheet.create({
     fontSize: 14,
     fontFamily: THEME.font.bodyFamily,
     color: '#999',
+  },
+  activitiesSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  activitiesSectionTitle: {
+    fontSize: 14,
+    fontFamily: THEME.font.bodySemibold,
+    color: '#000',
+    marginBottom: 8,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  activityIconContainer: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityInfo: {
+    flex: 1,
+  },
+  activityType: {
+    fontSize: 13,
+    fontFamily: THEME.font.bodySemibold,
+    color: '#000',
+  },
+  activityDetails: {
+    fontSize: 12,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#999',
+  },
+  activityDate: {
+    fontSize: 12,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#CCC',
   },
   swipeButtons: {
     flexDirection: 'row',
