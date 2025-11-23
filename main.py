@@ -1013,6 +1013,33 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             if max_distance_km and distance_km > max_distance_km:
                 continue
         
+        # Mock sportstatistieken voor testusers
+        mock_activities = []
+        if r[1] == "Emma de Vries":  # cyclist1
+            mock_activities = [
+                {"name": "Ochtend fietstocht", "distance": 42500, "moving_time": 5400, "start_date": "2024-11-20T08:00:00Z"},
+                {"name": "Middag rit", "distance": 35000, "moving_time": 4200, "start_date": "2024-11-18T14:00:00Z"},
+                {"name": "Weekend tour", "distance": 68000, "moving_time": 7800, "start_date": "2024-11-16T09:00:00Z"}
+            ]
+        elif r[1] == "Lucas Janssen":  # runner1
+            mock_activities = [
+                {"name": "Hardloop training", "distance": 10000, "moving_time": 3000, "start_date": "2024-11-21T07:00:00Z"},
+                {"name": "Interval run", "distance": 8000, "moving_time": 2400, "start_date": "2024-11-19T06:30:00Z"},
+                {"name": "Long run", "distance": 15000, "moving_time": 4500, "start_date": "2024-11-17T08:00:00Z"}
+            ]
+        elif r[1] == "Sophie Bakker":  # swimmer1
+            mock_activities = [
+                {"name": "Zwem training", "distance": 2000, "moving_time": 2400, "start_date": "2024-11-22T18:00:00Z"},
+                {"name": "Baantjes trekken", "distance": 1500, "moving_time": 1800, "start_date": "2024-11-20T19:00:00Z"},
+                {"name": "Open water", "distance": 3000, "moving_time": 3600, "start_date": "2024-11-18T10:00:00Z"}
+            ]
+        elif r[1] == "Mike van Dijk":  # triathlete1
+            mock_activities = [
+                {"name": "Triathlon training", "distance": 25000, "moving_time": 5400, "start_date": "2024-11-21T06:00:00Z"},
+                {"name": "Bike + Run brick", "distance": 30000, "moving_time": 6000, "start_date": "2024-11-19T07:00:00Z"},
+                {"name": "Zwem sessie", "distance": 2500, "moving_time": 2700, "start_date": "2024-11-17T18:00:00Z"}
+            ]
+        
         suggestions.append({
             "id": r[0],
             "name": r[1],
@@ -1023,6 +1050,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             "distance_km": round(distance_km, 1) if distance_km else None,
             "profile_photo_url": r[8],
             "photos": _photos,
+            "activities": mock_activities,
         })
     
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))

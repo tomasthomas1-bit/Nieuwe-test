@@ -967,6 +967,19 @@ function DiscoverScreen({ api, theme, user }) {
       const errMsg = data && data.detail ? data.detail : 'Fout';
       if (!res.ok) throw new Error(errMsg);
       const newSuggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      
+      // Laad activiteiten direct vanuit suggestions
+      const newActivitiesData = {};
+      newSuggestions.forEach(profile => {
+        if (profile.activities && profile.activities.length > 0) {
+          newActivitiesData[profile.id] = {
+            activities: profile.activities,
+            stats: {}
+          };
+        }
+      });
+      setActivitiesData(newActivitiesData);
+      
       setSuggestions(newSuggestions);
       setCurrentIndex(0);
       return newSuggestions;
@@ -978,32 +991,6 @@ function DiscoverScreen({ api, theme, user }) {
       loadRef.current = false;
     }
   }, [api, swiping, t]);
-
-  const fetchActivitiesForUser = useCallback(async (userId) => {
-    try {
-      const res = await api.authFetch(`/strava/activities`);
-      const data = await res.json();
-      if (res.ok && data.activities) {
-        setActivitiesData(prev => ({
-          ...prev,
-          [userId]: {
-            activities: data.activities,
-            slice: data.stats || {}
-          }
-        }));
-      }
-    } catch (e) {
-      console.error('Failed to fetch activities:', e);
-    }
-  }, [api]);
-
-  useEffect(() => {
-    if (currentProfile && currentProfile.id) {
-      if (!activitiesData[currentProfile.id]) {
-        fetchActivitiesForUser(currentProfile.id);
-      }
-    }
-  }, [currentProfile?.id]);
 
   const doSwipe = useCallback(async (liked) => {
     if (swiping || loading) return;
@@ -1111,6 +1098,44 @@ function DiscoverScreen({ api, theme, user }) {
         <>
           <View style={styles.swipeCardContainer}>
             <View style={styles.swipeCard}>
+              {/* FOTO BOVENAAN */}
+              <View style={styles.swipePhotoContainer}>
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.swipePhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.swipePhotoPlaceholder}>
+                    <Ionicons name="person" size={80} color="#666" />
+                  </View>
+                )}
+              </View>
+
+              {/* GEBRUIKERSINFO */}
+              <View style={styles.swipeInfo}>
+                <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
+                
+                {currentProfile.bio && (
+                  <Text style={styles.swipeBio} numberOfLines={2}>{currentProfile.bio}</Text>
+                )}
+                
+                <View style={styles.swipeDetails}>
+                  <View style={styles.swipeDetailItem}>
+                    <Ionicons name="location" size={16} color="#32D74B" />
+                    <Text style={styles.swipeDetailText}>{city}</Text>
+                  </View>
+                  
+                  {distance > 0 && (
+                    <View style={styles.swipeDetailItem}>
+                      <Ionicons name="triangle" size={14} color="#32D74B" />
+                      <Text style={styles.swipeDetailText}>{distance} km away</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
               {/* SPORTPRESTATIES OVERZICHT */}
               {activitiesData[currentProfile?.id]?.activities?.length > 0 && (
                 <View style={styles.activitiesSection}>
@@ -1136,20 +1161,7 @@ function DiscoverScreen({ api, theme, user }) {
                 </View>
               )}
 
-              <View style={styles.swipePhotoContainer}>
-                {photoUrl ? (
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={styles.swipePhoto}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.swipePhotoPlaceholder}>
-                    <Ionicons name="person" size={80} color="#666" />
-                  </View>
-                )}
-              </View>
-
+              {/* SWIPE BUTTONS */}
               <View style={styles.swipeButtons}>
                 <TouchableOpacity 
                   style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
@@ -1166,28 +1178,6 @@ function DiscoverScreen({ api, theme, user }) {
                 >
                   <Ionicons name="heart" size={32} color="#32D74B" />
                 </TouchableOpacity>
-              </View>
-
-              <View style={styles.swipeInfo}>
-                <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
-                
-                {currentProfile.bio && (
-                  <Text style={styles.swipeBio} numberOfLines={2}>{currentProfile.bio}</Text>
-                )}
-                
-                <View style={styles.swipeDetails}>
-                  <View style={styles.swipeDetailItem}>
-                    <Ionicons name="location" size={16} color="#32D74B" />
-                    <Text style={styles.swipeDetailText}>{city}</Text>
-                  </View>
-                  
-                  {distance > 0 && (
-                    <View style={styles.swipeDetailItem}>
-                      <Ionicons name="triangle" size={14} color="#32D74B" />
-                      <Text style={styles.swipeDetailText}>{distance} km away</Text>
-                    </View>
-                  )}
-                </View>
               </View>
             </View>
           </View>
