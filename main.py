@@ -365,7 +365,7 @@ async def get_current_user(
 
     c.execute(
         """
-        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl'), latitude, longitude, city
+        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl'), latitude, longitude, city, strava_athlete_id
         FROM users
         WHERE username = %s AND deleted_at IS NULL
         """,
@@ -387,6 +387,7 @@ async def get_current_user(
         "latitude": row[9],
         "longitude": row[10],
         "city": row[11],
+        "strava_athlete_id": row[12],
     }
 
 # ------------------------- Startup / Shutdown ----------------------
