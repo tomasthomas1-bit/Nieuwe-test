@@ -999,7 +999,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         query += " AND u.age <= %s"
         params.append(max_age)
     
-    query += " LIMIT 200"
+    query += " ORDER BY CASE WHEN u.name = 'Greta Hoffman' THEN 0 WHEN u.name IN ('Emma de Vries', 'Lucas Janssen', 'Sophie Bakker', 'Mike van Dijk') THEN 1 ELSE 2 END, u.id LIMIT 200"
     c.execute(query, tuple(params))
     rows = c.fetchall()
     
@@ -1015,7 +1015,13 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         
         # Mock sportstatistieken voor testusers
         mock_activities = []
-        if r[1] == "Emma de Vries":  # cyclist1
+        if r[1] == "Greta Hoffman":  # crossfit
+            mock_activities = [
+                {"name": "CrossFit WOD", "distance": 5000, "moving_time": 3600, "start_date": "2024-11-22T06:00:00Z"},
+                {"name": "AMRAP workout", "distance": 3000, "moving_time": 2700, "start_date": "2024-11-20T17:00:00Z"},
+                {"name": "Strength training", "distance": 0, "moving_time": 4500, "start_date": "2024-11-18T18:00:00Z"}
+            ]
+        elif r[1] == "Emma de Vries":  # cyclist1
             mock_activities = [
                 {"name": "Ochtend fietstocht", "distance": 42500, "moving_time": 5400, "start_date": "2024-11-20T08:00:00Z"},
                 {"name": "Middag rit", "distance": 35000, "moving_time": 4200, "start_date": "2024-11-18T14:00:00Z"},

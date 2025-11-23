@@ -1122,7 +1122,7 @@ function DiscoverScreen({ api, theme, user }) {
                 <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
                 
                 {currentProfile.bio && (
-                  <Text style={styles.swipeBio} numberOfLines={2}>{currentProfile.bio}</Text>
+                  <Text style={styles.swipeBio}>{currentProfile.bio}</Text>
                 )}
                 
                 <View style={styles.swipeDetails}>
