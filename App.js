@@ -1097,7 +1097,11 @@ function DiscoverScreen({ api, theme, user }) {
       ) : (
         <>
           <View style={styles.swipeCardContainer}>
-            <View style={styles.swipeCard}>
+            <ScrollView 
+              style={styles.swipeCard}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
               {/* FOTO BOVENAAN */}
               <View style={styles.swipePhotoContainer}>
                 {photoUrl ? (
@@ -1179,7 +1183,7 @@ function DiscoverScreen({ api, theme, user }) {
                   <Ionicons name="heart" size={32} color="#32D74B" />
                 </TouchableOpacity>
               </View>
-            </View>
+            </ScrollView>
           </View>
 
           <Text style={styles.swipeCounter}>
@@ -2865,7 +2869,7 @@ const createStyles = (THEME) => StyleSheet.create({
   },
   swipePhotoContainer: {
     width: '100%',
-    height: 400,
+    height: 280,
     backgroundColor: '#E5E7EB',
   },
   swipePhoto: {
@@ -2880,20 +2884,23 @@ const createStyles = (THEME) => StyleSheet.create({
     backgroundColor: '#E5E7EB',
   },
   swipeInfo: {
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   swipeName: {
-    fontSize: 28,
+    fontSize: 22,
     fontFamily: THEME.font.bodyBold,
     color: '#000',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   swipeBio: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: THEME.font.bodyFamily,
     color: '#666',
-    marginBottom: 12,
-    lineHeight: 22,
+    marginBottom: 8,
+    lineHeight: 20,
   },
   swipeDetails: {
     flexDirection: 'row',
@@ -2911,9 +2918,8 @@ const createStyles = (THEME) => StyleSheet.create({
   },
   activitiesSection: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingTop: 0,
+    paddingBottom: 8,
   },
   activitiesSectionTitle: {
     fontSize: 14,
@@ -2956,7 +2962,8 @@ const createStyles = (THEME) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 40,
-    paddingVertical: 20,
+    paddingVertical: 16,
+    paddingBottom: 20,
   },
   dislikeBtn: {
     width: 70,
