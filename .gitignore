@@ -3,3 +3,10 @@ __pycache__/
 venv/
 app_data.db
 encryption.key
+
+# Environment files met secrets
+.env
+.env.*
+.env.backend
+.env.local
+.env.production
