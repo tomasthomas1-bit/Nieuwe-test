@@ -2,7 +2,25 @@
 
 ## Overview
 
-The Sports Match App (Athlo) is a **mobile-first social matching platform** designed to connect sports enthusiasts. Built with **React Native (Expo)** for the frontend and **FastAPI** for the backend, its primary purpose is to help users find sports partners based on location, preferences, and activity data from fitness platforms like Strava and Garmin. Key features include user authentication, profile management, swipe-based matching, real-time messaging, and personalized route suggestions. The application supports **internationalization (i18n)** in Dutch, English, French, and German, aiming to create a vibrant community for athletes worldwide.
+The Sports Match App (Athlo) is a **mobile-first social matching platform** designed to connect sports enthusiasts. Built with **React Native (Expo)** for the frontend and **FastAPI** for the backend, its primary purpose is to help users find sports partners based on location, preferences, and activity data from fitness platforms like Strava and Garmin. Key features include user authentication, profile management, swipe-based matching with **Year-To-Date (YTD) sports statistics** prominently displayed on discovery cards, real-time messaging, and personalized route suggestions. The application supports **internationalization (i18n)** in Dutch, English, French, and German, aiming to create a vibrant community for athletes worldwide.
+
+## Recent Changes (November 24, 2025)
+
+### YTD Sports Statistics Feature
+- **Discovery cards** now prominently display Year-To-Date (2025) statistics for each profile:
+  - Total workouts completed
+  - Total distance covered (km)
+  - Total active time (hours)
+- **Backend** (`/suggestions` endpoint) returns `ytd_stats` object with realistic mock data for all test users
+- **Realistic sport-specific data**:
+  - CrossFit athlete (Greta): 156 workouts, 156km, 156h (strength-focused, minimal cardio distance)
+  - Cyclist (Emma): 180 workouts, 7,200km, 240h (30 km/h average - competitive cyclist)
+  - Marathon runner (Lucas): 260 workouts, 2,600km, 217h (12 km/h - 5 min/km pace)
+  - Swimmer (Sophie): 208 workouts, 520km, 144h (3.6 km/h pool pace)
+  - Triathlete (Mike): 312 workouts, 5,200km, 312h (16.7 km/h mixed-sport average)
+  - Default/recreational: 52 workouts, 260km, 65h (4 km/h walking pace)
+- **Frontend fallback**: Displays "Sportgegevens binnenkort beschikbaar" with fitness icon when YTD stats are missing or zero
+- **User prioritization**: Athletic achievements (YTD stats) are shown before activity history to emphasize performance
 
 ## User Preferences
 
