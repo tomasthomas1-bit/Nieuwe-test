@@ -951,6 +951,7 @@ function DiscoverScreen({ api, theme, user }) {
   const [stats, setStats] = useState({ workouts: 24, distance: 185, hours: 36 });
   const [activitiesData, setActivitiesData] = useState({});
   const [selectedSport, setSelectedSport] = useState(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
 
@@ -1037,8 +1038,26 @@ function DiscoverScreen({ api, theme, user }) {
     }
   }, [api, swiping, loading, load, t]);
 
+  // Reset photo index when profile changes
+  useEffect(() => {
+    setCurrentPhotoIndex(0);
+  }, [currentIndex]);
+
   const currentProfile = suggestions[currentIndex];
-  const photoUrl = currentProfile?.profile_photo_url || (currentProfile?.photos && currentProfile.photos[0]);
+  
+  // Get all photos for this profile (profile_photo_url + additional photos array)
+  const allPhotos = [];
+  if (currentProfile?.profile_photo_url) {
+    allPhotos.push(currentProfile.profile_photo_url);
+  }
+  if (currentProfile?.photos && Array.isArray(currentProfile.photos)) {
+    currentProfile.photos.forEach(photo => {
+      if (photo && photo !== currentProfile.profile_photo_url) {
+        allPhotos.push(photo);
+      }
+    });
+  }
+  
   const distance = currentProfile?.distance_km || 0;
   const city = currentProfile?.city || 'Amsterdam';
 
@@ -1148,14 +1167,47 @@ function DiscoverScreen({ api, theme, user }) {
                 )}
               </View>
 
-              {/* FOTO NA STATS (met placeholder als geen foto) */}
+              {/* FOTO GALLERY NA STATS (swipeable met dots) */}
               <View style={styles.swipePhotoContainer}>
-                {photoUrl ? (
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={styles.swipePhoto}
-                    resizeMode="cover"
-                  />
+                {allPhotos.length > 0 ? (
+                  <View style={{ flex: 1, position: 'relative' }}>
+                    <ScrollView
+                      horizontal
+                      pagingEnabled
+                      showsHorizontalScrollIndicator={false}
+                      onMomentumScrollEnd={(event) => {
+                        const slideIndex = Math.round(
+                          event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width
+                        );
+                        setCurrentPhotoIndex(slideIndex);
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      {allPhotos.map((photo, index) => (
+                        <Image
+                          key={index}
+                          source={{ uri: photo }}
+                          style={[styles.swipePhoto, { width: 360 }]}
+                          resizeMode="cover"
+                        />
+                      ))}
+                    </ScrollView>
+                    
+                    {/* Dots indicator */}
+                    {allPhotos.length > 1 && (
+                      <View style={styles.photoDots}>
+                        {allPhotos.map((_, index) => (
+                          <View
+                            key={index}
+                            style={[
+                              styles.photoDot,
+                              index === currentPhotoIndex && styles.photoDotActive
+                            ]}
+                          />
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 ) : (
                   <View style={styles.swipePhotoPlaceholder}>
                     <Ionicons name="person-circle" size={120} color="#ccc" />
@@ -2904,6 +2956,28 @@ const createStyles = (THEME) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#E5E7EB',
+  },
+  photoDots: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  photoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  photoDotActive: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
   },
   swipeInfo: {
     paddingHorizontal: 16,
