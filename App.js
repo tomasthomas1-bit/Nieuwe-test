@@ -968,12 +968,13 @@ function DiscoverScreen({ api, theme, user }) {
       if (!res.ok) throw new Error(errMsg);
       const newSuggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
       
-      // Laad activiteiten direct vanuit suggestions
+      // Laad activiteiten en YTD stats direct vanuit suggestions
       const newActivitiesData = {};
       newSuggestions.forEach(profile => {
         if (profile.activities && profile.activities.length > 0) {
           newActivitiesData[profile.id] = {
             activities: profile.activities,
+            ytd_stats: profile.ytd_stats || { total_workouts: 0, total_distance: 0, total_time: 0 },
             stats: {}
           };
         }
@@ -1140,28 +1141,35 @@ function DiscoverScreen({ api, theme, user }) {
                 </View>
               </View>
 
-              {/* SPORTPRESTATIES OVERZICHT */}
-              {activitiesData[currentProfile?.id]?.activities?.length > 0 && (
-                <View style={styles.activitiesSection}>
-                  <Text style={styles.activitiesSectionTitle}>Sportprestaties</Text>
-                  {activitiesData[currentProfile.id].activities.slice(0, 3).map((activity, idx) => (
-                    <View key={idx} style={styles.activityItem}>
-                      <View style={styles.activityIconContainer}>
-                        <Ionicons name="flash" size={16} color="#32D74B" />
-                      </View>
-                      <View style={styles.activityInfo}>
-                        <Text style={styles.activityType}>{activity.name}</Text>
-                        <Text style={styles.activityDetails}>
-                          {activity.distance ? `${(activity.distance / 1000).toFixed(1)} km` : ''} 
-                          {activity.distance && activity.moving_time ? ' • ' : ''}
-                          {activity.moving_time ? `${Math.floor(activity.moving_time / 60)} min` : ''}
-                        </Text>
-                      </View>
-                      <Text style={styles.activityDate}>
-                        {new Date(activity.start_date).toLocaleDateString('nl-NL', {month: 'short', day: 'numeric'})}
-                      </Text>
+              {/* YTD SPORTSTATISTIEKEN */}
+              {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
+                <View style={styles.ytdStatsSection}>
+                  <Text style={styles.ytdStatsTitle}>2025 Stats</Text>
+                  <View style={styles.ytdStatsGrid}>
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>{currentProfile.ytd_stats.total_workouts}</Text>
+                      <Text style={styles.ytdStatLabel}>Workouts</Text>
                     </View>
-                  ))}
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>
+                        {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)} km
+                      </Text>
+                      <Text style={styles.ytdStatLabel}>Afstand</Text>
+                    </View>
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>
+                        {Math.floor(currentProfile.ytd_stats.total_time / 3600)} uur
+                      </Text>
+                      <Text style={styles.ytdStatLabel}>Tijd</Text>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.ytdStatsSection}>
+                  <View style={styles.ytdStatsEmpty}>
+                    <Ionicons name="fitness" size={24} color="#CCC" />
+                    <Text style={styles.ytdStatsEmptyText}>Sportgegevens binnenkort beschikbaar</Text>
+                  </View>
                 </View>
               )}
 
@@ -2956,6 +2964,51 @@ const createStyles = (THEME) => StyleSheet.create({
     fontSize: 12,
     fontFamily: THEME.font.bodyFamily,
     color: '#CCC',
+  },
+  ytdStatsSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  ytdStatsTitle: {
+    fontSize: 14,
+    fontFamily: THEME.font.bodySemibold,
+    color: '#32D74B',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  ytdStatsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  ytdStatItem: {
+    alignItems: 'center',
+  },
+  ytdStatValue: {
+    fontSize: 20,
+    fontFamily: THEME.font.bodyBold,
+    color: '#000',
+    marginBottom: 4,
+  },
+  ytdStatLabel: {
+    fontSize: 11,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#666',
+    textTransform: 'uppercase',
+  },
+  ytdStatsEmpty: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  ytdStatsEmptyText: {
+    fontSize: 12,
+    fontFamily: THEME.font.bodyFamily,
+    color: '#999',
+    marginTop: 8,
   },
   swipeButtons: {
     flexDirection: 'row',

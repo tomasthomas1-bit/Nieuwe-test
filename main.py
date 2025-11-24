@@ -1013,38 +1013,70 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             if max_distance_km and distance_km > max_distance_km:
                 continue
         
-        # Mock sportstatistieken voor testusers
+        # Mock sportstatistieken met realistische YTD data voor testusers
         mock_activities = []
-        if r[1] == "Greta Hoffman":  # crossfit
+        # Default YTD stats voor users zonder specifieke data (recreatief sporter - wandeltempo)
+        ytd_stats = {
+            "total_workouts": 52,  # ~1x per week
+            "total_distance": 260000,  # ~260 km (5 km per workout)
+            "total_time": 234000  # ~65 uur (~4 km/u wandel/looptempo)
+        }
+        
+        if r[1] == "Greta Hoffman":  # crossfit - intensief maar korte afstanden (vooral kracht)
             mock_activities = [
-                {"name": "CrossFit WOD", "distance": 5000, "moving_time": 3600, "start_date": "2024-11-22T06:00:00Z"},
-                {"name": "AMRAP workout", "distance": 3000, "moving_time": 2700, "start_date": "2024-11-20T17:00:00Z"},
-                {"name": "Strength training", "distance": 0, "moving_time": 4500, "start_date": "2024-11-18T18:00:00Z"}
+                {"name": "CrossFit WOD", "distance": 5000, "moving_time": 3600, "start_date": "2025-11-22T06:00:00Z"},
+                {"name": "AMRAP workout", "distance": 3000, "moving_time": 2700, "start_date": "2025-11-20T17:00:00Z"},
+                {"name": "Strength training", "distance": 0, "moving_time": 4500, "start_date": "2025-11-18T18:00:00Z"}
             ]
-        elif r[1] == "Emma de Vries":  # cyclist1
+            ytd_stats = {
+                "total_workouts": 156,  # 3x per week
+                "total_distance": 156000,  # 156 km (~1 km per workout - vooral kracht/statisch)
+                "total_time": 561600  # 156 uur (1 uur per workout - veel rust tussen sets)
+            }
+        elif r[1] == "Emma de Vries":  # wielrenster - lange afstanden, redelijk tempo
             mock_activities = [
-                {"name": "Ochtend fietstocht", "distance": 42500, "moving_time": 5400, "start_date": "2024-11-20T08:00:00Z"},
-                {"name": "Middag rit", "distance": 35000, "moving_time": 4200, "start_date": "2024-11-18T14:00:00Z"},
-                {"name": "Weekend tour", "distance": 68000, "moving_time": 7800, "start_date": "2024-11-16T09:00:00Z"}
+                {"name": "Ochtend fietstocht", "distance": 42500, "moving_time": 5400, "start_date": "2025-11-20T08:00:00Z"},
+                {"name": "Middag rit", "distance": 35000, "moving_time": 4200, "start_date": "2025-11-18T14:00:00Z"},
+                {"name": "Weekend tour", "distance": 68000, "moving_time": 7800, "start_date": "2025-11-16T09:00:00Z"}
             ]
-        elif r[1] == "Lucas Janssen":  # runner1
+            ytd_stats = {
+                "total_workouts": 180,  # 3-4x per week
+                "total_distance": 7200000,  # 7200 km (40 km per rit gemiddeld)
+                "total_time": 864000  # 240 uur (30 km/u gemiddeld - realistisch voor wielrenner)
+            }
+        elif r[1] == "Lucas Janssen":  # marathon hardloper
             mock_activities = [
-                {"name": "Hardloop training", "distance": 10000, "moving_time": 3000, "start_date": "2024-11-21T07:00:00Z"},
-                {"name": "Interval run", "distance": 8000, "moving_time": 2400, "start_date": "2024-11-19T06:30:00Z"},
-                {"name": "Long run", "distance": 15000, "moving_time": 4500, "start_date": "2024-11-17T08:00:00Z"}
+                {"name": "Hardloop training", "distance": 10000, "moving_time": 3000, "start_date": "2025-11-21T07:00:00Z"},
+                {"name": "Interval run", "distance": 8000, "moving_time": 2400, "start_date": "2025-11-19T06:30:00Z"},
+                {"name": "Long run", "distance": 15000, "moving_time": 4500, "start_date": "2025-11-17T08:00:00Z"}
             ]
-        elif r[1] == "Sophie Bakker":  # swimmer1
+            ytd_stats = {
+                "total_workouts": 260,  # 5x per week
+                "total_distance": 2600000,  # 2600 km (10 km per run gemiddeld)
+                "total_time": 780000  # 217 uur (5 min/km pace - goed voor marathon runner)
+            }
+        elif r[1] == "Sophie Bakker":  # zwemcoach
             mock_activities = [
-                {"name": "Zwem training", "distance": 2000, "moving_time": 2400, "start_date": "2024-11-22T18:00:00Z"},
-                {"name": "Baantjes trekken", "distance": 1500, "moving_time": 1800, "start_date": "2024-11-20T19:00:00Z"},
-                {"name": "Open water", "distance": 3000, "moving_time": 3600, "start_date": "2024-11-18T10:00:00Z"}
+                {"name": "Zwem training", "distance": 2000, "moving_time": 2400, "start_date": "2025-11-22T18:00:00Z"},
+                {"name": "Baantjes trekken", "distance": 1500, "moving_time": 1800, "start_date": "2025-11-20T19:00:00Z"},
+                {"name": "Open water", "distance": 3000, "moving_time": 3600, "start_date": "2025-11-18T10:00:00Z"}
             ]
-        elif r[1] == "Mike van Dijk":  # triathlete1
+            ytd_stats = {
+                "total_workouts": 208,  # 4x per week
+                "total_distance": 520000,  # 520 km (2.5 km per sessie)
+                "total_time": 520000  # 144 uur (goed zwemtempo)
+            }
+        elif r[1] == "Mike van Dijk":  # triatleet - mix van sporten
             mock_activities = [
-                {"name": "Triathlon training", "distance": 25000, "moving_time": 5400, "start_date": "2024-11-21T06:00:00Z"},
-                {"name": "Bike + Run brick", "distance": 30000, "moving_time": 6000, "start_date": "2024-11-19T07:00:00Z"},
-                {"name": "Zwem sessie", "distance": 2500, "moving_time": 2700, "start_date": "2024-11-17T18:00:00Z"}
+                {"name": "Triathlon training", "distance": 25000, "moving_time": 5400, "start_date": "2025-11-21T06:00:00Z"},
+                {"name": "Bike + Run brick", "distance": 30000, "moving_time": 6000, "start_date": "2025-11-19T07:00:00Z"},
+                {"name": "Zwem sessie", "distance": 2500, "moving_time": 2700, "start_date": "2025-11-17T18:00:00Z"}
             ]
+            ytd_stats = {
+                "total_workouts": 312,  # 6x per week (zwemmen, fietsen, hardlopen)
+                "total_distance": 5200000,  # 5200 km (mix van disciplines)
+                "total_time": 1123200  # 312 uur (3.6 uur per training - realistisch voor triatleet)
+            }
         
         suggestions.append({
             "id": r[0],
@@ -1057,6 +1089,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             "profile_photo_url": r[8],
             "photos": _photos,
             "activities": mock_activities,
+            "ytd_stats": ytd_stats,
         })
     
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
