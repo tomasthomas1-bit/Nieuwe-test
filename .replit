@@ -27,19 +27,18 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash -c \"source .env.backend && uvicorn main:app --host 0.0.0.0 --port 5000\""
+args = "uvicorn main:app --host 0.0.0.0 --port 5000"
 waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 37773
-externalPort = 3000
-
 [userenv]
 
 [userenv.shared]
 STRAVA_CLIENT_ID = "placeholder_client_id"
 STRAVA_CLIENT_SECRET = "placeholder_client_secret"
+SECRET_KEY = "4tQsptDUQMmGhiqSxVwA6_374VWy_ZRa7DMifDC8ssY"
+ENCRYPTION_KEY = "YZ0tWGnf4equUneOaP7Hh9QOrxddzK2F7-fYjzXDrkQ="
+FRONTEND_ORIGINS = "https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev,http://localhost:5000"
