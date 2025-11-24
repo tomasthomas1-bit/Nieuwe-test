@@ -6,33 +6,48 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 
 ## Recent Changes (November 24, 2025)
 
-### YTD Sports Statistics Feature - Final Implementation
-- **Dual display of YTD stats**: Statistics appear **TWICE** in discovery cards by design:
-  1. **Primary display**: Gradient card (orange/yellow) as the FIRST element, replacing traditional photo-first layout
-  2. **Secondary display**: Stats section beneath user bio for easy reference while scrolling
-- **Three-metric display**: Each stats section shows:
-  - Total workouts completed in 2025
-  - Total distance covered (km)
-  - Total active time (hours)
-- **Intelligent fallback**: When `total_workouts === 0` or missing, both sections display localized "Stats coming soon" message with fitness icon
-- **Photo placeholder**: Profiles without photos (e.g., Greta Hoffman) display person icon with "No photo available" message, preventing UI breakage
-- **Full internationalization**: Stats labels and fallback messages localized across **7 languages** (nl, en, fr, de, es, it, pt) using translation keys:
-  - `ytdStatsTitle`: "Sportgegevens 2025" (nl), "2025 Stats" (en), etc.
-  - `ytdComingSoon`: Fallback message when stats unavailable
-  - `workouts`, `distance`, `hours`: Metric labels with consistent unit formatting
-- **Backend** (`/suggestions` endpoint) returns `ytd_stats` object with realistic sport-specific mock data:
-  - CrossFit athlete (Greta): 156 workouts, 156km, 156h (strength-focused, minimal cardio distance)
-  - Cyclist (Emma): 180 workouts, 7,200km, 240h (30 km/h average - competitive cyclist)
-  - Marathon runner (Lucas): 260 workouts, 2,600km, 217h (12 km/h - 5 min/km pace)
-  - Swimmer (Sophie): 208 workouts, 520km, 144h (3.6 km/h pool pace)
-  - Triathlete (Mike): 312 workouts, 5,200km, 312h (16.7 km/h mixed-sport average)
-  - Default/recreational: 52 workouts, 260km, 65h (4 km/h walking pace)
-- **Discovery card layout** (top to bottom):
-  1. YTD stats gradient card (or fallback)
-  2. User info (name, age, bio, location)
-  3. YTD stats section (or fallback)
-  4. Photo (or placeholder)
-  5. Swipe buttons (like/dislike)
+### Interactive Sport-Specific Stats Feature - Final Implementation
+- **Redesigned discovery card layout** for better UX flow (top to bottom):
+  1. **Interactive gradient stats card** with sport selector
+  2. **Swipeable photo gallery** with dots indicator
+  3. **User information** (name, age, bio, location)
+  4. **Swipe action buttons** (like/dislike)
+
+- **Modern gradient stats card** with glassmorphism design:
+  - **4-color gradients** unique to each sport type for visual differentiation
+  - **Sport selector**: Horizontal scrollable selector with 6 sport types:
+    - Alles (All) - shows overall YTD stats
+    - Fietsen (Cycling) - blue gradient
+    - Hardlopen (Running) - green gradient  
+    - Zwemmen (Swimming) - cyan gradient
+    - Triathlon - purple gradient
+    - Gym/Fitness - orange gradient
+  - **Dynamic stats display**: Stats change based on selected sport
+  - **Sport-specific icons**: Trophy, bicycle, running, water, fitness icons
+  - **Glassmorphism overlay**: Semi-transparent white overlay for modern look
+  - **Modern typography**: Bold Montserrat font with text shadows
+
+- **Swipeable photo gallery**:
+  - Browse multiple photos per profile with left/right swipe gestures
+  - Dots indicator shows current photo position
+  - Photo index resets when changing profiles
+  - Placeholder display for profiles without photos
+
+- **Smart fallback logic**:
+  - When selected sport has no data (0 workouts), automatically shows overall YTD stats
+  - Stats card remains visible even when sport-specific data unavailable
+  - Gradient/icon still reflect selected sport for consistency
+
+- **Backend** (`/suggestions` endpoint) returns:
+  - `ytd_stats`: Overall year-to-date statistics across all sports
+  - `sport_stats`: Per-sport breakdown (cycling, running, swimming, triathlon, gym)
+  - Realistic sport-specific data per profile:
+    - Cyclist (Emma): 180 cycling workouts, 24 running workouts
+    - Runner (Lucas): 260 running workouts, 104 gym workouts
+    - Swimmer (Sophie): 208 swimming workouts, 52 running workouts
+    - Triathlete (Mike): Balanced across swimming (104), cycling (104), running (104)
+    - CrossFit (Greta): 156 gym workouts
+  - `photos`: Array of photo URLs for swipeable gallery
 
 ## User Preferences
 
