@@ -1179,7 +1179,21 @@ function DiscoverScreen({ api, theme, user }) {
 
               {/* MODERN INTERACTIVE STATS CARD */}
               <View style={styles.swipePhotoContainer}>
-                {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
+                {(() => {
+                  // Get stats for selected sport - fallback to ytd_stats if sport has no data
+                  let displayStats = currentProfile.ytd_stats;
+                  let showingSportData = false;
+                  
+                  if (selectedSport !== 'all' && currentProfile.sport_stats && currentProfile.sport_stats[selectedSport]) {
+                    const sportData = currentProfile.sport_stats[selectedSport];
+                    if (sportData.total_workouts > 0) {
+                      displayStats = sportData;
+                      showingSportData = true;
+                    }
+                  }
+                  
+                  return displayStats && displayStats.total_workouts > 0;
+                })() ? (
                   <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
                     {/* Multi-color gradient background */}
                     <LinearGradient 
@@ -1233,114 +1247,127 @@ function DiscoverScreen({ api, theme, user }) {
                       </View>
                       
                       {/* Stats Grid with Icons */}
-                      <View style={{ 
-                        flexDirection: 'row', 
-                        justifyContent: 'space-around',
-                        alignItems: 'center',
-                        marginTop: 8,
-                      }}>
-                        <View style={{ alignItems: 'center', flex: 1 }}>
-                          <View style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginBottom: 8,
-                          }}>
-                            <Ionicons name="barbell" size={22} color="#fff" />
-                          </View>
-                          <Text style={{ 
-                            fontSize: 28, 
-                            fontFamily: 'Montserrat_700Bold', 
-                            color: '#fff',
-                            textShadowColor: 'rgba(0, 0, 0, 0.2)',
-                            textShadowOffset: { width: 0, height: 1 },
-                            textShadowRadius: 2,
-                          }}>
-                            {currentProfile.ytd_stats.total_workouts}
-                          </Text>
-                          <Text style={{ 
-                            fontSize: 11, 
-                            fontFamily: 'Montserrat_600SemiBold', 
-                            color: 'rgba(255, 255, 255, 0.95)',
-                            marginTop: 2,
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5,
-                          }}>
-                            {t('workouts')}
-                          </Text>
-                        </View>
+                      {(() => {
+                        // Get stats for selected sport - fallback to ytd_stats if sport has no data
+                        let displayStats = currentProfile.ytd_stats;
+                        if (selectedSport !== 'all' && currentProfile.sport_stats && currentProfile.sport_stats[selectedSport]) {
+                          const sportData = currentProfile.sport_stats[selectedSport];
+                          if (sportData.total_workouts > 0) {
+                            displayStats = sportData;
+                          }
+                        }
                         
-                        <View style={{ alignItems: 'center', flex: 1 }}>
-                          <View style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            justifyContent: 'center',
+                        return (
+                          <View style={{ 
+                            flexDirection: 'row', 
+                            justifyContent: 'space-around',
                             alignItems: 'center',
-                            marginBottom: 8,
+                            marginTop: 8,
                           }}>
-                            <Ionicons name="navigate" size={22} color="#fff" />
+                            <View style={{ alignItems: 'center', flex: 1 }}>
+                              <View style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: 22,
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}>
+                                <Ionicons name="barbell" size={22} color="#fff" />
+                              </View>
+                              <Text style={{ 
+                                fontSize: 28, 
+                                fontFamily: 'Montserrat_700Bold', 
+                                color: '#fff',
+                                textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                                textShadowOffset: { width: 0, height: 1 },
+                                textShadowRadius: 2,
+                              }}>
+                                {displayStats.total_workouts}
+                              </Text>
+                              <Text style={{ 
+                                fontSize: 11, 
+                                fontFamily: 'Montserrat_600SemiBold', 
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                marginTop: 2,
+                                textTransform: 'uppercase',
+                                letterSpacing: 0.5,
+                              }}>
+                                {t('workouts')}
+                              </Text>
+                            </View>
+                            
+                            <View style={{ alignItems: 'center', flex: 1 }}>
+                              <View style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: 22,
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}>
+                                <Ionicons name="navigate" size={22} color="#fff" />
+                              </View>
+                              <Text style={{ 
+                                fontSize: 28, 
+                                fontFamily: 'Montserrat_700Bold', 
+                                color: '#fff',
+                                textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                                textShadowOffset: { width: 0, height: 1 },
+                                textShadowRadius: 2,
+                              }}>
+                                {(displayStats.total_distance / 1000).toFixed(0)}
+                              </Text>
+                              <Text style={{ 
+                                fontSize: 11, 
+                                fontFamily: 'Montserrat_600SemiBold', 
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                marginTop: 2,
+                                textTransform: 'uppercase',
+                                letterSpacing: 0.5,
+                              }}>
+                                KM
+                              </Text>
+                            </View>
+                            
+                            <View style={{ alignItems: 'center', flex: 1 }}>
+                              <View style={{
+                                width: 44,
+                                height: 44,
+                                borderRadius: 22,
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}>
+                                <Ionicons name="time" size={22} color="#fff" />
+                              </View>
+                              <Text style={{ 
+                                fontSize: 28, 
+                                fontFamily: 'Montserrat_700Bold', 
+                                color: '#fff',
+                                textShadowColor: 'rgba(0, 0, 0, 0.2)',
+                                textShadowOffset: { width: 0, height: 1 },
+                                textShadowRadius: 2,
+                              }}>
+                                {Math.floor(displayStats.total_time / 3600)}
+                              </Text>
+                              <Text style={{ 
+                                fontSize: 11, 
+                                fontFamily: 'Montserrat_600SemiBold', 
+                                color: 'rgba(255, 255, 255, 0.95)',
+                                marginTop: 2,
+                                textTransform: 'uppercase',
+                                letterSpacing: 0.5,
+                              }}>
+                                {t('hours')}
+                              </Text>
+                            </View>
                           </View>
-                          <Text style={{ 
-                            fontSize: 28, 
-                            fontFamily: 'Montserrat_700Bold', 
-                            color: '#fff',
-                            textShadowColor: 'rgba(0, 0, 0, 0.2)',
-                            textShadowOffset: { width: 0, height: 1 },
-                            textShadowRadius: 2,
-                          }}>
-                            {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)}
-                          </Text>
-                          <Text style={{ 
-                            fontSize: 11, 
-                            fontFamily: 'Montserrat_600SemiBold', 
-                            color: 'rgba(255, 255, 255, 0.95)',
-                            marginTop: 2,
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5,
-                          }}>
-                            KM
-                          </Text>
-                        </View>
-                        
-                        <View style={{ alignItems: 'center', flex: 1 }}>
-                          <View style={{
-                            width: 44,
-                            height: 44,
-                            borderRadius: 22,
-                            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            marginBottom: 8,
-                          }}>
-                            <Ionicons name="time" size={22} color="#fff" />
-                          </View>
-                          <Text style={{ 
-                            fontSize: 28, 
-                            fontFamily: 'Montserrat_700Bold', 
-                            color: '#fff',
-                            textShadowColor: 'rgba(0, 0, 0, 0.2)',
-                            textShadowOffset: { width: 0, height: 1 },
-                            textShadowRadius: 2,
-                          }}>
-                            {Math.floor(currentProfile.ytd_stats.total_time / 3600)}
-                          </Text>
-                          <Text style={{ 
-                            fontSize: 11, 
-                            fontFamily: 'Montserrat_600SemiBold', 
-                            color: 'rgba(255, 255, 255, 0.95)',
-                            marginTop: 2,
-                            textTransform: 'uppercase',
-                            letterSpacing: 0.5,
-                          }}>
-                            {t('hours')}
-                          </Text>
-                        </View>
-                      </View>
+                        );
+                      })()}
                     </View>
                   </View>
                 ) : (

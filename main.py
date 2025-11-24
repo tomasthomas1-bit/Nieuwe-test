@@ -1078,6 +1078,37 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
                 "total_time": 1123200  # 312 uur (3.6 uur per training - realistisch voor triatleet)
             }
         
+        # Per-sport breakdown based on profile type
+        sport_stats = {
+            "cycling": {"total_workouts": 0, "total_distance": 0, "total_time": 0},
+            "running": {"total_workouts": 0, "total_distance": 0, "total_time": 0},
+            "swimming": {"total_workouts": 0, "total_distance": 0, "total_time": 0},
+            "triathlon": {"total_workouts": 0, "total_distance": 0, "total_time": 0},
+            "gym": {"total_workouts": 0, "total_distance": 0, "total_time": 0},
+        }
+        
+        # Distribute stats based on user's primary sport
+        if r[1] == "Emma de Vries":  # cyclist
+            sport_stats["cycling"] = ytd_stats
+            sport_stats["running"] = {"total_workouts": 24, "total_distance": 120000, "total_time": 28800}
+        elif r[1] == "Lucas Janssen":  # runner
+            sport_stats["running"] = ytd_stats
+            sport_stats["gym"] = {"total_workouts": 104, "total_distance": 0, "total_time": 124800}
+        elif r[1] == "Sophie Bakker":  # swimmer
+            sport_stats["swimming"] = ytd_stats
+            sport_stats["running"] = {"total_workouts": 52, "total_distance": 260000, "total_time": 78000}
+        elif r[1] == "Mike van Dijk":  # triathlete - split across all sports
+            sport_stats["swimming"] = {"total_workouts": 104, "total_distance": 260000, "total_time": 144000}
+            sport_stats["cycling"] = {"total_workouts": 104, "total_distance": 3120000, "total_time": 374400}
+            sport_stats["running"] = {"total_workouts": 104, "total_distance": 1560000, "total_time": 468000}
+            sport_stats["triathlon"] = ytd_stats
+        elif r[1] == "Greta Hoffman":  # crossfit/gym
+            sport_stats["gym"] = ytd_stats
+        else:
+            # Default recreational - mix of activities
+            sport_stats["running"] = {"total_workouts": 26, "total_distance": 130000, "total_time": 97500}
+            sport_stats["cycling"] = {"total_workouts": 26, "total_distance": 390000, "total_time": 78000}
+        
         suggestions.append({
             "id": r[0],
             "name": r[1],
@@ -1090,6 +1121,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             "photos": _photos,
             "activities": mock_activities,
             "ytd_stats": ytd_stats,
+            "sport_stats": sport_stats,
         })
     
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
