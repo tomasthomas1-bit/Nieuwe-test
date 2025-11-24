@@ -943,6 +943,7 @@ function DiscoverScreen({ api, theme, user }) {
   const [matchCount, setMatchCount] = useState(12);
   const [stats, setStats] = useState({ workouts: 24, distance: 185, hours: 36 });
   const [activitiesData, setActivitiesData] = useState({});
+  const [selectedSport, setSelectedSport] = useState(null);
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
 
@@ -1103,19 +1104,32 @@ function DiscoverScreen({ api, theme, user }) {
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
-              {/* FOTO BOVENAAN */}
+              {/* STATS ALS EERSTE "FOTO" MET SPORT SELECTOR */}
               <View style={styles.swipePhotoContainer}>
-                {photoUrl ? (
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={styles.swipePhoto}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.swipePhotoPlaceholder}>
-                    <Ionicons name="person" size={80} color="#666" />
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.color.accent, borderRadius: 12, padding: theme.gap.m }}>
+                  <LinearGradient colors={['#FF6B35', '#FFB84D']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12 }} />
+                  <View style={{ zIndex: 1 }}>
+                    <Text style={{ fontSize: 16, fontFamily: 'Montserrat_600SemiBold', color: '#fff', marginBottom: theme.gap.m, textAlign: 'center' }}>Sportgegevens 2025</Text>
+                    <View style={styles.ytdStatsGrid}>
+                      <View style={styles.ytdStatItem}>
+                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>{currentProfile.ytd_stats?.total_workouts || 0}</Text>
+                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Workouts</Text>
+                      </View>
+                      <View style={styles.ytdStatItem}>
+                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
+                          {currentProfile.ytd_stats ? (currentProfile.ytd_stats.total_distance / 1000).toFixed(0) : 0} km
+                        </Text>
+                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Afstand</Text>
+                      </View>
+                      <View style={styles.ytdStatItem}>
+                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
+                          {currentProfile.ytd_stats ? Math.floor(currentProfile.ytd_stats.total_time / 3600) : 0} uur
+                        </Text>
+                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Tijd</Text>
+                      </View>
+                    </View>
                   </View>
-                )}
+                </View>
               </View>
 
               {/* GEBRUIKERSINFO */}
@@ -1141,37 +1155,20 @@ function DiscoverScreen({ api, theme, user }) {
                 </View>
               </View>
 
-              {/* YTD SPORTSTATISTIEKEN */}
-              {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
-                <View style={styles.ytdStatsSection}>
-                  <Text style={styles.ytdStatsTitle}>2025 Stats</Text>
-                  <View style={styles.ytdStatsGrid}>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>{currentProfile.ytd_stats.total_workouts}</Text>
-                      <Text style={styles.ytdStatLabel}>Workouts</Text>
-                    </View>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>
-                        {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)} km
-                      </Text>
-                      <Text style={styles.ytdStatLabel}>Afstand</Text>
-                    </View>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>
-                        {Math.floor(currentProfile.ytd_stats.total_time / 3600)} uur
-                      </Text>
-                      <Text style={styles.ytdStatLabel}>Tijd</Text>
-                    </View>
+              {/* FOTO ONDER USER INFO */}
+              <View style={styles.swipePhotoContainer}>
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.swipePhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.swipePhotoPlaceholder}>
+                    <Ionicons name="person" size={80} color="#666" />
                   </View>
-                </View>
-              ) : (
-                <View style={styles.ytdStatsSection}>
-                  <View style={styles.ytdStatsEmpty}>
-                    <Ionicons name="fitness" size={24} color="#CCC" />
-                    <Text style={styles.ytdStatsEmptyText}>Sportgegevens binnenkort beschikbaar</Text>
-                  </View>
-                </View>
-              )}
+                )}
+              </View>
 
               {/* SWIPE BUTTONS */}
               <View style={styles.swipeButtons}>
