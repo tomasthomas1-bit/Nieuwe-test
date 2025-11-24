@@ -48,6 +48,7 @@ const translations = {
     discover: 'Ontdekken', matches: 'Matches', chat: 'Chat', profile: 'Profiel',
     settings: 'Instellingen', logout: 'Uitloggen', save: 'Opslaan', cancel: 'Annuleren',
     workouts: 'Workouts', distance: 'Afstand', hours: 'Uren', kmAway: 'km verderop',
+    ytdStatsTitle: 'Sportgegevens 2025', ytdComingSoon: 'Sportgegevens binnenkort beschikbaar',
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'Geen profielen meer om te tonen',
     itsAMatch: 'It\'s a Match!', sendMessage: 'Stuur bericht', keepSwiping: 'Doorgaan met swipen',
     typeMessage: 'Typ een bericht...', send: 'Verstuur', noMessages: 'Nog geen berichten',
@@ -92,6 +93,7 @@ const translations = {
     discover: 'Discover', matches: 'Matches', chat: 'Chat', profile: 'Profile',
     settings: 'Settings', logout: 'Logout', save: 'Save', cancel: 'Cancel',
     workouts: 'Workouts', distance: 'Distance', hours: 'Hours', kmAway: 'km away',
+    ytdStatsTitle: 'Sports Data 2025', ytdComingSoon: 'Sports data coming soon',
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'No more profiles to show',
     itsAMatch: 'It\'s a Match!', sendMessage: 'Send Message', keepSwiping: 'Keep Swiping',
     typeMessage: 'Type a message...', send: 'Send', noMessages: 'No messages yet',
@@ -134,6 +136,7 @@ const translations = {
     discover: 'Découvrir', matches: 'Matchs', chat: 'Chat', profile: 'Profil',
     settings: 'Paramètres', logout: 'Déconnexion', save: 'Enregistrer', cancel: 'Annuler',
     workouts: 'Entraînements', distance: 'Distance', hours: 'Heures', kmAway: 'km',
+    ytdStatsTitle: 'Données sportives 2025', ytdComingSoon: 'Données sportives bientôt disponibles',
     like: 'J\'aime', dislike: 'Je n\'aime pas', noMoreProfiles: 'Plus de profils à afficher',
     itsAMatch: 'C\'est un Match!', sendMessage: 'Envoyer un message', keepSwiping: 'Continuer',
     typeMessage: 'Tapez un message...', send: 'Envoyer', noMessages: 'Pas encore de messages',
@@ -176,6 +179,7 @@ const translations = {
     discover: 'Entdecken', matches: 'Matches', chat: 'Chat', profile: 'Profil',
     settings: 'Einstellungen', logout: 'Abmelden', save: 'Speichern', cancel: 'Abbrechen',
     workouts: 'Workouts', distance: 'Entfernung', hours: 'Stunden', kmAway: 'km entfernt',
+    ytdStatsTitle: 'Sportdaten 2025', ytdComingSoon: 'Sportdaten bald verfügbar',
     like: 'Gefällt mir', dislike: 'Gefällt nicht', noMoreProfiles: 'Keine Profile mehr',
     itsAMatch: 'Es ist ein Match!', sendMessage: 'Nachricht senden', keepSwiping: 'Weiter swipen',
     typeMessage: 'Nachricht eingeben...', send: 'Senden', noMessages: 'Noch keine Nachrichten',
@@ -218,6 +222,7 @@ const translations = {
     discover: 'Descubrir', matches: 'Matches', chat: 'Chat', profile: 'Perfil',
     settings: 'Ajustes', logout: 'Cerrar sesión', save: 'Guardar', cancel: 'Cancelar',
     workouts: 'Entrenamientos', distance: 'Distancia', hours: 'Horas', kmAway: 'km',
+    ytdStatsTitle: 'Datos deportivos 2025', ytdComingSoon: 'Datos deportivos próximamente',
     like: 'Me gusta', dislike: 'No me gusta', noMoreProfiles: 'No hay más perfiles',
     itsAMatch: '¡Es un Match!', sendMessage: 'Enviar mensaje', keepSwiping: 'Seguir deslizando',
     typeMessage: 'Escribe un mensaje...', send: 'Enviar', noMessages: 'Sin mensajes aún',
@@ -260,6 +265,7 @@ const translations = {
     discover: 'Scopri', matches: 'Match', chat: 'Chat', profile: 'Profilo',
     settings: 'Impostazioni', logout: 'Esci', save: 'Salva', cancel: 'Annulla',
     workouts: 'Allenamenti', distance: 'Distanza', hours: 'Ore', kmAway: 'km',
+    ytdStatsTitle: 'Dati sportivi 2025', ytdComingSoon: 'Dati sportivi in arrivo',
     like: 'Mi piace', dislike: 'Non mi piace', noMoreProfiles: 'Nessun altro profilo',
     itsAMatch: 'È un Match!', sendMessage: 'Invia messaggio', keepSwiping: 'Continua a scorrere',
     typeMessage: 'Scrivi un messaggio...', send: 'Invia', noMessages: 'Nessun messaggio ancora',
@@ -302,6 +308,7 @@ const translations = {
     discover: 'Descobrir', matches: 'Matches', chat: 'Chat', profile: 'Perfil',
     settings: 'Configurações', logout: 'Sair', save: 'Salvar', cancel: 'Cancelar',
     workouts: 'Treinos', distance: 'Distância', hours: 'Horas', kmAway: 'km',
+    ytdStatsTitle: 'Dados esportivos 2025', ytdComingSoon: 'Dados esportivos em breve',
     like: 'Curtir', dislike: 'Não curtir', noMoreProfiles: 'Sem mais perfis',
     itsAMatch: 'É um Match!', sendMessage: 'Enviar mensagem', keepSwiping: 'Continuar deslizando',
     typeMessage: 'Digite uma mensagem...', send: 'Enviar', noMessages: 'Sem mensagens ainda',
@@ -1106,30 +1113,39 @@ function DiscoverScreen({ api, theme, user }) {
             >
               {/* STATS ALS EERSTE "FOTO" MET SPORT SELECTOR */}
               <View style={styles.swipePhotoContainer}>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.color.accent, borderRadius: 12, padding: theme.gap.m }}>
-                  <LinearGradient colors={['#FF6B35', '#FFB84D']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12 }} />
-                  <View style={{ zIndex: 1 }}>
-                    <Text style={{ fontSize: 16, fontFamily: 'Montserrat_600SemiBold', color: '#fff', marginBottom: theme.gap.m, textAlign: 'center' }}>Sportgegevens 2025</Text>
-                    <View style={styles.ytdStatsGrid}>
-                      <View style={styles.ytdStatItem}>
-                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>{currentProfile.ytd_stats?.total_workouts || 0}</Text>
-                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Workouts</Text>
-                      </View>
-                      <View style={styles.ytdStatItem}>
-                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
-                          {currentProfile.ytd_stats ? (currentProfile.ytd_stats.total_distance / 1000).toFixed(0) : 0} km
-                        </Text>
-                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Afstand</Text>
-                      </View>
-                      <View style={styles.ytdStatItem}>
-                        <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
-                          {currentProfile.ytd_stats ? Math.floor(currentProfile.ytd_stats.total_time / 3600) : 0} uur
-                        </Text>
-                        <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>Tijd</Text>
+                {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.color.accent, borderRadius: 12, padding: theme.gap.m }}>
+                    <LinearGradient colors={['#FF6B35', '#FFB84D']} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 12 }} />
+                    <View style={{ zIndex: 1 }}>
+                      <Text style={{ fontSize: 16, fontFamily: 'Montserrat_600SemiBold', color: '#fff', marginBottom: theme.gap.m, textAlign: 'center' }}>{t('ytdStatsTitle')}</Text>
+                      <View style={styles.ytdStatsGrid}>
+                        <View style={styles.ytdStatItem}>
+                          <Text style={[styles.ytdStatValue, { color: '#fff' }]}>{currentProfile.ytd_stats.total_workouts}</Text>
+                          <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>{t('workouts')}</Text>
+                        </View>
+                        <View style={styles.ytdStatItem}>
+                          <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
+                            {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)}
+                          </Text>
+                          <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>{t('distance')} (km)</Text>
+                        </View>
+                        <View style={styles.ytdStatItem}>
+                          <Text style={[styles.ytdStatValue, { color: '#fff' }]}>
+                            {Math.floor(currentProfile.ytd_stats.total_time / 3600)}
+                          </Text>
+                          <Text style={[styles.ytdStatLabel, { color: '#fff' }]}>{t('hours')}</Text>
+                        </View>
                       </View>
                     </View>
                   </View>
-                </View>
+                ) : (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5', borderRadius: 12, padding: theme.gap.l }}>
+                    <Ionicons name="fitness" size={48} color="#CCC" />
+                    <Text style={{ color: '#999', marginTop: theme.gap.m, fontFamily: 'Montserrat_400Regular', textAlign: 'center' }}>
+                      {t('ytdComingSoon')}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* GEBRUIKERSINFO */}
@@ -1155,7 +1171,39 @@ function DiscoverScreen({ api, theme, user }) {
                 </View>
               </View>
 
-              {/* FOTO ONDER USER INFO */}
+              {/* YTD SPORTSTATISTIEKEN ONDER BIO */}
+              {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
+                <View style={styles.ytdStatsSection}>
+                  <Text style={styles.ytdStatsTitle}>{t('ytdStatsTitle')}</Text>
+                  <View style={styles.ytdStatsGrid}>
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>{currentProfile.ytd_stats.total_workouts}</Text>
+                      <Text style={styles.ytdStatLabel}>{t('workouts')}</Text>
+                    </View>
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>
+                        {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)}
+                      </Text>
+                      <Text style={styles.ytdStatLabel}>{t('distance')} (km)</Text>
+                    </View>
+                    <View style={styles.ytdStatItem}>
+                      <Text style={styles.ytdStatValue}>
+                        {Math.floor(currentProfile.ytd_stats.total_time / 3600)}
+                      </Text>
+                      <Text style={styles.ytdStatLabel}>{t('hours')}</Text>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.ytdStatsSection}>
+                  <View style={styles.ytdStatsEmpty}>
+                    <Ionicons name="fitness" size={24} color="#CCC" />
+                    <Text style={styles.ytdStatsEmptyText}>{t('ytdComingSoon')}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* FOTO ONDER YTD STATS (met placeholder als geen foto) */}
               <View style={styles.swipePhotoContainer}>
                 {photoUrl ? (
                   <Image
@@ -1165,7 +1213,8 @@ function DiscoverScreen({ api, theme, user }) {
                   />
                 ) : (
                   <View style={styles.swipePhotoPlaceholder}>
-                    <Ionicons name="person" size={80} color="#666" />
+                    <Ionicons name="person-circle" size={120} color="#ccc" />
+                    <Text style={{ color: '#999', marginTop: 8, fontFamily: 'Montserrat_400Regular' }}>Geen foto beschikbaar</Text>
                   </View>
                 )}
               </View>
