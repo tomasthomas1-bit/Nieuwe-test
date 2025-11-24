@@ -1148,6 +1148,22 @@ function DiscoverScreen({ api, theme, user }) {
                 )}
               </View>
 
+              {/* FOTO NA STATS (met placeholder als geen foto) */}
+              <View style={styles.swipePhotoContainer}>
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={styles.swipePhoto}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.swipePhotoPlaceholder}>
+                    <Ionicons name="person-circle" size={120} color="#ccc" />
+                    <Text style={{ color: '#999', marginTop: 8, fontFamily: 'Montserrat_400Regular' }}>Geen foto beschikbaar</Text>
+                  </View>
+                )}
+              </View>
+
               {/* GEBRUIKERSINFO */}
               <View style={styles.swipeInfo}>
                 <Text style={styles.swipeName}>{currentProfile.name}, {currentProfile.age}</Text>
@@ -1169,54 +1185,6 @@ function DiscoverScreen({ api, theme, user }) {
                     </View>
                   )}
                 </View>
-              </View>
-
-              {/* YTD SPORTSTATISTIEKEN ONDER BIO */}
-              {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
-                <View style={styles.ytdStatsSection}>
-                  <Text style={styles.ytdStatsTitle}>{t('ytdStatsTitle')}</Text>
-                  <View style={styles.ytdStatsGrid}>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>{currentProfile.ytd_stats.total_workouts}</Text>
-                      <Text style={styles.ytdStatLabel}>{t('workouts')}</Text>
-                    </View>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>
-                        {(currentProfile.ytd_stats.total_distance / 1000).toFixed(0)}
-                      </Text>
-                      <Text style={styles.ytdStatLabel}>{t('distance')} (km)</Text>
-                    </View>
-                    <View style={styles.ytdStatItem}>
-                      <Text style={styles.ytdStatValue}>
-                        {Math.floor(currentProfile.ytd_stats.total_time / 3600)}
-                      </Text>
-                      <Text style={styles.ytdStatLabel}>{t('hours')}</Text>
-                    </View>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.ytdStatsSection}>
-                  <View style={styles.ytdStatsEmpty}>
-                    <Ionicons name="fitness" size={24} color="#CCC" />
-                    <Text style={styles.ytdStatsEmptyText}>{t('ytdComingSoon')}</Text>
-                  </View>
-                </View>
-              )}
-
-              {/* FOTO ONDER YTD STATS (met placeholder als geen foto) */}
-              <View style={styles.swipePhotoContainer}>
-                {photoUrl ? (
-                  <Image
-                    source={{ uri: photoUrl }}
-                    style={styles.swipePhoto}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.swipePhotoPlaceholder}>
-                    <Ionicons name="person-circle" size={120} color="#ccc" />
-                    <Text style={{ color: '#999', marginTop: 8, fontFamily: 'Montserrat_400Regular' }}>Geen foto beschikbaar</Text>
-                  </View>
-                )}
               </View>
 
               {/* SWIPE BUTTONS */}
