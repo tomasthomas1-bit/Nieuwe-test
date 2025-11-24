@@ -950,10 +950,20 @@ function DiscoverScreen({ api, theme, user }) {
   const [matchCount, setMatchCount] = useState(12);
   const [stats, setStats] = useState({ workouts: 24, distance: 185, hours: 36 });
   const [activitiesData, setActivitiesData] = useState({});
-  const [selectedSport, setSelectedSport] = useState(null);
+  const [selectedSport, setSelectedSport] = useState('all');
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
+
+  // Sport types with gradients and icons
+  const sportTypes = [
+    { id: 'all', label: 'Alles', icon: 'trophy', gradients: ['#FF6B6B', '#FF8E53', '#FEC163', '#FFD93D'] },
+    { id: 'cycling', label: 'Fietsen', icon: 'bicycle', gradients: ['#667eea', '#764ba2', '#f093fb', '#4facfe'] },
+    { id: 'running', label: 'Hardlopen', icon: 'footsteps', gradients: ['#f093fb', '#f5576c', '#fa709a', '#fee140'] },
+    { id: 'swimming', label: 'Zwemmen', icon: 'water', gradients: ['#4facfe', '#00f2fe', '#43e97b', '#38f9d7'] },
+    { id: 'triathlon', label: 'Triathlon', icon: 'medal', gradients: ['#fa709a', '#fee140', '#30cfd0', '#330867'] },
+    { id: 'gym', label: 'Gym', icon: 'barbell', gradients: ['#f5576c', '#f093fb', '#fa709a', '#ffd89b'] },
+  ];
 
   useEffect(() => {
     suggestionsRef.current = suggestions;
@@ -1130,13 +1140,50 @@ function DiscoverScreen({ api, theme, user }) {
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
+              {/* SPORT SELECTOR */}
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 12, paddingHorizontal: 16 }}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {sportTypes.map(sport => (
+                  <TouchableOpacity
+                    key={sport.id}
+                    onPress={() => setSelectedSport(sport.id)}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      backgroundColor: selectedSport === sport.id ? '#FF6B35' : '#f0f0f0',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                    }}
+                  >
+                    <Ionicons 
+                      name={sport.icon} 
+                      size={16} 
+                      color={selectedSport === sport.id ? '#fff' : '#666'} 
+                    />
+                    <Text style={{
+                      fontFamily: 'Montserrat_600SemiBold',
+                      fontSize: 13,
+                      color: selectedSport === sport.id ? '#fff' : '#666',
+                    }}>
+                      {sport.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
               {/* MODERN INTERACTIVE STATS CARD */}
               <View style={styles.swipePhotoContainer}>
                 {currentProfile.ytd_stats && currentProfile.ytd_stats.total_workouts > 0 ? (
                   <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
                     {/* Multi-color gradient background */}
                     <LinearGradient 
-                      colors={['#FF6B6B', '#FF8E53', '#FEC163', '#FFD93D']} 
+                      colors={sportTypes.find(s => s.id === selectedSport)?.gradients || ['#FF6B6B', '#FF8E53', '#FEC163', '#FFD93D']} 
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 1 }}
                       style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
