@@ -8,8 +8,10 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 
 ### Interactive Sport-Specific Stats Feature - Final Implementation
 - **Redesigned discovery card layout** for better UX flow (top to bottom):
-  1. **Interactive gradient stats card** with sport selector
-  2. **Swipeable photo gallery** with dots indicator
+  1. **Sport selector** (horizontal scrollable, outside gallery)
+  2. **Unified swipeable gallery** with dots indicator:
+     - **Slide 0**: Interactive gradient stats card (sport-specific or overall YTD)
+     - **Slides 1-3**: User photos (3 photos per profile)
   3. **User information** (name, age, bio, location)
   4. **Swipe action buttons** (like/dislike)
 
@@ -27,11 +29,13 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
   - **Glassmorphism overlay**: Semi-transparent white overlay for modern look
   - **Modern typography**: Bold Montserrat font with text shadows
 
-- **Swipeable photo gallery**:
-  - Browse multiple photos per profile with left/right swipe gestures
-  - Dots indicator shows current photo position
-  - Photo index resets when changing profiles
-  - Placeholder display for profiles without photos
+- **Unified swipeable gallery** (stats card + photos):
+  - **Horizontal swipe navigation**: Swipe left/right to browse through all slides
+  - **Slide 0 (Stats Card)**: Always the first slide, shows sport-specific or overall YTD stats
+  - **Slides 1-3 (Photos)**: User photos follow the stats card
+  - **Dots indicator**: Shows total slides (1 stats + 3 photos = 4 dots total)
+  - **Auto-reset**: Gallery resets to slide 0 (stats card) when changing profiles
+  - **All profiles have photos**: Every user profile now has 3 curated stock photos
 
 - **Smart fallback logic**:
   - When selected sport has no data (0 workouts), automatically shows overall YTD stats
