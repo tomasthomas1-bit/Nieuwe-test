@@ -10,3 +10,4 @@ encryption.key
 .env.backend
 .env.local
 .env.production
+.github/workflows/
