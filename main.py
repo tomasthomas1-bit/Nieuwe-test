@@ -1007,6 +1007,61 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     for r in rows:
         _photos = r[9] if isinstance(r[9], list) else []
         
+        # Zorg dat elk profiel minimaal 3 foto's heeft voor de swipeable gallery
+        user_name = r[1]
+        if user_name == "Greta Hoffman":
+            _photos = [
+                "/attached_assets/stock_images/young_woman_fitness__d16ff150.jpg",
+                "/attached_assets/stock_images/young_woman_fitness__d999d5d6.jpg",
+                "/attached_assets/stock_images/man_doing_crossfit_w_01ad1dbd.jpg"
+            ]
+        elif user_name == "Emma de Vries":
+            _photos = [
+                "/attached_assets/stock_images/athletic_woman_cycli_aa0c899a.jpg",
+                "/attached_assets/stock_images/man_mountain_biking__23a83e22.jpg",
+                "/attached_assets/stock_images/man_mountain_biking__afa1f0d0.jpg"
+            ]
+        elif user_name == "Lucas Janssen":
+            _photos = [
+                "/attached_assets/stock_images/athletic_man_running_2d831f2d.jpg",
+                "/attached_assets/stock_images/man_marathon_runner__15184a79.jpg",
+                "/attached_assets/stock_images/man_marathon_runner__c97ed512.jpg"
+            ]
+        elif user_name == "Sophie Bakker":
+            _photos = [
+                "/attached_assets/stock_images/athletic_woman_swimm_d163d388.jpg",
+                "/attached_assets/stock_images/woman_swimming_triat_25d4acc8.jpg",
+                "/attached_assets/stock_images/woman_swimming_triat_cac09f49.jpg"
+            ]
+        elif user_name == "Mike van Dijk":
+            _photos = [
+                "/attached_assets/stock_images/athletic_man_triathl_e5456b59.jpg",
+                "/attached_assets/stock_images/man_marathon_runner__15184a79.jpg",
+                "/attached_assets/stock_images/athletic_woman_swimm_d163d388.jpg"
+            ]
+        else:
+            # Als er database foto's zijn, gebruik die als eerste foto
+            db_photo = _photos[0] if _photos else None
+            
+            # Default foto's voor andere profielen
+            gender = r[4]
+            if gender == "man":
+                _photos = [
+                    "/attached_assets/stock_images/man_playing_tennis_a_54f6d78c.jpg",
+                    "/attached_assets/stock_images/man_soccer_player_at_0512128e.jpg",
+                    "/attached_assets/stock_images/man_marathon_runner__c97ed512.jpg"
+                ]
+            else:
+                _photos = [
+                    "/attached_assets/stock_images/young_woman_running__0e2f1233.jpg",
+                    "/attached_assets/stock_images/woman_rock_climbing__0a088eb5.jpg",
+                    "/attached_assets/stock_images/young_woman_yoga_ins_1713cba9.jpg"
+                ]
+            
+            # Als er een database foto was, voeg die toe als eerste
+            if db_photo and db_photo not in _photos:
+                _photos = [db_photo] + _photos[:2]
+        
         distance_km = None
         if user_lat and user_lon and r[5] and r[6]:
             distance_km = haversine((user_lat, user_lon), (r[5], r[6]), unit=Unit.KILOMETERS)
