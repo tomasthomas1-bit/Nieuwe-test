@@ -282,13 +282,14 @@ class UserSettingsModel(BaseModel):
     preferred_gender: Optional[str] = None
     max_distance_km: Optional[int] = None
     notifications_enabled: Optional[bool] = None
-    # Optioneel taalveld zou hier kunnen, maar laten we nu buiten scope.
+    filter_sports: Optional[List[str]] = None
 
 DEFAULT_SETTINGS = {
     "match_goal": "friendship",
     "preferred_gender": "any",
     "max_distance_km": 25,
     "notifications_enabled": True,
+    "filter_sports": [],
 }
 
 # ------------------------- Password & Token ------------------------
@@ -514,7 +515,8 @@ def on_startup():
                 match_goal TEXT,
                 preferred_gender TEXT,
                 max_distance_km INTEGER,
-                notifications_enabled BOOLEAN
+                notifications_enabled BOOLEAN,
+                filter_sports TEXT[]
             )
             """
         )
@@ -647,7 +649,7 @@ async def get_user_settings(
     conn, c = db
     c.execute(
         """
-        SELECT match_goal, preferred_gender, max_distance_km, notifications_enabled
+        SELECT match_goal, preferred_gender, max_distance_km, notifications_enabled, filter_sports
         FROM user_settings WHERE user_id=%s
         """,
         (user_id,),
@@ -660,6 +662,7 @@ async def get_user_settings(
         "preferred_gender": row[1],
         "max_distance_km": row[2],
         "notifications_enabled": row[3],
+        "filter_sports": parse_pg_array(row[4]) if row[4] else [],
     }
 
 @app.post("/users/{user_id}/settings")
@@ -674,17 +677,19 @@ async def save_user_settings(
         raise HTTPException(status_code=403, detail=t("forbidden", lang))
     conn, c = db
     data = {**DEFAULT_SETTINGS, **payload.dict(exclude_unset=True)}
+    filter_sports_val = data.get("filter_sports") or []
     c.execute(
         """
-        INSERT INTO user_settings (user_id, match_goal, preferred_gender, max_distance_km, notifications_enabled)
-        VALUES (%s,%s,%s,%s,%s)
+        INSERT INTO user_settings (user_id, match_goal, preferred_gender, max_distance_km, notifications_enabled, filter_sports)
+        VALUES (%s,%s,%s,%s,%s,%s)
         ON CONFLICT (user_id) DO UPDATE SET
             match_goal=EXCLUDED.match_goal,
             preferred_gender=EXCLUDED.preferred_gender,
             max_distance_km=EXCLUDED.max_distance_km,
-            notifications_enabled=EXCLUDED.notifications_enabled
+            notifications_enabled=EXCLUDED.notifications_enabled,
+            filter_sports=EXCLUDED.filter_sports
         """,
-        (user_id, data["match_goal"], data["preferred_gender"], data["max_distance_km"], data["notifications_enabled"]),
+        (user_id, data["match_goal"], data["preferred_gender"], data["max_distance_km"], data["notifications_enabled"], filter_sports_val),
     )
     return {"status": "success", "message": t("ok", lang)}
 
@@ -1102,14 +1107,16 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
     max_age = current_user.get("preferred_max_age")
     
     c.execute(
-        "SELECT preferred_gender, max_distance_km FROM user_settings WHERE user_id = %s",
+        "SELECT preferred_gender, max_distance_km, filter_sports FROM user_settings WHERE user_id = %s",
         (user_id,)
     )
     settings_row = c.fetchone()
     if settings_row:
-        preferred_gender, max_distance_km = settings_row
+        preferred_gender, max_distance_km = settings_row[0], settings_row[1]
+        filter_sports = parse_pg_array(settings_row[2]) if settings_row[2] else []
     else:
         preferred_gender, max_distance_km = "any", 25
+        filter_sports = []
     
     c.execute(
         "SELECT latitude, longitude, sports_interests FROM users WHERE id = %s",
@@ -1231,7 +1238,11 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         
         target_sports = parse_pg_array(r[10]) if r[10] else []
         
-        if user_sports and target_sports:
+        if filter_sports and target_sports:
+            shared_sports = set(filter_sports) & set(target_sports)
+            if not shared_sports:
+                continue
+        elif user_sports and target_sports and not filter_sports:
             shared_sports = set(user_sports) & set(target_sports)
             if not shared_sports:
                 continue

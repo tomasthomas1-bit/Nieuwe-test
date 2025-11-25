@@ -53,7 +53,9 @@ const translations = {
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'Geen profielen meer om te tonen',
     itsAMatch: 'It\'s a Match!', sendMessage: 'Stuur bericht', keepSwiping: 'Doorgaan met swipen',
     typeMessage: 'Typ een bericht...', send: 'Verstuur', noMessages: 'Nog geen berichten',
-    matchGoal: 'Match-doel', preferredGender: 'Voorkeur geslacht', maxDistance: 'Maximale afstand (km)',
+    matchGoal: 'Match-doel', preferredGender: 'Voorkeur geslacht', filterSports: 'Filter op sporten',
+    filterSportsDescription: 'Selecteer de sporten waarop je wilt filteren. Laat leeg om alle sporten te zien.',
+    maxDistance: 'Maximale afstand (km)',
     minAge: 'Minimum leeftijd', maxAge: 'Maximum leeftijd', notifications: 'Pushmeldingen',
     saveSettings: 'Instellingen opslaan', settingsSaved: 'Instellingen opgeslagen!', saveProfile: 'Profiel opslaan', photos: 'Foto\'s',
     uploadPhoto: 'Upload foto', setAsProfile: 'Als profielfoto', deletePhoto: 'Verwijder',
@@ -120,7 +122,9 @@ const translations = {
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'No more profiles to show',
     itsAMatch: 'It\'s a Match!', sendMessage: 'Send Message', keepSwiping: 'Keep Swiping',
     typeMessage: 'Type a message...', send: 'Send', noMessages: 'No messages yet',
-    matchGoal: 'Match goal', preferredGender: 'Preferred gender', maxDistance: 'Max distance (km)',
+    matchGoal: 'Match goal', preferredGender: 'Preferred gender', filterSports: 'Filter by sports',
+    filterSportsDescription: 'Select the sports you want to filter on. Leave empty to see all sports.',
+    maxDistance: 'Max distance (km)',
     minAge: 'Minimum age', maxAge: 'Maximum age', notifications: 'Push notifications',
     saveSettings: 'Save Settings', settingsSaved: 'Settings saved!', saveProfile: 'Save Profile', photos: 'Photos',
     uploadPhoto: 'Upload photo', setAsProfile: 'Set as profile', deletePhoto: 'Delete',
@@ -185,7 +189,9 @@ const translations = {
     like: 'J\'aime', dislike: 'Je n\'aime pas', noMoreProfiles: 'Plus de profils à afficher',
     itsAMatch: 'C\'est un Match!', sendMessage: 'Envoyer un message', keepSwiping: 'Continuer',
     typeMessage: 'Tapez un message...', send: 'Envoyer', noMessages: 'Pas encore de messages',
-    matchGoal: 'Objectif de match', preferredGender: 'Genre préféré', maxDistance: 'Distance max (km)',
+    matchGoal: 'Objectif de match', preferredGender: 'Genre préféré', filterSports: 'Filtrer par sports',
+    filterSportsDescription: 'Sélectionnez les sports sur lesquels vous voulez filtrer. Laissez vide pour voir tous les sports.',
+    maxDistance: 'Distance max (km)',
     minAge: 'Âge minimum', maxAge: 'Âge maximum', notifications: 'Notifications push',
     saveSettings: 'Enregistrer', settingsSaved: 'Paramètres enregistrés!', saveProfile: 'Enregistrer le profil', photos: 'Photos',
     uploadPhoto: 'Télécharger photo', setAsProfile: 'Définir comme profil', deletePhoto: 'Supprimer',
@@ -250,7 +256,9 @@ const translations = {
     like: 'Gefällt mir', dislike: 'Gefällt nicht', noMoreProfiles: 'Keine Profile mehr',
     itsAMatch: 'Es ist ein Match!', sendMessage: 'Nachricht senden', keepSwiping: 'Weiter swipen',
     typeMessage: 'Nachricht eingeben...', send: 'Senden', noMessages: 'Noch keine Nachrichten',
-    matchGoal: 'Match-Ziel', preferredGender: 'Bevorzugtes Geschlecht', maxDistance: 'Max. Entfernung (km)',
+    matchGoal: 'Match-Ziel', preferredGender: 'Bevorzugtes Geschlecht', filterSports: 'Nach Sportarten filtern',
+    filterSportsDescription: 'Wählen Sie die Sportarten aus, nach denen Sie filtern möchten. Leer lassen, um alle zu sehen.',
+    maxDistance: 'Max. Entfernung (km)',
     minAge: 'Mindestalter', maxAge: 'Höchstalter', notifications: 'Push-Benachrichtigungen',
     saveSettings: 'Einstellungen speichern', settingsSaved: 'Einstellungen gespeichert!', saveProfile: 'Profil speichern', photos: 'Fotos',
     uploadPhoto: 'Foto hochladen', setAsProfile: 'Als Profil', deletePhoto: 'Löschen',
@@ -315,7 +323,9 @@ const translations = {
     like: 'Me gusta', dislike: 'No me gusta', noMoreProfiles: 'No hay más perfiles',
     itsAMatch: '¡Es un Match!', sendMessage: 'Enviar mensaje', keepSwiping: 'Seguir deslizando',
     typeMessage: 'Escribe un mensaje...', send: 'Enviar', noMessages: 'Sin mensajes aún',
-    matchGoal: 'Objetivo de match', preferredGender: 'Género preferido', maxDistance: 'Distancia máx (km)',
+    matchGoal: 'Objetivo de match', preferredGender: 'Género preferido', filterSports: 'Filtrar por deportes',
+    filterSportsDescription: 'Selecciona los deportes por los que quieres filtrar. Déjalo vacío para ver todos.',
+    maxDistance: 'Distancia máx (km)',
     minAge: 'Edad mínima', maxAge: 'Edad máxima', notifications: 'Notificaciones push',
     saveSettings: 'Guardar ajustes', settingsSaved: '¡Ajustes guardados!', saveProfile: 'Guardar perfil', photos: 'Fotos',
     uploadPhoto: 'Subir foto', setAsProfile: 'Como perfil', deletePhoto: 'Eliminar',
@@ -380,7 +390,9 @@ const translations = {
     like: 'Mi piace', dislike: 'Non mi piace', noMoreProfiles: 'Nessun altro profilo',
     itsAMatch: 'È un Match!', sendMessage: 'Invia messaggio', keepSwiping: 'Continua a scorrere',
     typeMessage: 'Scrivi un messaggio...', send: 'Invia', noMessages: 'Nessun messaggio ancora',
-    matchGoal: 'Obiettivo match', preferredGender: 'Genere preferito', maxDistance: 'Distanza max (km)',
+    matchGoal: 'Obiettivo match', preferredGender: 'Genere preferito', filterSports: 'Filtra per sport',
+    filterSportsDescription: 'Seleziona gli sport su cui vuoi filtrare. Lascia vuoto per vedere tutti.',
+    maxDistance: 'Distanza max (km)',
     minAge: 'Età minima', maxAge: 'Età massima', notifications: 'Notifiche push',
     saveSettings: 'Salva impostazioni', settingsSaved: 'Impostazioni salvate!', saveProfile: 'Salva profilo', photos: 'Foto',
     uploadPhoto: 'Carica foto', setAsProfile: 'Come profilo', deletePhoto: 'Elimina',
@@ -445,7 +457,9 @@ const translations = {
     like: 'Curtir', dislike: 'Não curtir', noMoreProfiles: 'Sem mais perfis',
     itsAMatch: 'É um Match!', sendMessage: 'Enviar mensagem', keepSwiping: 'Continuar deslizando',
     typeMessage: 'Digite uma mensagem...', send: 'Enviar', noMessages: 'Sem mensagens ainda',
-    matchGoal: 'Objetivo de match', preferredGender: 'Gênero preferido', maxDistance: 'Distância máx (km)',
+    matchGoal: 'Objetivo de match', preferredGender: 'Gênero preferido', filterSports: 'Filtrar por esportes',
+    filterSportsDescription: 'Selecione os esportes pelos quais você quer filtrar. Deixe vazio para ver todos.',
+    maxDistance: 'Distância máx (km)',
     minAge: 'Idade mínima', maxAge: 'Idade máxima', notifications: 'Notificações push',
     saveSettings: 'Salvar configurações', settingsSaved: 'Configurações salvas!', saveProfile: 'Salvar perfil', photos: 'Fotos',
     uploadPhoto: 'Carregar foto', setAsProfile: 'Como perfil', deletePhoto: 'Excluir',
@@ -2966,6 +2980,30 @@ function SettingsScreen() {
             {['any', 'male', 'female', 'non_binary'].map((gender) => (
               <Chip key={gender} label={t(gender)} active={settings.preferred_gender === gender} onPress={() => updateField('preferred_gender', gender)} />
             ))}
+          </View>
+
+          <Text style={{ marginTop: 16, marginBottom: 8 }}>{t('filterSports') || 'Filter op sporten'}</Text>
+          <Text style={{ marginBottom: 8, color: theme.color.textSecondary, fontSize: 13 }}>
+            {t('filterSportsDescription') || 'Selecteer de sporten waarop je wilt filteren. Laat leeg om alle sporten te zien.'}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {['running', 'cycling', 'swimming', 'fitness', 'other'].map((sport) => {
+              const filterSports = settings.filter_sports || [];
+              const isActive = filterSports.includes(sport);
+              return (
+                <Chip 
+                  key={sport} 
+                  label={t(sport) || sport} 
+                  active={isActive} 
+                  onPress={() => {
+                    const newFilterSports = isActive 
+                      ? filterSports.filter(s => s !== sport)
+                      : [...filterSports, sport];
+                    updateField('filter_sports', newFilterSports);
+                  }} 
+                />
+              );
+            })}
           </View>
 
           <Text style={{ marginTop: 16 }}>{t('maxDistance')}</Text>
