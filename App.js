@@ -34,13 +34,8 @@ import { NavigationContainer, DefaultTheme, useFocusEffect, CommonActions, creat
 const navigationRef = createNavigationContainerRef();
 
 function navigateToChat(matchUser) {
-  console.log('navigateToChat called', matchUser?.name);
   if (navigationRef.isReady()) {
-    console.log('navigationRef is ready, navigating...');
     navigationRef.navigate('Chat', { matchUser });
-  } else {
-    console.log('navigationRef NOT ready');
-    Alert.alert('Debug', 'Navigation ref not ready');
   }
 }
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -2336,10 +2331,7 @@ function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
             {/* Buttons */}
             <TouchableOpacity
               onPress={() => {
-                console.log('Send Message button pressed');
-                Alert.alert('Debug', 'Knop werkt! Navigeren naar chat...');
                 setShowMatchModal(false);
-                // Navigate to Chat using global navigation ref
                 setTimeout(() => navigateToChat(matchedUser), 100);
               }}
               style={{
@@ -2390,6 +2382,7 @@ function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
 
 /* ---- ChatModal ---- */
 function ChatModal({ route, navigation, api, theme }) {
+  const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const matchUser =
     route && route.params && route.params.matchUser ? route.params.matchUser : null;
