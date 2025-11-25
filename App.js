@@ -1857,7 +1857,7 @@ function DiscoverScreen({ api, theme, user }) {
         </TouchableOpacity>
         
         <Image 
-          source={{ uri: `${BASE_URL}/static/athlo-logo.png` }}
+          source={{ uri: `${BASE_URL}/static/athlo-logo.jpg` }}
           style={styles.headerLogo}
           resizeMode="contain"
         />
@@ -3733,8 +3733,8 @@ const createStyles = (THEME) => StyleSheet.create({
     padding: 8,
   },
   headerLogo: {
-    width: 50,
-    height: 50,
+    width: 80,
+    height: 60,
     borderRadius: 8,
   },
   matchCounterMinimal: {
