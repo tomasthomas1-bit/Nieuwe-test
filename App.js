@@ -25,6 +25,7 @@ import {
   useColorScheme,
   Image,
   Switch,
+  Dimensions,
 } from 'react-native';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -952,6 +953,8 @@ function DiscoverScreen({ api, theme, user }) {
   const [activitiesData, setActivitiesData] = useState({});
   const [selectedSport, setSelectedSport] = useState('all');
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [galleryWidth, setGalleryWidth] = useState(Dimensions.get('window').width - 32);
+  const galleryScrollRef = useRef(null);
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
 
@@ -1178,19 +1181,32 @@ function DiscoverScreen({ api, theme, user }) {
               </ScrollView>
 
               {/* SWIPEABLE GALLERY: STATS CARD (SLIDE 0) + FOTO'S (SLIDE 1+) */}
-              <View style={styles.swipePhotoContainer}>
+              <View 
+                style={styles.swipePhotoContainer}
+                onLayout={(event) => {
+                  const { width } = event.nativeEvent.layout;
+                  if (width > 0 && width !== galleryWidth) {
+                    setGalleryWidth(width);
+                  }
+                }}
+              >
                 <View style={{ flex: 1, position: 'relative' }}>
                   <ScrollView
+                    ref={galleryScrollRef}
                     horizontal
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
                     scrollEventThrottle={16}
+                    decelerationRate="fast"
+                    snapToInterval={galleryWidth}
+                    snapToAlignment="start"
                     onScroll={(event) => {
-                      const slideWidth = 360;
                       const offsetX = event.nativeEvent.contentOffset.x;
-                      const slideIndex = Math.round(offsetX / slideWidth);
-                      if (slideIndex !== currentPhotoIndex && slideIndex >= 0 && slideIndex <= allPhotos.length) {
-                        setCurrentPhotoIndex(slideIndex);
+                      const slideIndex = Math.round(offsetX / galleryWidth);
+                      const maxIndex = allPhotos.length;
+                      const clampedIndex = Math.max(0, Math.min(slideIndex, maxIndex));
+                      if (clampedIndex !== currentPhotoIndex) {
+                        setCurrentPhotoIndex(clampedIndex);
                       }
                     }}
                     style={{ flex: 1 }}
@@ -1208,7 +1224,7 @@ function DiscoverScreen({ api, theme, user }) {
                       }
                       
                       return (
-                        <View style={{ width: 360, height: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
+                        <View style={{ width: galleryWidth, height: '100%', borderRadius: 16, overflow: 'hidden', position: 'relative' }}>
                           {/* Multi-color gradient background */}
                           <LinearGradient 
                             colors={sportTypes.find(s => s.id === selectedSport)?.gradients || ['#FF6B6B', '#FF8E53', '#FEC163', '#FFD93D']} 
@@ -1380,7 +1396,7 @@ function DiscoverScreen({ api, theme, user }) {
                         <Image
                           key={index}
                           source={{ uri: photo.startsWith('http') ? photo : `${BASE_URL}${photo}` }}
-                          style={[styles.swipePhoto, { width: 360 }]}
+                          style={[styles.swipePhoto, { width: galleryWidth }]}
                           resizeMode="cover"
                         />
                       ))
