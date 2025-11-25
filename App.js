@@ -3408,7 +3408,7 @@ function MainTabs({ api, theme }) {
         },
       })}
     >
-      <Tabs.Screen name="Ontdekken" options={{ title: t('discover') }}>
+      <Tabs.Screen name="Ontdekken" options={{ title: t('discover'), headerShown: false }}>
         {(props) => <DiscoverScreen {...props} api={api} theme={theme} user={{ profile_photo_url: profilePhotoUrl }} />}
       </Tabs.Screen>
       <Tabs.Screen name="Matches" options={{ title: t('matches') }}>
@@ -3721,7 +3721,7 @@ const createStyles = (THEME) => StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    paddingTop: 4,
+    paddingTop: 50,
   },
   headerIconBtn: {
     padding: 8,
