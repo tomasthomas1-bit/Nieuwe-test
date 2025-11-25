@@ -6,6 +6,17 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 
 ## Recent Changes (November 25, 2025)
 
+### Complete Onboarding Flow Implementation
+- **VerificationPendingScreen**: New screen shown after registration with resend verification email option
+- **ProfileSetupScreen**: First-time user setup with photo upload, sports selection (running, cycling, swimming, fitness, other), and location detection
+- **Navigation Flow**: AuthScreen → VerificationPending → Login → ProfileSetup (if needed) → MainTabs
+- **Backend Updates**:
+  - Added `profile_setup_complete` (BOOLEAN) and `sports_interests` (TEXT[]) columns to users table
+  - Extended `get_current_user`, `/me` endpoint, and `PATCH /users` to support new fields
+  - Added `parse_pg_array()` helper for safe PostgreSQL array handling
+  - Extended `UserPublic` and `UserUpdate` Pydantic models
+- **Translations**: Added all onboarding screen translations in 7 languages (NL, EN, FR, DE, ES, IT, PT)
+
 ### Email Verification & Password Reset - Resend Integration
 - **Resend API Integration**: Replaced SMTP with Resend for reliable email delivery
 - **Fixed Email Verification**: 
