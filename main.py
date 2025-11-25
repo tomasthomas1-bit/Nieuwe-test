@@ -1718,14 +1718,23 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     )
     if not c.fetchone():
         raise HTTPException(status_code=403, detail=t("chat_access_denied", lang))
-    # Strava tokens ophalen
-    user_strava_token = current_user.get("strava_token")
-    c.execute("SELECT strava_token FROM users WHERE id = %s AND deleted_at IS NULL", (match_id,))
-    row = c.fetchone()
-    match_strava_token = row[0] if row else None
-
-    user_loc = get_latest_strava_coords(user_strava_token)
-    match_loc = get_latest_strava_coords(match_strava_token)
+    
+    # Haal locaties op van beide gebruikers (huidige/ingestelde locaties)
+    c.execute("SELECT latitude, longitude FROM users WHERE id = %s AND deleted_at IS NULL", (user_id,))
+    user_row = c.fetchone()
+    
+    c.execute("SELECT latitude, longitude FROM users WHERE id = %s AND deleted_at IS NULL", (match_id,))
+    match_row = c.fetchone()
+    
+    if not user_row or not match_row:
+        raise HTTPException(
+            status_code=400,
+            detail=t("route_suggestion_error", lang),
+        )
+    
+    user_loc = (user_row[0], user_row[1]) if user_row[0] and user_row[1] else None
+    match_loc = (match_row[0], match_row[1]) if match_row[0] and match_row[1] else None
+    
     if not user_loc or not match_loc:
         raise HTTPException(
             status_code=400,
@@ -1735,7 +1744,7 @@ async def get_route_suggestion(match_id: int, current_user: dict = Depends(get_c
     map_link = f"https://www.google.com/maps/dir/{user_loc[0]},{user_loc[1]}/{match_loc[0]},{match_loc[1]}"
     popular_route = {
         "name": "Voorstel gezamenlijke route",
-        "description": "Suggestie gebaseerd op meest recente Strava-activiteiten (mock of echte integratie).",
+        "description": f"Route tussen je locatie en je match. Afstand ca. {round(distance_km, 1)} km.",
         "distance_km": round(distance_km / 2, 2),
         "map_link": map_link,
     }
