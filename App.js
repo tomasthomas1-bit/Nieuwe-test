@@ -1857,7 +1857,7 @@ function DiscoverScreen({ api, theme, user }) {
         </TouchableOpacity>
         
         <Image 
-          source={{ uri: `${BASE_URL}/static/athlo-logo.jpg` }}
+          source={{ uri: `${BASE_URL}/static/athlo-logo-transparent.png` }}
           style={styles.headerLogo}
           resizeMode="contain"
         />
