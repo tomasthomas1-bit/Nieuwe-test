@@ -26,6 +26,7 @@ import {
   Image,
   Switch,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { NavigationContainer, DefaultTheme, useFocusEffect } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -4231,24 +4232,102 @@ function MatchesScreen({ api, theme, navigation }) {
 
 /* ---- RouteScreen ---- */
 function RouteScreen({ route, theme }) {
+  const { t } = useContext(LanguageContext);
+  const { api } = useContext(ApiContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const matchUser = route?.params?.matchUser ?? null;
+  const [routeSuggestion, setRouteSuggestion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadRoute = async () => {
+      if (!matchUser?.id) {
+        setError(t('matchNotFound') || 'Match not found');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.authFetch(`/suggest_route/${matchUser.id}`);
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data?.detail || t('routeSuggestionError') || 'Route suggestion failed');
+        }
+        
+        setRouteSuggestion(data?.route_suggestion ?? null);
+        if (!data?.route_suggestion) {
+          setError(t('noRouteSuggestion') || 'No route suggestion available');
+        }
+      } catch (e) {
+        setError(e.message);
+        setRouteSuggestion(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRoute();
+  }, [matchUser?.id, api, t]);
+
+  const openMap = () => {
+    if (routeSuggestion?.map_link) {
+      Linking.openURL(routeSuggestion.map_link).catch(e => {
+        Alert.alert('Error', 'Could not open map');
+      });
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.tabContent}>
-      <Text style={styles.sectionTitle}>Route voorstel</Text>
-      <View style={[styles.card, { gap: 8 }]}>
-        <Text style={styles.routeLine}>
-          <Text style={styles.routeLabel}>Met: </Text>
-          {matchUser?.name ?? '—'}
-        </Text>
-        <Text style={styles.routeLine}>
-          Hier komt straks het dynamische routevoorstel (loop/fiets).
-        </Text>
-        <Text style={styles.routeLine}>
-          We kunnen hier later Google/Apple Maps deeplinks tonen.
-        </Text>
-      </View>
+      <Text style={styles.sectionTitle}>{t('routeSuggestion') || 'Route voorstel'}</Text>
+      
+      {loading ? (
+        <LoaderBar theme={theme} />
+      ) : error ? (
+        <View style={[styles.card, { gap: 8 }]}>
+          <Text style={[styles.routeLine, { color: theme.color.error || '#ff6b6b' }]}>
+            {error}
+          </Text>
+          <Text style={styles.routeLine}>
+            {t('routeSuggestionTip') || 'Make sure both users have linked Strava and completed recent activities.'}
+          </Text>
+        </View>
+      ) : routeSuggestion ? (
+        <View style={[styles.card, { gap: 12 }]}>
+          <Text style={styles.routeLine}>
+            <Text style={styles.routeLabel}>{t('with') || 'Met: '}</Text>
+            {matchUser?.name ?? '—'}
+          </Text>
+          
+          <Text style={styles.routeLabel}>{routeSuggestion.name}</Text>
+          <Text style={styles.routeLine}>{routeSuggestion.description}</Text>
+          
+          {routeSuggestion.distance_km && (
+            <Text style={styles.routeLine}>
+              <Text style={styles.routeLabel}>{t('distance') || 'Distance: '}</Text>
+              {routeSuggestion.distance_km} km
+            </Text>
+          )}
+          
+          <TouchableOpacity 
+            onPress={openMap}
+            style={[styles.btn, { backgroundColor: theme.color.primary, marginTop: 8 }]}
+          >
+            <Ionicons name="map-outline" size={16} color="#fff" />
+            <Text style={[styles.btnText, { color: '#fff' }]}>
+              {t('openInMaps') || 'Open in Maps'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={[styles.card, { gap: 8 }]}>
+          <Text style={styles.routeLine}>No route suggestion available</Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
