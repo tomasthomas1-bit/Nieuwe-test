@@ -2,9 +2,7 @@
 import os
 import logging
 import secrets
-import smtplib
-import ssl
-from email.message import EmailMessage
+import requests
 from typing import Optional, Tuple
 
 from translations import translations
@@ -30,61 +28,43 @@ def _render_email_text(name: str, token: str, lang: str = "nl") -> Tuple[str, st
 
     return subject, body
 
-# -------- SMTP ----------
-def _build_message(
-    to_email: str,
-    from_email: str,
-    subject: str,
-    text_body: str,
-    html_body: Optional[str] = None,
-    reply_to: Optional[str] = None,
-) -> EmailMessage:
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = from_email
-    msg["To"] = to_email
-    if reply_to:
-        msg["Reply-To"] = reply_to
+# -------- Resend API ----------
+def _resend_send(to_email: str, subject: str, text_body: str, html_body: Optional[str] = None, from_email: str = None) -> None:
+    """
+    Verstuur email via Resend API.
+    """
+    api_key = os.getenv("RESEND_API_KEY")
+    if not api_key:
+        logger.warning("RESEND_API_KEY niet geconfigureerd. E-mail wordt NIET verzonden; logging-only mode.")
+        logger.info("Email (to=%s): subject=%r", to_email, subject)
+        logger.debug("Text body:\n%s", text_body)
+        logger.debug("HTML body:\n%s", html_body)
+        return
 
-    # multipart/alternative: eerst text/plain, dan text/html
-    msg.set_content(text_body, subtype="plain", charset="utf-8")
-    if html_body:
-        msg.add_alternative(html_body, subtype="html", charset="utf-8")
-    return msg
+    if not from_email:
+        from_email = "noreply@athlo.app"
 
-def _smtp_send(msg: EmailMessage) -> None:
-    host = os.getenv("SMTP_HOST")
-    port = int(os.getenv("SMTP_PORT", "0") or "0")
-    user = os.getenv("SMTP_USERNAME")
-    pwd = os.getenv("SMTP_PASSWORD")
-    security = (os.getenv("SMTP_SECURITY", "STARTTLS") or "STARTTLS").upper()
-    timeout = float(os.getenv("SMTP_TIMEOUT", "15") or "15")
-
-    if not host or not port:
-        raise RuntimeError("SMTP is niet geconfigureerd: SMTP_HOST/SMTP_PORT ontbreken.")
-
-    context = ssl.create_default_context()
-
-    if security == "SSL" or port == 465:
-        with smtplib.SMTP_SSL(host=host, port=port, timeout=timeout, context=context) as server:
-            if user and pwd:
-                server.login(user, pwd)
-            server.send_message(msg)
-    elif security == "STARTTLS":
-        with smtplib.SMTP(host=host, port=port, timeout=timeout) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-            if user and pwd:
-                server.login(user, pwd)
-            server.send_message(msg)
-    elif security == "PLAINTEXT":
-        with smtplib.SMTP(host=host, port=port, timeout=timeout) as server:
-            if user and pwd:
-                server.login(user, pwd)
-            server.send_message(msg)
-    else:
-        raise ValueError(f"Onbekende SMTP_SECURITY: {security}")
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    
+    payload = {
+        "from": from_email,
+        "to": to_email,
+        "subject": subject,
+        "text": text_body,
+        "html": html_body or text_body,
+    }
+    
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        response.raise_for_status()
+        logger.info("Email verzonden naar %s via Resend", to_email)
+    except requests.exceptions.RequestException as e:
+        logger.exception("Verzenden van email is mislukt: %s", str(e))
+        raise
 
 # -------- Password Reset Templates --------
 def _render_password_reset_text(name: str, token: str, lang: str = "nl") -> Tuple[str, str]:
@@ -147,52 +127,6 @@ def render_password_reset_html(name: str, link: str, lang: str = "nl") -> str:
     </html>
     """
 
-
-# -------- Public API --------
-def send_password_reset_email(
-    to_email: str,
-    name: str,
-    token: str,
-    lang: str = "nl",
-) -> None:
-    """
-    Verzend password reset email als multipart (text + HTML).
-    """
-    from_email = os.getenv("SMTP_FROM")
-    reply_to = os.getenv("SMTP_REPLY_TO")
-
-    subject, text_body = _render_password_reset_text(name, token, lang)
-    
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
-    link = f"{frontend_url}/reset-password?token={token}"
-    html_body = render_password_reset_html(name, link, lang)
-
-    host = os.getenv("SMTP_HOST")
-    port = os.getenv("SMTP_PORT")
-    if not host or not port or not from_email:
-        logger.warning(
-            "SMTP niet volledig geconfigureerd. Password reset email wordt NIET verzonden; logging-only mode."
-        )
-        logger.info("Password reset email (to=%s): subject=%r, link=%s", to_email, subject, link)
-        return
-
-    msg = _build_message(
-        to_email=to_email,
-        from_email=from_email,
-        subject=subject,
-        text_body=text_body,
-        html_body=html_body,
-        reply_to=reply_to,
-    )
-
-    try:
-        _smtp_send(msg)
-        logger.info("Password reset email verzonden naar %s", to_email)
-    except Exception:
-        logger.exception("Verzenden van password reset email is mislukt.")
-        raise
-
-
 def send_verification_email(
     to_email: str,
     name: str,
@@ -202,13 +136,9 @@ def send_verification_email(
     body: Optional[str] = None,
 ) -> None:
     """
-    Verzend verificatiemail als multipart (text + HTML).
+    Verstuur verificatiemail via Resend.
     - Als subject/body ontbreken, rendert functie zelf text + html op basis van 'lang'.
-    - Zonder SMTP-config -> logging-only (geen verzending, wel zichtbaar in logs).
     """
-    from_email = os.getenv("SMTP_FROM")
-    reply_to = os.getenv("SMTP_REPLY_TO")
-
     # Render text/html
     if subject is None or body is None:
         subject, text_body = _render_email_text(name, token, lang)
@@ -220,31 +150,21 @@ def send_verification_email(
     link = f"{frontend_url}/verify-email?token={token}"
     html_body = render_verification_email_html(name, link, lang)
 
-    # Fallback: geen SMTP-config -> loggen en return
-    host = os.getenv("SMTP_HOST")
-    port = os.getenv("SMTP_PORT")
-    if not host or not port or not from_email:
-        logger.warning(
-            "SMTP niet volledig geconfigureerd (HOST/PORT/FROM). "
-            "E-mail wordt NIET verzonden; logging-only mode ingeschakeld."
-        )
-        logger.info("Verification email (to=%s, from=%s): subject=%r", to_email, from_email or "<unset>", subject)
-        logger.debug("Text body:\n%s", text_body)
-        logger.debug("HTML body:\n%s", html_body)
-        return
+    _resend_send(to_email, subject, text_body, html_body)
 
-    msg = _build_message(
-        to_email=to_email,
-        from_email=from_email,
-        subject=subject,
-        text_body=text_body,
-        html_body=html_body,
-        reply_to=reply_to,
-    )
+def send_password_reset_email(
+    to_email: str,
+    name: str,
+    token: str,
+    lang: str = "nl",
+) -> None:
+    """
+    Verstuur password reset email via Resend.
+    """
+    subject, text_body = _render_password_reset_text(name, token, lang)
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+    link = f"{frontend_url}/reset-password?token={token}"
+    html_body = render_password_reset_html(name, link, lang)
 
-    try:
-        _smtp_send(msg)
-        logger.info("Verificatiemail verzonden naar %s", to_email)
-    except Exception:
-        logger.exception("Verzenden van verificatiemail is mislukt.")
-        raise
+    _resend_send(to_email, subject, text_body, html_body)
