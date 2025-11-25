@@ -10,9 +10,14 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 - **Sport Interests Filtering**: `/suggestions` endpoint now filters matches based on shared sports interests
 - **Profile Completion Filter**: Only shows users with `profile_setup_complete = TRUE` in discovery
 - **Enhanced Response**: Discovery cards now include `sports_interests` field for rendering sport chips
+- **Sport Filter in Settings**: Users can now filter discovery by specific sports (running, cycling, swimming, fitness, other) in SettingsScreen
+  - Added `filter_sports` column to user_settings table
+  - When set, filter_sports takes priority over user's own sports_interests for matching
+  - Empty filter shows all sports (falls back to user sports matching)
 - **Existing Endpoints**:
   - `POST /swipe/{swipee_id}` - like/pass with automatic mutual match detection
   - `GET /matches` - retrieves all mutual matches with photos
+  - `GET/POST /users/{id}/settings` - includes filter_sports for sport filtering preferences
 
 ### Complete Onboarding Flow Implementation
 - **VerificationPendingScreen**: New screen shown after registration with resend verification email option
