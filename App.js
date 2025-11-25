@@ -1199,12 +1199,12 @@ function DiscoverScreen({ api, theme, user }) {
                           {/* Glassmorphism overlay */}
                           <View style={{
                             position: 'absolute',
-                            top: 50,
-                            left: 20,
-                            right: 20,
-                            bottom: 20,
+                            top: 38,
+                            left: 12,
+                            right: 12,
+                            bottom: 12,
                             backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                            borderRadius: 20,
+                            borderRadius: 16,
                             borderWidth: 1,
                             borderColor: 'rgba(255, 255, 255, 0.3)',
                           }} />
@@ -1247,24 +1247,24 @@ function DiscoverScreen({ api, theme, user }) {
                           </ScrollView>
                           
                           {/* Content */}
-                          <View style={{ flex: 1, justifyContent: 'space-between', padding: 24, paddingTop: 50, zIndex: 1 }}>
+                          <View style={{ flex: 1, justifyContent: 'space-between', padding: 12, paddingTop: 42, zIndex: 1 }}>
                             {/* Header with icon */}
                             <View style={{ alignItems: 'center' }}>
                               <View style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 28,
+                                width: 36,
+                                height: 36,
+                                borderRadius: 18,
                                 backgroundColor: 'rgba(255, 255, 255, 0.25)',
                                 justifyContent: 'center',
                                 alignItems: 'center',
-                                marginBottom: 12,
+                                marginBottom: 4,
                                 borderWidth: 2,
                                 borderColor: 'rgba(255, 255, 255, 0.4)',
                               }}>
-                                <Ionicons name="trophy" size={28} color="#fff" />
+                                <Ionicons name="trophy" size={18} color="#fff" />
                               </View>
                               <Text style={{ 
-                                fontSize: 18, 
+                                fontSize: 13, 
                                 fontFamily: 'Montserrat_700Bold', 
                                 color: '#fff', 
                                 textAlign: 'center',
@@ -1281,22 +1281,22 @@ function DiscoverScreen({ api, theme, user }) {
                               flexDirection: 'row', 
                               justifyContent: 'space-around',
                               alignItems: 'center',
-                              marginTop: 8,
+                              marginTop: 4,
                             }}>
                               <View style={{ alignItems: 'center', flex: 1 }}>
                                 <View style={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 22,
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
                                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                   justifyContent: 'center',
                                   alignItems: 'center',
-                                  marginBottom: 8,
+                                  marginBottom: 4,
                                 }}>
-                                  <Ionicons name="barbell" size={22} color="#fff" />
+                                  <Ionicons name="barbell" size={14} color="#fff" />
                                 </View>
                                 <Text style={{ 
-                                  fontSize: 28, 
+                                  fontSize: 20, 
                                   fontFamily: 'Montserrat_700Bold', 
                                   color: '#fff',
                                   textShadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -1306,10 +1306,10 @@ function DiscoverScreen({ api, theme, user }) {
                                   {displayStats.total_workouts}
                                 </Text>
                                 <Text style={{ 
-                                  fontSize: 11, 
+                                  fontSize: 9, 
                                   fontFamily: 'Montserrat_600SemiBold', 
                                   color: 'rgba(255, 255, 255, 0.95)',
-                                  marginTop: 2,
+                                  marginTop: 1,
                                   textTransform: 'uppercase',
                                   letterSpacing: 0.5,
                                 }}>
@@ -1319,18 +1319,18 @@ function DiscoverScreen({ api, theme, user }) {
                               
                               <View style={{ alignItems: 'center', flex: 1 }}>
                                 <View style={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 22,
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
                                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                   justifyContent: 'center',
                                   alignItems: 'center',
-                                  marginBottom: 8,
+                                  marginBottom: 4,
                                 }}>
-                                  <Ionicons name="navigate" size={22} color="#fff" />
+                                  <Ionicons name="navigate" size={14} color="#fff" />
                                 </View>
                                 <Text style={{ 
-                                  fontSize: 28, 
+                                  fontSize: 20, 
                                   fontFamily: 'Montserrat_700Bold', 
                                   color: '#fff',
                                   textShadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -1340,10 +1340,10 @@ function DiscoverScreen({ api, theme, user }) {
                                   {(displayStats.total_distance / 1000).toFixed(0)}
                                 </Text>
                                 <Text style={{ 
-                                  fontSize: 11, 
+                                  fontSize: 9, 
                                   fontFamily: 'Montserrat_600SemiBold', 
                                   color: 'rgba(255, 255, 255, 0.95)',
-                                  marginTop: 2,
+                                  marginTop: 1,
                                   textTransform: 'uppercase',
                                   letterSpacing: 0.5,
                                 }}>
@@ -1353,18 +1353,18 @@ function DiscoverScreen({ api, theme, user }) {
                               
                               <View style={{ alignItems: 'center', flex: 1 }}>
                                 <View style={{
-                                  width: 44,
-                                  height: 44,
-                                  borderRadius: 22,
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 14,
                                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                   justifyContent: 'center',
                                   alignItems: 'center',
-                                  marginBottom: 8,
+                                  marginBottom: 4,
                                 }}>
-                                  <Ionicons name="time" size={22} color="#fff" />
+                                  <Ionicons name="time" size={14} color="#fff" />
                                 </View>
                                 <Text style={{ 
-                                  fontSize: 28, 
+                                  fontSize: 20, 
                                   fontFamily: 'Montserrat_700Bold', 
                                   color: '#fff',
                                   textShadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -1374,10 +1374,10 @@ function DiscoverScreen({ api, theme, user }) {
                                   {Math.floor(displayStats.total_time / 3600)}
                                 </Text>
                                 <Text style={{ 
-                                  fontSize: 11, 
+                                  fontSize: 9, 
                                   fontFamily: 'Montserrat_600SemiBold', 
                                   color: 'rgba(255, 255, 255, 0.95)',
-                                  marginTop: 2,
+                                  marginTop: 1,
                                   textTransform: 'uppercase',
                                   letterSpacing: 0.5,
                                 }}>
