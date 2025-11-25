@@ -2166,26 +2166,26 @@ function DiscoverScreen({ api, theme, user }) {
                   )}
                 </View>
               </View>
-
-              {/* SWIPE BUTTONS */}
-              <View style={styles.swipeButtons}>
-                <TouchableOpacity 
-                  style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
-                  onPress={() => doSwipe(false)}
-                  disabled={swiping}
-                >
-                  <Ionicons name="close" size={32} color="#FF6B35" />
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.likeBtn, swiping && styles.swipeBtnDisabled]}
-                  onPress={() => doSwipe(true)}
-                  disabled={swiping}
-                >
-                  <Ionicons name="heart" size={32} color="#32D74B" />
-                </TouchableOpacity>
-              </View>
             </ScrollView>
+          </View>
+
+          {/* SWIPE BUTTONS - BUITEN de ScrollView zodat ze altijd zichtbaar zijn */}
+          <View style={styles.swipeButtons}>
+            <TouchableOpacity 
+              style={[styles.dislikeBtn, swiping && styles.swipeBtnDisabled]}
+              onPress={() => doSwipe(false)}
+              disabled={swiping}
+            >
+              <Ionicons name="close" size={36} color="#FF6B35" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.likeBtn, swiping && styles.swipeBtnDisabled]}
+              onPress={() => doSwipe(true)}
+              disabled={swiping}
+            >
+              <Ionicons name="heart" size={36} color="#32D74B" />
+            </TouchableOpacity>
           </View>
 
           <Text style={styles.swipeCounter}>
@@ -3922,9 +3922,12 @@ const createStyles = (THEME) => StyleSheet.create({
   // Swipe Interface
   swipeCardContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 0,
+    maxHeight: '75%',
   },
   swipeCard: {
     width: '100%',
@@ -4099,13 +4102,10 @@ const createStyles = (THEME) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 50,
-    paddingVertical: 20,
-    paddingBottom: 24,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    marginHorizontal: 16,
-    borderRadius: 20,
-    marginTop: 8,
+    gap: 60,
+    paddingVertical: 16,
+    paddingBottom: 12,
+    paddingTop: 12,
   },
   dislikeBtn: {
     width: 80,
