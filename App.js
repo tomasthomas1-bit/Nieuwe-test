@@ -1856,11 +1856,10 @@ function DiscoverScreen({ api, theme, user }) {
           <Ionicons name="refresh" size={22} color={loading ? "#ccc" : "#FF6B35"} />
         </TouchableOpacity>
         
-        <Image 
-          source={require('./assets/athlo-logo.png')} 
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
+        <View style={styles.headerLogoContainer}>
+          <View style={styles.heartLogoLeft} />
+          <View style={styles.heartLogoRight} />
+        </View>
         
         <View style={styles.matchCounterMinimal}>
           <Ionicons name="heart" size={16} color="#FF6B35" />
@@ -3732,9 +3731,32 @@ const createStyles = (THEME) => StyleSheet.create({
   headerIconBtn: {
     padding: 8,
   },
-  headerLogo: {
-    width: 60,
+  headerLogoContainer: {
+    width: 44,
     height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heartLogoLeft: {
+    width: 20,
+    height: 32,
+    backgroundColor: '#0A84FF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 0,
+    transform: [{ rotate: '-10deg' }, { translateX: 3 }],
+  },
+  heartLogoRight: {
+    width: 20,
+    height: 32,
+    backgroundColor: '#32D74B',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 4,
+    transform: [{ rotate: '10deg' }, { translateX: -3 }],
   },
   matchCounterMinimal: {
     flexDirection: 'row',
