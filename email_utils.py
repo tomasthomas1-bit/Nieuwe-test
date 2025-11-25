@@ -48,7 +48,9 @@ def _resend_send(to_email: str, subject: str, text_body: str, html_body: Optiona
         return
 
     if not from_email:
-        from_email = "noreply@athlo.app"
+        # Gebruik Resend testdomein (werkt zonder domeinverificatie)
+        # Vervang later door je eigen geverifieerde domein: "noreply@athlo.app"
+        from_email = "Athlo <onboarding@resend.dev>"
 
     url = "https://api.resend.com/emails"
     headers = {
