@@ -1143,42 +1143,44 @@ function DiscoverScreen({ api, theme, user }) {
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
-              {/* SPORT SELECTOR */}
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={{ marginBottom: 12, paddingHorizontal: 16 }}
-                contentContainerStyle={{ gap: 8 }}
-              >
-                {sportTypes.map(sport => (
-                  <TouchableOpacity
-                    key={sport.id}
-                    onPress={() => setSelectedSport(sport.id)}
-                    style={{
-                      paddingHorizontal: 16,
-                      paddingVertical: 8,
-                      borderRadius: 20,
-                      backgroundColor: selectedSport === sport.id ? '#FF6B35' : '#f0f0f0',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                  >
-                    <Ionicons 
-                      name={sport.icon} 
-                      size={16} 
-                      color={selectedSport === sport.id ? '#fff' : '#666'} 
-                    />
-                    <Text style={{
-                      fontFamily: 'Montserrat_600SemiBold',
-                      fontSize: 13,
-                      color: selectedSport === sport.id ? '#fff' : '#666',
-                    }}>
-                      {sport.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {/* SPORT SELECTOR - alleen zichtbaar op stats card (slide 0) */}
+              {currentPhotoIndex === 0 && (
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginBottom: 12, paddingHorizontal: 16 }}
+                  contentContainerStyle={{ gap: 8 }}
+                >
+                  {sportTypes.map(sport => (
+                    <TouchableOpacity
+                      key={sport.id}
+                      onPress={() => setSelectedSport(sport.id)}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        backgroundColor: selectedSport === sport.id ? '#FF6B35' : '#f0f0f0',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      <Ionicons 
+                        name={sport.icon} 
+                        size={16} 
+                        color={selectedSport === sport.id ? '#fff' : '#666'} 
+                      />
+                      <Text style={{
+                        fontFamily: 'Montserrat_600SemiBold',
+                        fontSize: 13,
+                        color: selectedSport === sport.id ? '#fff' : '#666',
+                      }}>
+                        {sport.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
 
               {/* SWIPEABLE GALLERY: STATS CARD (SLIDE 0) + FOTO'S (SLIDE 1+) */}
               <View 
