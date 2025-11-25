@@ -87,6 +87,9 @@ const translations = {
     locationError: 'Locatiefout', locationSaved: 'Locatie opgeslagen!', locationNotAvailable: 'Locatie niet beschikbaar',
     stravaLink: 'Koppel Strava', stravaLinked: 'Strava Gekoppeld', stravaUnlink: 'Ontkoppel Strava',
     stravaConnectDescription: 'Koppel je Strava account om automatisch je sportactiviteiten te delen.',
+    forgotPassword: 'Wachtwoord vergeten?', enterEmail: 'Voer je e-mailadres in',
+    sendResetLink: 'Verstuur resetlink', backToLogin: 'Terug naar inloggen',
+    resetLinkSent: 'Als dit e-mailadres bij ons bekend is, ontvang je een e-mail met instructies.',
   },
   en: {
     login: 'Login', register: 'Register', username: 'Username', password: 'Password',
@@ -130,6 +133,9 @@ const translations = {
     location: 'Location', currentLocation: 'Current location', getLocation: 'Get location',
     locationPermissionDenied: 'Location permission denied', locationPermissionDeniedMessage: 'You must allow location access to get your current location.',
     locationError: 'Location error', locationSaved: 'Location saved!', locationNotAvailable: 'Location not available',
+    forgotPassword: 'Forgot password?', enterEmail: 'Enter your email address',
+    sendResetLink: 'Send reset link', backToLogin: 'Back to login',
+    resetLinkSent: 'If this email address is registered with us, you\'ll receive an email with instructions.',
   },
   fr: {
     login: 'Connexion', register: 'S\'inscrire', username: 'Nom d\'utilisateur', password: 'Mot de passe',
@@ -173,6 +179,9 @@ const translations = {
     location: 'Localisation', currentLocation: 'Localisation actuelle', getLocation: 'Obtenir la localisation',
     locationPermissionDenied: 'Permission de localisation refusée', locationPermissionDeniedMessage: 'Vous devez autoriser l\'accès à la localisation pour obtenir votre position actuelle.',
     locationError: 'Erreur de localisation', locationSaved: 'Localisation enregistrée !', locationNotAvailable: 'Localisation non disponible',
+    forgotPassword: 'Mot de passe oublié?', enterEmail: 'Entrez votre adresse email',
+    sendResetLink: 'Envoyer le lien', backToLogin: 'Retour à la connexion',
+    resetLinkSent: 'Si cette adresse email est enregistrée, vous recevrez un email avec des instructions.',
   },
   de: {
     login: 'Anmelden', register: 'Registrieren', username: 'Benutzername', password: 'Passwort',
@@ -216,6 +225,9 @@ const translations = {
     location: 'Standort', currentLocation: 'Aktueller Standort', getLocation: 'Standort abrufen',
     locationPermissionDenied: 'Standortzugriff verweigert', locationPermissionDeniedMessage: 'Sie müssen den Standortzugriff zulassen, um Ihren aktuellen Standort abzurufen.',
     locationError: 'Standortfehler', locationSaved: 'Standort gespeichert!', locationNotAvailable: 'Standort nicht verfügbar',
+    forgotPassword: 'Passwort vergessen?', enterEmail: 'Geben Sie Ihre E-Mail-Adresse ein',
+    sendResetLink: 'Link senden', backToLogin: 'Zurück zur Anmeldung',
+    resetLinkSent: 'Wenn diese E-Mail-Adresse bei uns registriert ist, erhalten Sie eine E-Mail mit Anweisungen.',
   },
   es: {
     login: 'Iniciar sesión', register: 'Registrarse', username: 'Nombre de usuario', password: 'Contraseña',
@@ -259,6 +271,9 @@ const translations = {
     location: 'Ubicación', currentLocation: 'Ubicación actual', getLocation: 'Obtener ubicación',
     locationPermissionDenied: 'Permiso de ubicación denegado', locationPermissionDeniedMessage: 'Debe permitir el acceso a la ubicación para obtener su ubicación actual.',
     locationError: 'Error de ubicación', locationSaved: '¡Ubicación guardada!', locationNotAvailable: 'Ubicación no disponible',
+    forgotPassword: '¿Olvidaste tu contraseña?', enterEmail: 'Ingresa tu correo electrónico',
+    sendResetLink: 'Enviar enlace', backToLogin: 'Volver al inicio',
+    resetLinkSent: 'Si este correo está registrado, recibirás un correo con instrucciones.',
   },
   it: {
     login: 'Accedi', register: 'Registrati', username: 'Nome utente', password: 'Password',
@@ -302,6 +317,9 @@ const translations = {
     location: 'Posizione', currentLocation: 'Posizione attuale', getLocation: 'Ottieni posizione',
     locationPermissionDenied: 'Permesso di posizione negato', locationPermissionDeniedMessage: 'Devi consentire l\'accesso alla posizione per ottenere la tua posizione attuale.',
     locationError: 'Errore di posizione', locationSaved: 'Posizione salvata!', locationNotAvailable: 'Posizione non disponibile',
+    forgotPassword: 'Password dimenticata?', enterEmail: 'Inserisci la tua email',
+    sendResetLink: 'Invia link', backToLogin: 'Torna al login',
+    resetLinkSent: 'Se questa email è registrata, riceverai un\'email con le istruzioni.',
   },
   pt: {
     login: 'Entrar', register: 'Registrar', username: 'Nome de usuário', password: 'Senha',
@@ -345,6 +363,9 @@ const translations = {
     location: 'Localização', currentLocation: 'Localização atual', getLocation: 'Obter localização',
     locationPermissionDenied: 'Permissão de localização negada', locationPermissionDeniedMessage: 'Você deve permitir o acesso à localização para obter sua localização atual.',
     locationError: 'Erro de localização', locationSaved: 'Localização salva!', locationNotAvailable: 'Localização não disponível',
+    forgotPassword: 'Esqueceu a senha?', enterEmail: 'Digite seu email',
+    sendResetLink: 'Enviar link', backToLogin: 'Voltar ao login',
+    resetLinkSent: 'Se este email estiver registrado, você receberá um email com instruções.',
   },
 };
 
@@ -714,6 +735,17 @@ function useApi() {
     return { ok: true, data };
   }, []);
 
+  // Wachtwoord vergeten
+  const forgotPassword = useCallback(async (email) => {
+    const res = await fetch(`${BASE_URL}/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json().catch(() => null);
+    return { ok: res.ok, data };
+  }, []);
+
   // Uitloggen
   const logout = useCallback(async () => {
     // State resetten
@@ -761,7 +793,7 @@ function useApi() {
 
   return {
     token, isAuthenticated, userId,
-    authFetch, login, register, logout,
+    authFetch, login, register, logout, forgotPassword,
     getProfile, updateProfile,
     profileVersion, notifyProfilePhotoChanged,
   };
@@ -820,15 +852,17 @@ const Tabs = createBottomTabNavigator();
 function AuthScreen({ navigation, api, theme }) {
   const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot'
   const [form, setForm] = useState({
     username: '',
     name: '',
     age: '',
     bio: '',
     password: '',
+    email: '',
   });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleLogin = useCallback(async () => {
@@ -863,11 +897,73 @@ function AuthScreen({ navigation, api, theme }) {
     Alert.alert(
       t('register'), 
       data?.message || t('verificationSent'),
-      [{ text: 'OK', onPress: () => setIsLogin(true) }]
+      [{ text: 'OK', onPress: () => setMode('login') }]
     );
   }, [api, form, t]);
 
+  const handleForgotPassword = useCallback(async () => {
+    if (!form.email || !form.email.includes('@')) {
+      setErrors({ email: t('enterEmail') });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { ok } = await api.forgotPassword(form.email);
+      Alert.alert(
+        t('forgotPassword'),
+        t('resetLinkSent'),
+        [{ text: 'OK', onPress: () => setMode('login') }]
+      );
+    } catch (err) {
+      Alert.alert(t('forgotPassword'), t('resetLinkSent'));
+    } finally {
+      setLoading(false);
+    }
+  }, [api, form.email, t]);
+
   const LOGO_TRANSPARENT = 'https://i.imgur.com/hEpZh82.png';
+  
+  // Forgot Password Screen
+  if (mode === 'forgot') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.color.surface }}>
+        <ScrollView contentContainerStyle={styles.authContainer}>
+          <LogoBox theme={theme} uri={LOGO_TRANSPARENT} size={120} />
+          <Text style={styles.authTitle}>{t('forgotPassword')}</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder={t('email')}
+            value={form.email}
+            onChangeText={(v) => set('email', v)}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholderTextColor={theme.color.textSecondary}
+          />
+          {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
+
+          <TouchableOpacity 
+            onPress={handleForgotPassword} 
+            style={styles.primaryBtn}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryBtnText}>{t('sendResetLink')}</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setMode('login')} style={{ marginTop: theme.gap.m }}>
+            <Text style={styles.switchText}>{t('backToLogin')}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Login / Register Screen
+  const isLogin = mode === 'login';
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.color.surface }}>
       <ScrollView contentContainerStyle={styles.authContainer}>
@@ -912,6 +1008,16 @@ function AuthScreen({ navigation, api, theme }) {
               onChangeText={(v) => set('bio', v)}
               placeholderTextColor={theme.color.textSecondary}
             />
+            
+            <TextInput
+              style={styles.input}
+              placeholder={t('email')}
+              value={form.email}
+              onChangeText={(v) => set('email', v)}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor={theme.color.textSecondary}
+            />
           </>
         ) : null}
 
@@ -930,7 +1036,15 @@ function AuthScreen({ navigation, api, theme }) {
           <Text style={styles.primaryBtnText}>{isLogin ? t('login') : t('register')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setIsLogin(!isLogin)} style={{ marginTop: theme.gap.m }}>
+        {isLogin && (
+          <TouchableOpacity onPress={() => setMode('forgot')} style={{ marginTop: theme.gap.s }}>
+            <Text style={[styles.switchText, { color: theme.color.textSecondary, fontSize: 14 }]}>
+              {t('forgotPassword')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity onPress={() => setMode(isLogin ? 'register' : 'login')} style={{ marginTop: theme.gap.m }}>
           <Text style={styles.switchText}>
             {isLogin ? t('register') : t('login')}
           </Text>

@@ -200,6 +200,8 @@ class UserInDB(UserBase):
 
 class UserCreate(UserBase):
     password: str
+    email: Optional[str] = None
+    
     @validator("password")
     def validate_password_strength(cls, v: str) -> str:
         if len(v) < 8:
@@ -801,13 +803,13 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
         # Gebruiker aanmaken
         c.execute(
             """
-            INSERT INTO users (username, password_hash, name, age, bio, strava_token,
+            INSERT INTO users (username, password_hash, name, age, bio, email, strava_token,
                                preferred_min_age, preferred_max_age, push_token, deleted_at)
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,NULL)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NULL)
             RETURNING id, COALESCE(language,'nl')
             """,
             (
-                user.username, password_hash, user.name, user.age, user.bio,
+                user.username, password_hash, user.name, user.age, user.bio, user.email,
                 None, None, None, None
             )
         )
@@ -872,6 +874,114 @@ async def verify_email(token: str, db=Depends(get_db)):
     c.execute("UPDATE users SET is_verified = TRUE WHERE id = %s", (user_id,))
     logger.info("E-mailadres bevestigd voor gebruiker %s", user_id)
     return {"status": "success", "message": t("email_verified", lang)}
+
+
+# -------- Password Reset --------
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+    
+    @validator("new_password")
+    def validate_password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Wachtwoord moet minimaal 8 karakters lang zijn.")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Wachtwoord moet minimaal één kleine letter bevatten.")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Wachtwoord moet minimaal één hoofdletter bevatten.")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Wachtwoord moet minimaal één cijfer bevatten.")
+        if not re.search(r"[\\#\?!@$%^&*\-]", v):
+            raise ValueError("Wachtwoord moet minimaal één speciaal karakter bevatten.")
+        return v
+
+
+@app.post("/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db=Depends(get_db)):
+    """
+    Vraag een wachtwoord reset aan. Stuurt een email met reset link.
+    """
+    from email_utils import send_password_reset_email
+    conn, c = db
+    
+    # Zoek gebruiker op email
+    c.execute(
+        "SELECT id, name, email, COALESCE(language,'nl') FROM users WHERE email = %s AND deleted_at IS NULL",
+        (request.email,)
+    )
+    row = c.fetchone()
+    
+    # Altijd success retourneren (security: vertel niet of email bestaat)
+    if not row:
+        logger.info("Password reset aangevraagd voor onbekend email: %s", request.email)
+        return {"status": "success", "message": t("password_reset_sent", "nl")}
+    
+    user_id, name, email, lang = row
+    lang = get_lang({"language": lang})
+    
+    # Genereer reset token
+    token = generate_verification_token()
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+    
+    # Sla token op
+    c.execute(
+        "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (%s, %s, %s)",
+        (user_id, token, expires_at)
+    )
+    
+    # Verstuur email
+    try:
+        send_password_reset_email(email, name, token, lang=lang)
+        logger.info("Password reset email verzonden naar %s", email)
+    except Exception:
+        logger.exception("Fout bij verzenden password reset email")
+    
+    return {"status": "success", "message": t("password_reset_sent", lang)}
+
+
+@app.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest, db=Depends(get_db)):
+    """
+    Reset het wachtwoord met een geldige token.
+    """
+    conn, c = db
+    
+    # Zoek geldige token
+    c.execute(
+        """
+        SELECT prt.user_id, prt.expires_at, COALESCE(u.language,'nl')
+        FROM password_reset_tokens prt
+        JOIN users u ON u.id = prt.user_id
+        WHERE prt.token = %s AND prt.used = FALSE
+        """,
+        (request.token,)
+    )
+    row = c.fetchone()
+    
+    if not row:
+        raise HTTPException(status_code=400, detail=t("invalid_or_expired_token", "en"))
+    
+    user_id, expires_at, lang = row
+    lang = get_lang({"language": lang})
+    
+    # Controleer of token verlopen is
+    if datetime.utcnow() > expires_at.replace(tzinfo=None):
+        raise HTTPException(status_code=400, detail=t("token_expired", lang))
+    
+    # Update wachtwoord
+    password_hash = get_password_hash(request.new_password)
+    c.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_id))
+    
+    # Markeer token als gebruikt
+    c.execute("UPDATE password_reset_tokens SET used = TRUE WHERE token = %s", (request.token,))
+    
+    logger.info("Wachtwoord gereset voor gebruiker %s", user_id)
+    return {"status": "success", "message": t("password_reset_success", lang)}
+
 
 @app.get("/users/{user_id}", response_model=UserProfile)
 async def read_user(user_id: int, current_user: dict = Depends(get_current_user), db=Depends(get_db)):

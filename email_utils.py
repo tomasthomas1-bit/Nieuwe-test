@@ -86,7 +86,113 @@ def _smtp_send(msg: EmailMessage) -> None:
     else:
         raise ValueError(f"Onbekende SMTP_SECURITY: {security}")
 
+# -------- Password Reset Templates --------
+def _render_password_reset_text(name: str, token: str, lang: str = "nl") -> Tuple[str, str]:
+    """
+    Plain-text subject & body voor password reset email.
+    """
+    lang = lang if lang in translations else "en"
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+    link = f"{frontend_url}/reset-password?token={token}"
+    
+    lang_map = translations.get(lang, translations.get("en", {}))
+    subject = lang_map.get("password_reset_subject", "Reset your password")
+    
+    body_template = lang_map.get("password_reset_body", 
+        f"Hi {name},\n\nClick here to reset your password: {link}\n\nThis link expires in 1 hour.")
+    
+    return subject, body_template.format(name=name, link=link) if "{" in body_template else body_template
+
+
+def render_password_reset_html(name: str, link: str, lang: str = "nl") -> str:
+    """
+    HTML template voor password reset email.
+    """
+    lang_map = translations.get(lang, translations.get("en", {}))
+    button_text = lang_map.get("reset_password_button", "Reset Password")
+    expires_text = lang_map.get("link_expires_1hour", "This link expires in 1 hour.")
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: 'Montserrat', Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }}
+            .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }}
+            .header {{ background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%); padding: 40px 20px; text-align: center; }}
+            .header h1 {{ color: white; margin: 0; font-size: 28px; }}
+            .content {{ padding: 40px 30px; text-align: center; }}
+            .content p {{ color: #333; font-size: 16px; line-height: 1.6; }}
+            .button {{ display: inline-block; background: #FF6B35; color: white; padding: 16px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; margin: 20px 0; }}
+            .footer {{ padding: 20px; text-align: center; color: #888; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Athlo</h1>
+            </div>
+            <div class="content">
+                <p>Hi {name},</p>
+                <p>{lang_map.get("password_reset_intro", "You requested to reset your password. Click the button below to create a new password.")}</p>
+                <a href="{link}" class="button">{button_text}</a>
+                <p style="color: #888; font-size: 14px;">{expires_text}</p>
+            </div>
+            <div class="footer">
+                <p>{lang_map.get("ignore_if_not_requested", "If you didn't request this, you can safely ignore this email.")}</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+
 # -------- Public API --------
+def send_password_reset_email(
+    to_email: str,
+    name: str,
+    token: str,
+    lang: str = "nl",
+) -> None:
+    """
+    Verzend password reset email als multipart (text + HTML).
+    """
+    from_email = os.getenv("SMTP_FROM")
+    reply_to = os.getenv("SMTP_REPLY_TO")
+
+    subject, text_body = _render_password_reset_text(name, token, lang)
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+    link = f"{frontend_url}/reset-password?token={token}"
+    html_body = render_password_reset_html(name, link, lang)
+
+    host = os.getenv("SMTP_HOST")
+    port = os.getenv("SMTP_PORT")
+    if not host or not port or not from_email:
+        logger.warning(
+            "SMTP niet volledig geconfigureerd. Password reset email wordt NIET verzonden; logging-only mode."
+        )
+        logger.info("Password reset email (to=%s): subject=%r, link=%s", to_email, subject, link)
+        return
+
+    msg = _build_message(
+        to_email=to_email,
+        from_email=from_email,
+        subject=subject,
+        text_body=text_body,
+        html_body=html_body,
+        reply_to=reply_to,
+    )
+
+    try:
+        _smtp_send(msg)
+        logger.info("Password reset email verzonden naar %s", to_email)
+    except Exception:
+        logger.exception("Verzenden van password reset email is mislukt.")
+        raise
+
+
 def send_verification_email(
     to_email: str,
     name: str,
