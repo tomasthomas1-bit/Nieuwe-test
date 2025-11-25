@@ -1363,6 +1363,201 @@ function AuthScreen({ navigation, api, theme }) {
   );
 }
 
+/* ---- ProfileSetupScreen ---- */
+const AVAILABLE_SPORTS = [
+  { id: 'running', icon: 'footsteps' },
+  { id: 'cycling', icon: 'bicycle' },
+  { id: 'swimming', icon: 'water' },
+  { id: 'triathlon', icon: 'medal' },
+  { id: 'hiking', icon: 'trail-sign' },
+  { id: 'gym', icon: 'barbell' },
+  { id: 'yoga', icon: 'fitness' },
+  { id: 'tennis', icon: 'tennisball' },
+  { id: 'football', icon: 'football' },
+  { id: 'basketball', icon: 'basketball' },
+  { id: 'golf', icon: 'golf' },
+  { id: 'climbing', icon: 'trending-up' },
+];
+
+function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
+  const { t } = useContext(LanguageContext);
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [selectedSports, setSelectedSports] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  const toggleSport = (sportId) => {
+    setSelectedSports(prev => 
+      prev.includes(sportId) 
+        ? prev.filter(s => s !== sportId)
+        : [...prev, sportId]
+    );
+  };
+
+  const handleContinue = async () => {
+    if (selectedSports.length === 0) {
+      setMessage({ text: t('selectSports'), type: 'error' });
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await api.authFetch(`/users/${api.userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sports_interests: selectedSports,
+          profile_setup_complete: true 
+        }),
+      });
+      
+      if (res.ok) {
+        onComplete();
+      } else {
+        const data = await res.json().catch(() => null);
+        setMessage({ text: data?.detail || t('profileSaveFailed'), type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: t('profileSaveFailed'), type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      await api.authFetch(`/users/${api.userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile_setup_complete: true }),
+      });
+    } catch (err) {
+      // Ignore errors on skip
+    }
+    onComplete();
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.color.surface }}>
+      <ScrollView contentContainerStyle={[styles.authContainer, { paddingTop: 40 }]}>
+        <View style={{
+          width: 80,
+          height: 80,
+          borderRadius: 40,
+          backgroundColor: `${theme.color.primary}20`,
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 24,
+          alignSelf: 'center',
+        }}>
+          <Ionicons name="person-add-outline" size={40} color={theme.color.primary} />
+        </View>
+        
+        <Text style={[styles.authTitle, { textAlign: 'center' }]}>{t('completeYourProfile')}</Text>
+        
+        <Text style={{
+          color: theme.color.textSecondary,
+          fontFamily: theme.font.bodyFamily,
+          fontSize: 15,
+          textAlign: 'center',
+          marginBottom: 32,
+        }}>
+          {t('letsGetStarted')}
+        </Text>
+
+        <Text style={{
+          fontFamily: theme.font.bodySemibold,
+          fontSize: 16,
+          marginBottom: 16,
+          color: theme.color.text,
+        }}>
+          {t('selectSports')}
+        </Text>
+        
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 }}>
+          {AVAILABLE_SPORTS.map((sport) => {
+            const isSelected = selectedSports.includes(sport.id);
+            return (
+              <TouchableOpacity
+                key={sport.id}
+                onPress={() => toggleSport(sport.id)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 20,
+                  backgroundColor: isSelected ? theme.color.primary : theme.color.surfaceAlt || '#f0f0f0',
+                  borderWidth: 1,
+                  borderColor: isSelected ? theme.color.primary : theme.color.border,
+                  gap: 6,
+                }}
+              >
+                <Ionicons 
+                  name={sport.icon} 
+                  size={18} 
+                  color={isSelected ? '#fff' : theme.color.text} 
+                />
+                <Text style={{
+                  fontFamily: isSelected ? theme.font.bodySemibold : theme.font.bodyFamily,
+                  color: isSelected ? '#fff' : theme.color.text,
+                  fontSize: 14,
+                }}>
+                  {t(sport.id)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {message.text ? (
+          <View style={{
+            backgroundColor: message.type === 'success' ? 'rgba(50,215,75,0.15)' : 'rgba(239,68,68,0.15)',
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: message.type === 'success' ? '#32D74B' : '#EF4444',
+          }}>
+            <Text style={{
+              color: message.type === 'success' ? '#32D74B' : '#EF4444',
+              fontFamily: 'Montserrat_600SemiBold',
+              textAlign: 'center',
+            }}>{message.text}</Text>
+          </View>
+        ) : null}
+
+        <TouchableOpacity 
+          onPress={handleContinue}
+          style={[styles.primaryBtn, loading && { opacity: 0.7 }]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryBtnText}>{t('continueBtn')}</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          onPress={handleSkip}
+          style={{ marginTop: 16, padding: 12 }}
+          disabled={loading}
+        >
+          <Text style={{
+            color: theme.color.textSecondary,
+            fontFamily: theme.font.bodyFamily,
+            textAlign: 'center',
+          }}>
+            {t('skipForNow')}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 /* ---- DiscoverScreen ---- */
 function DiscoverScreen({ api, theme, user }) {
   const { t } = useContext(LanguageContext);
@@ -2857,25 +3052,50 @@ function AppContent() {
     Montserrat_600SemiBold,
     Montserrat_700Bold,
   });
+  const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
-  // Load user's language preference on startup
+  // Load user's language preference and check profile completion on startup
   useEffect(() => {
     if (api.isAuthenticated && api.userId) {
       (async () => {
         try {
+          setCheckingProfile(true);
           const res = await api.authFetch('/me');
           const data = await res.json().catch(() => null);
           if (data?.language && data.language !== '') {
             setLang(data.language);
           }
+          // Check if profile setup is complete
+          const needsSetup = !data?.profile_setup_complete && 
+            (!data?.sports_interests || data.sports_interests.length === 0);
+          setNeedsProfileSetup(needsSetup);
         } catch (e) {
           // Silent fail - language will default to 'nl'
+        } finally {
+          setCheckingProfile(false);
         }
       })();
+    } else {
+      setCheckingProfile(false);
+      setNeedsProfileSetup(false);
     }
-  }, [api, setLang]);
+  }, [api, api.isAuthenticated, api.userId, setLang]);
+
+  const handleProfileSetupComplete = useCallback(() => {
+    setNeedsProfileSetup(false);
+  }, []);
 
   if (!fontsLoaded) return null;
+  
+  // Show loading while checking profile
+  if (api.isAuthenticated && checkingProfile) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.color.surface }}>
+        <ActivityIndicator size="large" color={theme.color.primary} />
+      </View>
+    );
+  }
 
   const headerOptions = {
     headerBackground: () => (
@@ -2899,6 +3119,26 @@ function AppContent() {
     ...DefaultTheme,
     colors: { ...DefaultTheme.colors, background: theme.color.surface },
   };
+
+  // Show ProfileSetupScreen if profile is incomplete
+  if (api.isAuthenticated && needsProfileSetup) {
+    return (
+      <NavigationContainer theme={navTheme} key={`nav-setup-${theme.mode}-${theme.preset}`}>
+        <Stack.Navigator screenOptions={headerOptions}>
+          <Stack.Screen name="ProfileSetup" options={{ title: 'Athlo', headerBackVisible: false }}>
+            {(props) => (
+              <ProfileSetupScreen 
+                {...props} 
+                api={api} 
+                theme={theme} 
+                onComplete={handleProfileSetupComplete}
+              />
+            )}
+          </Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
 
   // Remount navigator wanneer mode/preset veranderen
   return (

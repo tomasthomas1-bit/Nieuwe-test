@@ -269,6 +269,8 @@ class UserUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     city: Optional[str] = None
+    profile_setup_complete: Optional[bool] = None
+    sports_interests: Optional[List[str]] = None
 
 class UserSettingsModel(BaseModel):
     match_goal: Optional[str] = None
@@ -367,7 +369,7 @@ async def get_current_user(
 
     c.execute(
         """
-        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl'), latitude, longitude, city, strava_athlete_id
+        SELECT id, username, name, age, bio, preferred_min_age, preferred_max_age, strava_token, COALESCE(language,'nl'), latitude, longitude, city, strava_athlete_id, COALESCE(profile_setup_complete, FALSE), COALESCE(sports_interests, '{}')
         FROM users
         WHERE username = %s AND deleted_at IS NULL
         """,
@@ -390,6 +392,8 @@ async def get_current_user(
         "longitude": row[10],
         "city": row[11],
         "strava_athlete_id": row[12],
+        "profile_setup_complete": row[13],
+        "sports_interests": list(row[14]) if row[14] else [],
     }
 
 # ------------------------- Startup / Shutdown ----------------------
@@ -565,6 +569,8 @@ async def me(current_user: dict = Depends(get_current_user)):
         "longitude": current_user.get("longitude"),
         "city": current_user.get("city"),
         "strava_athlete_id": current_user.get("strava_athlete_id"),
+        "profile_setup_complete": current_user.get("profile_setup_complete", False),
+        "sports_interests": current_user.get("sports_interests", []),
     }
 
 @app.patch("/users/{user_id}", response_model=UserPublic)
