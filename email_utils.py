@@ -24,7 +24,13 @@ def _render_email_text(name: str, token: str, lang: str = "nl") -> Tuple[str, st
     link = f"{frontend_url}/verify-email?token={token}"
     subject = translations[lang]["email_verification_subject"]
     lang_map = translations.get(lang, translations.get("en", {}))
-    body = lang_map.get("email_verification_body", "")
+    body_template = lang_map.get("email_verification_body", "")
+    
+    # Als het een callable is (lambda), aanroepen met name en link
+    if callable(body_template):
+        body = body_template(name, link)
+    else:
+        body = body_template
 
     return subject, body
 
