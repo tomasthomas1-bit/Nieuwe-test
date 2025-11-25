@@ -3145,7 +3145,7 @@ const createStyles = (THEME) => StyleSheet.create({
   },
   swipePhotoContainer: {
     width: '100%',
-    height: 280,
+    height: 220,
     backgroundColor: '#E5E7EB',
   },
   swipePhoto: {
