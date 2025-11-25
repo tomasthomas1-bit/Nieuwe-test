@@ -2323,23 +2323,14 @@ function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
             <TouchableOpacity
               onPress={() => {
                 setShowMatchModal(false);
-                // Navigate to Chat - try different navigation paths
-                console.log('Chat button pressed, rootNav:', !!rootNavigation, 'nav:', !!navigation);
-                try {
-                  if (rootNavigation?.navigate) {
-                    console.log('Using rootNavigation');
-                    rootNavigation.navigate('Chat', { matchUser: matchedUser });
-                  } else if (navigation?.getParent?.()) {
-                    console.log('Using getParent()');
-                    navigation.getParent().navigate('Chat', { matchUser: matchedUser });
-                  } else {
-                    console.log('Using navigation directly');
+                // Navigate from Tab to Stack - navigation from DiscoverScreen props
+                setTimeout(() => {
+                  if (navigation?.navigate) {
                     navigation.navigate('Chat', { matchUser: matchedUser });
+                  } else {
+                    Alert.alert('Error', 'Navigation not available');
                   }
-                } catch (e) {
-                  console.error('Navigation error:', e);
-                  Alert.alert('Navigatiefout', e.message);
-                }
+                }, 300);
               }}
               style={{
                 backgroundColor: '#fff',
