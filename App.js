@@ -863,19 +863,35 @@ function AuthScreen({ navigation, api, theme }) {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' }); // type: 'success' | 'error'
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const handleLogin = useCallback(async () => {
-    const { ok, error } = await api.login(form.username, form.password);
-    if (ok) {
-      Alert.alert(t('login'), t('login'));
-      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
-    } else {
-      Alert.alert(t('login'), error);
+    setMessage({ text: '', type: '' });
+    if (!form.username || !form.password) {
+      setMessage({ text: t('allFieldsRequired'), type: 'error' });
+      return;
+    }
+    setLoading(true);
+    try {
+      const { ok, error } = await api.login(form.username, form.password);
+      if (ok) {
+        setMessage({ text: t('login') + ' OK!', type: 'success' });
+        setTimeout(() => {
+          navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+        }, 500);
+      } else {
+        setMessage({ text: error || t('loginFailed'), type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: t('loginFailed'), type: 'error' });
+    } finally {
+      setLoading(false);
     }
   }, [api, form.username, form.password, navigation, t]);
 
   const handleRegister = useCallback(async () => {
+    setMessage({ text: '', type: '' });
     const e = {};
     ['username', 'name', 'age', 'password', 'email'].forEach((r) => {
       if (!form[r] || String(form[r]).trim() === '') e[r] = t('allFieldsRequired');
@@ -887,20 +903,27 @@ function AuthScreen({ navigation, api, theme }) {
     setErrors(e);
     if (Object.keys(e).length) return;
 
-    const { ok, error, data } = await api.register({
-      username: form.username,
-      name: form.name,
-      age: ageNum,
-      bio: form.bio,
-      password: form.password,
-      email: form.email,
-    });
-    if (!ok) return Alert.alert(t('register'), error);
-    Alert.alert(
-      t('register'), 
-      data?.message || t('verificationSent'),
-      [{ text: 'OK', onPress: () => setMode('login') }]
-    );
+    setLoading(true);
+    try {
+      const { ok, error, data } = await api.register({
+        username: form.username,
+        name: form.name,
+        age: ageNum,
+        bio: form.bio,
+        password: form.password,
+        email: form.email,
+      });
+      if (!ok) {
+        setMessage({ text: error || t('registrationFailed'), type: 'error' });
+        return;
+      }
+      setMessage({ text: data?.message || t('verificationSent'), type: 'success' });
+      setTimeout(() => setMode('login'), 3000);
+    } catch (err) {
+      setMessage({ text: t('registrationFailed'), type: 'error' });
+    } finally {
+      setLoading(false);
+    }
   }, [api, form, t]);
 
   const handleForgotPassword = useCallback(async () => {
@@ -1035,8 +1058,33 @@ function AuthScreen({ navigation, api, theme }) {
         />
         {errors.password ? <Text style={styles.error}>{errors.password}</Text> : null}
 
-        <TouchableOpacity onPress={isLogin ? handleLogin : handleRegister} style={styles.primaryBtn}>
-          <Text style={styles.primaryBtnText}>{isLogin ? t('login') : t('register')}</Text>
+        {message.text ? (
+          <View style={{
+            backgroundColor: message.type === 'success' ? 'rgba(50,215,75,0.15)' : 'rgba(239,68,68,0.15)',
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 16,
+            borderWidth: 1,
+            borderColor: message.type === 'success' ? '#32D74B' : '#EF4444',
+          }}>
+            <Text style={{
+              color: message.type === 'success' ? '#32D74B' : '#EF4444',
+              fontFamily: 'Montserrat_600SemiBold',
+              textAlign: 'center',
+            }}>{message.text}</Text>
+          </View>
+        ) : null}
+
+        <TouchableOpacity 
+          onPress={isLogin ? handleLogin : handleRegister} 
+          style={[styles.primaryBtn, loading && { opacity: 0.7 }]}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.primaryBtnText}>{isLogin ? t('login') : t('register')}</Text>
+          )}
         </TouchableOpacity>
 
         {isLogin && (
