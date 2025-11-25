@@ -1,0 +1,36 @@
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 4)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 5)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 7)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 8)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 9)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 10)
+...
+Chrome:
+Error: "Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only." in ReadOnlyError: Failed to execute 'put' on 'IDBObjectStore': The transaction is read-only. <<     at new Promise (<anonymous>) <<     at async Promise.all (index 3)
+...
+Chrome:
+Token laden mislukt: Error: "i.default.getValueWithKeyAsync is not a function" in TypeError: i.default.getValueWithKeyAsync is not a function <<     at Object.eval (expo-secure.store:3:3089) <<     at Generator.next (<anonymous>) <<     at t (expo-secure.store:3:219)
+...
+4
+Chrome:
+Error: "Unable to resolve module 'module://assets/athlo-logo.jpg.js'
+  Evaluating module://assets/athlo-logo.jpg.js" in Error: Unable to resolve module 'module://assets/athlo-logo.jpg.js' <<     at Object.eval (assets/athlo-logo.jpg:1) <<     at eval (assets/athlo-logo.jpg <<     at eval (assets/athlo-logo.jpg
+...
+Chrome:
+Token laden mislukt: Error: "i.default.getValueWithKeyAsync is not a function" in TypeError: i.default.getValueWithKeyAsync is not a function <<     at Object.eval (expo-secure.store:3:3089) <<     at Generator.next (<anonymous>) <<     at t (expo-secure.store:3:219)
+...
+Chrome:
+Error: "Unable to resolve module 'module://assets/athlo-logo.jpg.js'
+  Evaluating module://assets/athlo-logo.jpg.js" in Error: Unable to resolve module 'module://assets/athlo-logo.jpg.js' <<     at Object.eval (assets/athlo-logo.jpg:1) <<     at eval (assets/athlo-logo.jpg <<     at eval (assets/athlo-logo.jpg
+...
