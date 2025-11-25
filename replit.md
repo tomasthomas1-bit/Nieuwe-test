@@ -42,6 +42,11 @@ The **PostgreSQL** database schema includes tables for `Users` (credentials, pro
 
 An **Resend API-based email delivery system** is implemented, supporting multi-format (plain text + HTML) and internationalized email templates across seven languages. It facilitates token-based email verification with configurable environment variables and Resend API key for secure email delivery.
 
+**Email Configuration:**
+- Sender: `noreply@athlo.be` (verified domain in Resend)
+- Supports: Email verification + Password reset
+- Languages: NL, EN, FR, DE, ES, IT, PT
+
 ## External Dependencies
 
 ### Third-Party Services
