@@ -27,7 +27,7 @@ import {
   Switch,
   Dimensions,
 } from 'react-native';
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, useFocusEffect } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -1821,6 +1821,14 @@ function DiscoverScreen({ api, theme, user }) {
   useEffect(() => {
     setCurrentPhotoIndex(0);
   }, [currentIndex]);
+
+  // Reload suggestions when screen gains focus (e.g., after changing settings)
+  useFocusEffect(
+    useCallback(() => {
+      loadRef.current = false;
+      load();
+    }, [load])
+  );
 
   const currentProfile = suggestions[currentIndex];
   
@@ -4091,36 +4099,40 @@ const createStyles = (THEME) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 40,
-    paddingVertical: 16,
-    paddingBottom: 20,
+    gap: 50,
+    paddingVertical: 20,
+    paddingBottom: 24,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    marginHorizontal: 16,
+    borderRadius: 20,
+    marginTop: 8,
   },
   dislikeBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#FFF',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF0ED',
     borderWidth: 3,
     borderColor: '#FF6B35',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
   },
   likeBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#FFF',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E8F9ED',
     borderWidth: 3,
     borderColor: '#32D74B',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#32D74B',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 4,
