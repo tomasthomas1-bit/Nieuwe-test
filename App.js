@@ -877,12 +877,13 @@ function AuthScreen({ navigation, api, theme }) {
 
   const handleRegister = useCallback(async () => {
     const e = {};
-    ['username', 'name', 'age', 'password'].forEach((r) => {
+    ['username', 'name', 'age', 'password', 'email'].forEach((r) => {
       if (!form[r] || String(form[r]).trim() === '') e[r] = t('allFieldsRequired');
     });
     const ageNum = parseInt(form.age, 10);
     if (isNaN(ageNum) || ageNum < 18 || ageNum > 99) e.age = t('ageRange18to99');
     if ((form.password ?? '').length < 8) e.password = t('passwordMin6');
+    if (form.email && !form.email.includes('@')) e.email = t('enterEmail');
     setErrors(e);
     if (Object.keys(e).length) return;
 
@@ -892,6 +893,7 @@ function AuthScreen({ navigation, api, theme }) {
       age: ageNum,
       bio: form.bio,
       password: form.password,
+      email: form.email,
     });
     if (!ok) return Alert.alert(t('register'), error);
     Alert.alert(
@@ -1018,6 +1020,7 @@ function AuthScreen({ navigation, api, theme }) {
               keyboardType="email-address"
               placeholderTextColor={theme.color.textSecondary}
             />
+            {errors.email ? <Text style={styles.error}>{errors.email}</Text> : null}
           </>
         ) : null}
 
