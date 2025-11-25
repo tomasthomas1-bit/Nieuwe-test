@@ -260,6 +260,11 @@ class UserPublic(BaseModel):
     age: int
     bio: Optional[str] = None
     language: Optional[str] = "nl"
+    profile_setup_complete: Optional[bool] = False
+    sports_interests: Optional[List[str]] = []
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -339,6 +344,22 @@ def get_latest_strava_coords(strava_token: Optional[str]) -> Optional[Tuple[floa
             return None
     return None
 
+# ------------------------- Helper for PostgreSQL arrays -------------------------
+def parse_pg_array(value) -> List[str]:
+    """Safely parse PostgreSQL array - handles both native lists and string representations."""
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        if value == '{}' or value == '':
+            return []
+        stripped = value.strip('{}')
+        if not stripped:
+            return []
+        return [item.strip('"').strip() for item in stripped.split(',')]
+    return []
+
 # ------------------------- Auth Dependency -------------------------
 async def get_bearer_token(
     request: Request,
@@ -393,7 +414,7 @@ async def get_current_user(
         "city": row[11],
         "strava_athlete_id": row[12],
         "profile_setup_complete": row[13],
-        "sports_interests": list(row[14]) if row[14] else [],
+        "sports_interests": parse_pg_array(row[14]),
     }
 
 # ------------------------- Startup / Shutdown ----------------------
@@ -596,11 +617,23 @@ async def patch_user(
         f"UPDATE users SET {', '.join(updates)} WHERE id=%s AND deleted_at IS NULL",
         tuple(values)
     )
-    c.execute("SELECT id, username, name, age, bio, COALESCE(language,'nl') FROM users WHERE id=%s", (user_id,))
+    c.execute("SELECT id, username, name, age, bio, COALESCE(language,'nl'), COALESCE(profile_setup_complete, FALSE), COALESCE(sports_interests, '{}'), latitude, longitude, city FROM users WHERE id=%s", (user_id,))
     row = c.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=t("user_not_found", lang))
-    return {"id": row[0], "username": row[1], "name": row[2], "age": row[3], "bio": row[4], "language": row[5]}
+    return {
+        "id": row[0],
+        "username": row[1],
+        "name": row[2],
+        "age": row[3],
+        "bio": row[4],
+        "language": row[5],
+        "profile_setup_complete": row[6],
+        "sports_interests": parse_pg_array(row[7]),
+        "latitude": row[8],
+        "longitude": row[9],
+        "city": row[10],
+    }
 
 @app.get("/users/{user_id}/settings")
 async def get_user_settings(
