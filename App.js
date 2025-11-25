@@ -985,7 +985,7 @@ const Tabs = createBottomTabNavigator();
 function AuthScreen({ navigation, api, theme }) {
   const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot'
+  const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot', 'verification'
   const [form, setForm] = useState({
     username: '',
     name: '',
@@ -994,6 +994,8 @@ function AuthScreen({ navigation, api, theme }) {
     password: '',
     email: '',
   });
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [registeredUsername, setRegisteredUsername] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' }); // type: 'success' | 'error'
@@ -1050,14 +1052,37 @@ function AuthScreen({ navigation, api, theme }) {
         setMessage({ text: error || t('registrationFailed'), type: 'error' });
         return;
       }
-      setMessage({ text: data?.message || t('verificationSent'), type: 'success' });
-      setTimeout(() => setMode('login'), 3000);
+      setRegisteredEmail(form.email);
+      setRegisteredUsername(form.username);
+      setMode('verification');
+      setMessage({ text: '', type: '' });
     } catch (err) {
       setMessage({ text: t('registrationFailed'), type: 'error' });
     } finally {
       setLoading(false);
     }
   }, [api, form, t]);
+
+  const handleResendVerification = useCallback(async () => {
+    if (!registeredUsername) return;
+    setLoading(true);
+    setMessage({ text: '', type: '' });
+    try {
+      const res = await fetch(`${BASE_URL}/resend-verification?username=${encodeURIComponent(registeredUsername)}`, {
+        method: 'POST',
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok) {
+        setMessage({ text: t('emailResent'), type: 'success' });
+      } else {
+        setMessage({ text: data?.detail || t('registrationFailed'), type: 'error' });
+      }
+    } catch (err) {
+      setMessage({ text: t('registrationFailed'), type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [registeredUsername, t]);
 
   const handleForgotPassword = useCallback(async () => {
     if (!form.email || !form.email.includes('@')) {
@@ -1081,6 +1106,106 @@ function AuthScreen({ navigation, api, theme }) {
 
   const LOGO_TRANSPARENT = 'https://i.imgur.com/hEpZh82.png';
   
+  // Verification Pending Screen
+  if (mode === 'verification') {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.color.surface }}>
+        <ScrollView contentContainerStyle={[styles.authContainer, { alignItems: 'center' }]}>
+          <View style={{
+            width: 80,
+            height: 80,
+            borderRadius: 40,
+            backgroundColor: 'rgba(50, 215, 75, 0.15)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 24,
+          }}>
+            <Ionicons name="mail-outline" size={40} color="#32D74B" />
+          </View>
+          
+          <Text style={[styles.authTitle, { textAlign: 'center' }]}>{t('checkYourEmail')}</Text>
+          
+          <Text style={{
+            color: theme.color.textSecondary,
+            fontFamily: theme.font.bodyFamily,
+            fontSize: 16,
+            textAlign: 'center',
+            marginBottom: 8,
+          }}>
+            {t('verificationEmailSent')}
+          </Text>
+          
+          <Text style={{
+            color: theme.color.text,
+            fontFamily: theme.font.bodySemibold,
+            fontSize: 16,
+            textAlign: 'center',
+            marginBottom: 16,
+          }}>
+            {registeredEmail}
+          </Text>
+          
+          <Text style={{
+            color: theme.color.textSecondary,
+            fontFamily: theme.font.bodyFamily,
+            fontSize: 14,
+            textAlign: 'center',
+            marginBottom: 32,
+          }}>
+            {t('clickLinkToVerify')}
+          </Text>
+
+          {message.text ? (
+            <View style={{
+              backgroundColor: message.type === 'success' ? 'rgba(50,215,75,0.15)' : 'rgba(239,68,68,0.15)',
+              borderRadius: 8,
+              padding: 12,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: message.type === 'success' ? '#32D74B' : '#EF4444',
+              width: '100%',
+            }}>
+              <Text style={{
+                color: message.type === 'success' ? '#32D74B' : '#EF4444',
+                fontFamily: 'Montserrat_600SemiBold',
+                textAlign: 'center',
+              }}>{message.text}</Text>
+            </View>
+          ) : null}
+          
+          <View style={{ marginTop: 16, alignItems: 'center' }}>
+            <Text style={{ color: theme.color.textSecondary, fontFamily: theme.font.bodyFamily, marginBottom: 8 }}>
+              {t('didntReceiveEmail')}
+            </Text>
+            <TouchableOpacity 
+              onPress={handleResendVerification}
+              disabled={loading}
+              style={[styles.primaryBtn, { width: '100%' }]}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.primaryBtnText}>{t('resendVerification')}</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          <View style={{ marginTop: 32, alignItems: 'center' }}>
+            <Text style={{ color: theme.color.textSecondary, fontFamily: theme.font.bodyFamily, marginBottom: 8 }}>
+              {t('alreadyVerified')}
+            </Text>
+            <TouchableOpacity onPress={() => {
+              setMode('login');
+              setForm(f => ({ ...f, username: registeredUsername, password: '' }));
+            }}>
+              <Text style={[styles.switchText, { color: theme.color.primary }]}>{t('goToLogin')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   // Forgot Password Screen
   if (mode === 'forgot') {
     return (
