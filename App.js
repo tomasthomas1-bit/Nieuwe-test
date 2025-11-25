@@ -3733,9 +3733,9 @@ const createStyles = (THEME) => StyleSheet.create({
     padding: 8,
   },
   headerLogo: {
-    width: 80,
-    height: 60,
-    borderRadius: 8,
+    width: 120,
+    height: 80,
+    borderRadius: 10,
   },
   matchCounterMinimal: {
     flexDirection: 'row',
