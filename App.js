@@ -1708,7 +1708,7 @@ function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
 }
 
 /* ---- DiscoverScreen ---- */
-function DiscoverScreen({ api, theme, user, navigation }) {
+function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
   const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [suggestions, setSuggestions] = useState([]);
@@ -2323,10 +2323,9 @@ function DiscoverScreen({ api, theme, user, navigation }) {
             <TouchableOpacity
               onPress={() => {
                 setShowMatchModal(false);
-                // Use getParent() to navigate from Tab to Stack navigator
-                const parentNav = navigation.getParent();
-                if (parentNav) {
-                  parentNav.navigate('Chat', { matchUser: matchedUser });
+                // Navigate to Chat using root navigation
+                if (rootNavigation) {
+                  rootNavigation.navigate('Chat', { matchUser: matchedUser });
                 } else {
                   navigation.navigate('Chat', { matchUser: matchedUser });
                 }
@@ -3621,7 +3620,10 @@ function MainTabs({ api, theme }) {
       })}
     >
       <Tabs.Screen name="Ontdekken" options={{ title: t('discover'), headerShown: false }}>
-        {(props) => <DiscoverScreen {...props} api={api} theme={theme} user={{ profile_photo_url: profilePhotoUrl }} />}
+        {(props) => {
+          const rootNav = props.navigation.getParent?.();
+          return <DiscoverScreen {...props} api={api} theme={theme} user={{ profile_photo_url: profilePhotoUrl }} rootNavigation={rootNav || props.navigation} />;
+        }}
       </Tabs.Screen>
       <Tabs.Screen name="Matches" options={{ title: t('matches') }}>
         {(props) => <MatchesScreen {...props} api={api} theme={theme} />}
