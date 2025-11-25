@@ -29,7 +29,7 @@ def _render_email_text(name: str, token: str, lang: str = "nl") -> Tuple[str, st
     return subject, body
 
 # -------- Resend API ----------
-def _resend_send(to_email: str, subject: str, text_body: str, html_body: Optional[str] = None, from_email: str = None) -> None:
+def _resend_send(to_email: str, subject: str, text_body: str, html_body: Optional[str] = None, from_email: Optional[str] = None) -> None:
     """
     Verstuur email via Resend API.
     """

@@ -4,54 +4,21 @@
 
 The Sports Match App (Athlo) is a **mobile-first social matching platform** designed to connect sports enthusiasts. Built with **React Native (Expo)** for the frontend and **FastAPI** for the backend, its primary purpose is to help users find sports partners based on location, preferences, and activity data from fitness platforms like Strava and Garmin. Key features include user authentication, profile management, swipe-based matching with **Year-To-Date (YTD) sports statistics** prominently displayed **twice** on discovery cards (gradient header + bio section), real-time messaging, and personalized route suggestions. The application supports **internationalization (i18n)** in **7 languages** (Dutch, English, French, German, Spanish, Italian, Portuguese), aiming to create a vibrant community for athletes worldwide.
 
-## Recent Changes (November 24, 2025)
+## Recent Changes (November 25, 2025)
 
-### Interactive Sport-Specific Stats Feature - Final Implementation
-- **Redesigned discovery card layout** for better UX flow (top to bottom):
-  1. **Sport selector** (horizontal scrollable, outside gallery)
-  2. **Unified swipeable gallery** with dots indicator:
-     - **Slide 0**: Interactive gradient stats card (sport-specific or overall YTD)
-     - **Slides 1-3**: User photos (3 photos per profile)
-  3. **User information** (name, age, bio, location)
-  4. **Swipe action buttons** (like/dislike)
-
-- **Modern gradient stats card** with glassmorphism design:
-  - **4-color gradients** unique to each sport type for visual differentiation
-  - **Sport selector**: Horizontal scrollable selector with 6 sport types:
-    - Alles (All) - shows overall YTD stats
-    - Fietsen (Cycling) - blue gradient
-    - Hardlopen (Running) - green gradient  
-    - Zwemmen (Swimming) - cyan gradient
-    - Triathlon - purple gradient
-    - Gym/Fitness - orange gradient
-  - **Dynamic stats display**: Stats change based on selected sport
-  - **Sport-specific icons**: Trophy, bicycle, running, water, fitness icons
-  - **Glassmorphism overlay**: Semi-transparent white overlay for modern look
-  - **Modern typography**: Bold Montserrat font with text shadows
-
-- **Unified swipeable gallery** (stats card + photos):
-  - **Horizontal swipe navigation**: Swipe left/right to browse through all slides
-  - **Slide 0 (Stats Card)**: Always the first slide, shows sport-specific or overall YTD stats
-  - **Slides 1-3 (Photos)**: User photos follow the stats card
-  - **Dots indicator**: Shows total slides (1 stats + 3 photos = 4 dots total)
-  - **Auto-reset**: Gallery resets to slide 0 (stats card) when changing profiles
-  - **All profiles have photos**: Every user profile now has 3 curated stock photos
-
-- **Smart fallback logic**:
-  - When selected sport has no data (0 workouts), automatically shows overall YTD stats
-  - Stats card remains visible even when sport-specific data unavailable
-  - Gradient/icon still reflect selected sport for consistency
-
-- **Backend** (`/suggestions` endpoint) returns:
-  - `ytd_stats`: Overall year-to-date statistics across all sports
-  - `sport_stats`: Per-sport breakdown (cycling, running, swimming, triathlon, gym)
-  - Realistic sport-specific data per profile:
-    - Cyclist (Emma): 180 cycling workouts, 24 running workouts
-    - Runner (Lucas): 260 running workouts, 104 gym workouts
-    - Swimmer (Sophie): 208 swimming workouts, 52 running workouts
-    - Triathlete (Mike): Balanced across swimming (104), cycling (104), running (104)
-    - CrossFit (Greta): 156 gym workouts
-  - `photos`: Array of photo URLs for swipeable gallery
+### Email Verification & Password Reset - Resend Integration
+- **Resend API Integration**: Replaced SMTP with Resend for reliable email delivery
+- **Fixed Email Verification**: 
+  - Updated `/register` endpoint to send verification emails to user's actual email address (was incorrectly using username)
+  - Updated `/resend-verification` endpoint to fetch and use email from database
+  - Added email validation error handling for users without email addresses
+- **Password Reset Flow**: Already working correctly, now uses Resend API
+- **All 7 Languages Supported**: 
+  - Added translations for all missing error messages (NL, EN, FR, DE, ES, IT, PT)
+  - New error: `no_email_address` for when user tries to resend verification without email on file
+- **Frontend Translations**: 
+  - Added missing translations to App.js for all 6 remaining languages (DE, ES, IT, PT, FR, EN already had some)
+  - `forgotPassword`, `enterEmail`, `sendResetLink`, `backToLogin`, `resetLinkSent`
 
 ## User Preferences
 
@@ -73,7 +40,7 @@ The **PostgreSQL** database schema includes tables for `Users` (credentials, pro
 
 ### Email System
 
-An **SMTP-based email delivery system** is implemented, supporting multi-format (plain text + HTML) and internationalized email templates across four languages. It facilitates token-based email verification with configurable environment variables for SMTP credentials and frontend URLs.
+An **Resend API-based email delivery system** is implemented, supporting multi-format (plain text + HTML) and internationalized email templates across seven languages. It facilitates token-based email verification with configurable environment variables and Resend API key for secure email delivery.
 
 ## External Dependencies
 
@@ -81,7 +48,7 @@ An **SMTP-based email delivery system** is implemented, supporting multi-format 
 
 -   **Strava API**: Integrated for activity data fetching, workout location, and route suggestions. Uses OAuth tokens for secure access.
 -   **Garmin Connect**: Planned integration for alternative fitness tracking.
--   **SMTP Server**: Used for email delivery for user verification and notifications.
+-   **Resend API**: Used for reliable email delivery for user verification and password reset notifications.
 
 ### Database
 
@@ -89,7 +56,12 @@ An **SMTP-based email delivery system** is implemented, supporting multi-format 
 
 ### Environment Configuration
 
-Key environment variables are required for database connection, JWT signing, frontend URL for email verification, SMTP server details, and Strava/Garmin API credentials.
+Key environment variables/secrets are required for:
+- Database connection (DATABASE_URL, PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE)
+- JWT signing (SECRET_KEY, ENCRYPTION_KEY)
+- Frontend URL for email verification links (FRONTEND_URL)
+- Strava OAuth (STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET)
+- Resend API (RESEND_API_KEY) - for email delivery
 
 ### Frontend Dependencies
 
