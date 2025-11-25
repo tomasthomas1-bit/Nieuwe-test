@@ -1011,33 +1011,33 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         user_name = r[1]
         if user_name == "Greta Hoffman":
             _photos = [
-                "/attached_assets/stock_images/young_woman_fitness__d16ff150.jpg",
-                "/attached_assets/stock_images/young_woman_fitness__d999d5d6.jpg",
-                "/attached_assets/stock_images/man_doing_crossfit_w_01ad1dbd.jpg"
+                "/static/young_woman_fitness__d16ff150.jpg",
+                "/static/young_woman_fitness__d999d5d6.jpg",
+                "/static/man_doing_crossfit_w_01ad1dbd.jpg"
             ]
         elif user_name == "Emma de Vries":
             _photos = [
-                "/attached_assets/stock_images/athletic_woman_cycli_aa0c899a.jpg",
-                "/attached_assets/stock_images/man_mountain_biking__23a83e22.jpg",
-                "/attached_assets/stock_images/man_mountain_biking__afa1f0d0.jpg"
+                "/static/athletic_woman_cycli_aa0c899a.jpg",
+                "/static/man_mountain_biking__23a83e22.jpg",
+                "/static/man_mountain_biking__afa1f0d0.jpg"
             ]
         elif user_name == "Lucas Janssen":
             _photos = [
-                "/attached_assets/stock_images/athletic_man_running_2d831f2d.jpg",
-                "/attached_assets/stock_images/man_marathon_runner__15184a79.jpg",
-                "/attached_assets/stock_images/man_marathon_runner__c97ed512.jpg"
+                "/static/athletic_man_running_2d831f2d.jpg",
+                "/static/man_marathon_runner__15184a79.jpg",
+                "/static/man_marathon_runner__c97ed512.jpg"
             ]
         elif user_name == "Sophie Bakker":
             _photos = [
-                "/attached_assets/stock_images/athletic_woman_swimm_d163d388.jpg",
-                "/attached_assets/stock_images/woman_swimming_triat_25d4acc8.jpg",
-                "/attached_assets/stock_images/woman_swimming_triat_cac09f49.jpg"
+                "/static/athletic_woman_swimm_d163d388.jpg",
+                "/static/woman_swimming_triat_25d4acc8.jpg",
+                "/static/woman_swimming_triat_cac09f49.jpg"
             ]
         elif user_name == "Mike van Dijk":
             _photos = [
-                "/attached_assets/stock_images/athletic_man_triathl_e5456b59.jpg",
-                "/attached_assets/stock_images/man_marathon_runner__15184a79.jpg",
-                "/attached_assets/stock_images/athletic_woman_swimm_d163d388.jpg"
+                "/static/athletic_man_triathl_e5456b59.jpg",
+                "/static/man_marathon_runner__15184a79.jpg",
+                "/static/athletic_woman_swimm_d163d388.jpg"
             ]
         else:
             # Als er database foto's zijn, gebruik die als eerste foto
@@ -1047,15 +1047,15 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             gender = r[4]
             if gender == "man":
                 _photos = [
-                    "/attached_assets/stock_images/man_playing_tennis_a_54f6d78c.jpg",
-                    "/attached_assets/stock_images/man_soccer_player_at_0512128e.jpg",
-                    "/attached_assets/stock_images/man_marathon_runner__c97ed512.jpg"
+                    "/static/man_playing_tennis_a_54f6d78c.jpg",
+                    "/static/man_soccer_player_at_0512128e.jpg",
+                    "/static/man_marathon_runner__c97ed512.jpg"
                 ]
             else:
                 _photos = [
-                    "/attached_assets/stock_images/young_woman_running__0e2f1233.jpg",
-                    "/attached_assets/stock_images/woman_rock_climbing__0a088eb5.jpg",
-                    "/attached_assets/stock_images/young_woman_yoga_ins_1713cba9.jpg"
+                    "/static/young_woman_running__0e2f1233.jpg",
+                    "/static/woman_rock_climbing__0a088eb5.jpg",
+                    "/static/young_woman_yoga_ins_1713cba9.jpg"
                 ]
             
             # Als er een database foto was, voeg die toe als eerste

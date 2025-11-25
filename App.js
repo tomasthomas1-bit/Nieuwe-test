@@ -1376,7 +1376,7 @@ function DiscoverScreen({ api, theme, user }) {
                       allPhotos.map((photo, index) => (
                         <Image
                           key={index}
-                          source={{ uri: photo }}
+                          source={{ uri: photo.startsWith('http') ? photo : `${BASE_URL}${photo}` }}
                           style={[styles.swipePhoto, { width: 360 }]}
                           resizeMode="cover"
                         />
@@ -1386,7 +1386,7 @@ function DiscoverScreen({ api, theme, user }) {
                   
                   {/* Dots indicator - 1 voor stats + aantal foto's */}
                   <View style={styles.photoDots}>
-                    {[0, ...allPhotos.map((_, i) => i + 1)].map((index) => (
+                    {Array.from({ length: 1 + allPhotos.length }, (_, index) => (
                       <View
                         key={index}
                         style={[
