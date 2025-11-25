@@ -1850,11 +1850,17 @@ function DiscoverScreen({ api, theme, user }) {
 
   return (
     <View style={styles.discoverContainer}>
-      {/* Minimale header met alleen refresh en matches */}
+      {/* Minimale header met logo in het midden */}
       <View style={styles.discoverHeaderMinimal}>
         <TouchableOpacity onPress={load} disabled={loading} style={styles.headerIconBtn}>
           <Ionicons name="refresh" size={22} color={loading ? "#ccc" : "#FF6B35"} />
         </TouchableOpacity>
+        
+        <Image 
+          source={require('./assets/athlo-logo.jpg')} 
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
         
         <View style={styles.matchCounterMinimal}>
           <Ionicons name="heart" size={16} color="#FF6B35" />
@@ -3725,6 +3731,10 @@ const createStyles = (THEME) => StyleSheet.create({
   },
   headerIconBtn: {
     padding: 8,
+  },
+  headerLogo: {
+    width: 60,
+    height: 40,
   },
   matchCounterMinimal: {
     flexDirection: 'row',
