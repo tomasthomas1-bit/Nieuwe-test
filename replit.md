@@ -6,6 +6,16 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 
 ## Recent Changes (November 25, 2025)
 
+### Visual Match Celebration Modal
+- **MatchModal Component**: Celebratory overlay when mutual match occurs
+  - Full-screen gradient background (pink/purple/orange)
+  - Both users' profile photos displayed side-by-side with heart icon between them
+  - "It's a Match!" title with matched user's name
+  - Two action buttons: "Send Message" (navigates to chat) and "Keep Swiping"
+- **Integration**: Replaced basic Alert with immersive modal in doSwipe function
+- **Translations**: All match modal text available in 7 languages
+- **Dev Testing Endpoint**: `/dev/seed-likes-for-me` (development only) - seeds likes from all users to test mutual matches
+
 ### Discovery & Matching Backend Improvements
 - **Sport Interests Filtering**: `/suggestions` endpoint now filters matches based on shared sports interests
 - **Profile Completion Filter**: Only shows users with `profile_setup_complete = TRUE` in discovery
