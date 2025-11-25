@@ -2323,7 +2323,13 @@ function DiscoverScreen({ api, theme, user, navigation }) {
             <TouchableOpacity
               onPress={() => {
                 setShowMatchModal(false);
-                navigation.navigate('Chat', { matchUser: matchedUser });
+                // Use getParent() to navigate from Tab to Stack navigator
+                const parentNav = navigation.getParent();
+                if (parentNav) {
+                  parentNav.navigate('Chat', { matchUser: matchedUser });
+                } else {
+                  navigation.navigate('Chat', { matchUser: matchedUser });
+                }
               }}
               style={{
                 backgroundColor: '#fff',
@@ -4417,8 +4423,14 @@ function MatchesScreen({ api, theme, navigation }) {
                 <Ionicons name="map-outline" size={20} color={theme.color.primary} />
               </TouchableOpacity>
               {/* Chat */}
-              <TouchableOpacity onPress={() => navigation.navigate('Chat', { matchUser: m })}
-                                style={{ marginLeft: 12 }}>
+              <TouchableOpacity onPress={() => {
+                const parentNav = navigation.getParent();
+                if (parentNav) {
+                  parentNav.navigate('Chat', { matchUser: m });
+                } else {
+                  navigation.navigate('Chat', { matchUser: m });
+                }
+              }} style={{ marginLeft: 12 }}>
                 <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.color.primary} />
               </TouchableOpacity>
             </View>
