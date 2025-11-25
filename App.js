@@ -1184,11 +1184,14 @@ function DiscoverScreen({ api, theme, user }) {
                     horizontal
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
-                    onMomentumScrollEnd={(event) => {
-                      const slideIndex = Math.round(
-                        event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width
-                      );
-                      setCurrentPhotoIndex(slideIndex);
+                    scrollEventThrottle={16}
+                    onScroll={(event) => {
+                      const slideWidth = 360;
+                      const offsetX = event.nativeEvent.contentOffset.x;
+                      const slideIndex = Math.round(offsetX / slideWidth);
+                      if (slideIndex !== currentPhotoIndex && slideIndex >= 0 && slideIndex <= allPhotos.length) {
+                        setCurrentPhotoIndex(slideIndex);
+                      }
                     }}
                     style={{ flex: 1 }}
                   >
