@@ -62,6 +62,8 @@ Het Athlo Team
         "db_error": "Databasefout.",
         "token_missing": "Kon validatiegegevens niet verifiëren.",
         "token_invalid": "Ongeldige of verlopen token.",
+        "username_already_exists": "Deze gebruikersnaam is al in gebruik. Kies een andere.",
+        "email_already_exists": "Dit e-mailadres is al geregistreerd.",
         
         # Password Reset
         "password_reset_subject": "Wachtwoord resetten voor Athlo",
@@ -165,6 +167,8 @@ The Athlo Team
         "no_email_address": "No email address provided. Please add an email address to your profile first.",
         "token_missing": "Could not verify credentials.",
         "token_invalid": "Invalid or expired token.",
+        "username_already_exists": "This username is already taken. Please choose another.",
+        "email_already_exists": "This email address is already registered.",
     },
 
     "fr": {
@@ -229,6 +233,8 @@ L'équipe Athlo
         "no_email_address": "Aucune adresse e-mail fournie. Veuillez d'abord ajouter une adresse e-mail à votre profil.",
         "token_missing": "Impossible de vérifier les informations d’identification.",
         "token_invalid": "Jeton invalide ou expiré.",
+        "username_already_exists": "Ce nom d'utilisateur est déjà utilisé. Veuillez en choisir un autre.",
+        "email_already_exists": "Cette adresse email est déjà enregistrée.",
     },
 
     "de": {
@@ -293,6 +299,8 @@ Das Athlo-Team
         "no_email_address": "Keine E-Mail-Adresse angegeben. Bitte fügen Sie zuerst eine E-Mail-Adresse zu Ihrem Profil hinzu.",
         "token_missing": "Anmeldedaten konnten nicht überprüft werden.",
         "token_invalid": "Ungültiges oder abgelaufenes Token.",
+        "username_already_exists": "Dieser Benutzername ist bereits vergeben. Bitte wählen Sie einen anderen.",
+        "email_already_exists": "Diese E-Mail-Adresse ist bereits registriert.",
     },
 
     "es": {
@@ -356,6 +364,8 @@ El equipo de Athlo
         "no_email_address": "No se ha proporcionado una dirección de correo electrónico. Por favor, añade primero una dirección de correo a tu perfil.",
         "token_missing": "No se pudieron verificar las credenciales.",
         "token_invalid": "Token inválido o expirado.",
+        "username_already_exists": "Este nombre de usuario ya está en uso. Por favor, elige otro.",
+        "email_already_exists": "Esta dirección de correo electrónico ya está registrada.",
     },
 
     "pt": {
@@ -419,6 +429,8 @@ Equipe Athlo
         "no_email_address": "Nenhum endereço de e-mail fornecido. Por favor, adicione primeiro um endereço de e-mail ao seu perfil.",
         "token_missing": "Não foi possível verificar as credenciais.",
         "token_invalid": "Token inválido ou expirado.",
+        "username_already_exists": "Este nome de usuário já está em uso. Por favor, escolha outro.",
+        "email_already_exists": "Este endereço de e-mail já está registrado.",
     },
 
     "it": {
@@ -482,5 +494,7 @@ Il team di Athlo
         "no_email_address": "Nessun indirizzo e-mail fornito. Aggiungi prima un indirizzo e-mail al tuo profilo.",
         "token_missing": "Impossibile verificare le credenziali.",
         "token_invalid": "Token non valido o scaduto.",
+        "username_already_exists": "Questo nome utente è già in uso. Scegline un altro.",
+        "email_already_exists": "Questo indirizzo email è già registrato.",
     },
 }

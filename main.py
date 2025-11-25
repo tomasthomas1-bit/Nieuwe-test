@@ -834,8 +834,14 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
             "profile_pic_url": None,
             "message": t("verification_email_sent", get_lang({"language": lang})),
         }
-    except Exception:
+    except Exception as e:
         logger.exception("Fout bij registratie.")
+        error_msg = str(e)
+        lang = getattr(user, 'language', None) or "en"
+        if "users_username_key" in error_msg or "duplicate key" in error_msg.lower():
+            raise HTTPException(status_code=400, detail=t("username_already_exists", lang))
+        if "users_email_key" in error_msg:
+            raise HTTPException(status_code=400, detail=t("email_already_exists", lang))
         raise HTTPException(status_code=500, detail=t("internal_server_error", "en"))
 
 @app.post("/resend-verification")

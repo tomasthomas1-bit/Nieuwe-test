@@ -627,7 +627,7 @@ const makeBaseTheme = (mode) => {
 };
 
 /* ================= API HOOK ================= */
-const BASE_URL = __DEV__ ? 'http://localhost:5000' : (typeof window !== 'undefined' ? `${window.location.origin}` : 'http://localhost:5000');
+const BASE_URL = 'https://97bfdb52-3064-4532-9a91-48fd1291b1af-00-2t59ltt1vcb8u.riker.replit.dev';
 function useApi() {
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
