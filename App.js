@@ -28,7 +28,7 @@ import {
   Dimensions,
   Linking,
 } from 'react-native';
-import { NavigationContainer, DefaultTheme, useFocusEffect } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -2323,9 +2323,17 @@ function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
             <TouchableOpacity
               onPress={() => {
                 setShowMatchModal(false);
-                // Navigate to Chat using root navigation from MainTabs
-                if (rootNavigation) {
-                  rootNavigation.navigate('Chat', { matchUser: matchedUser });
+                // Navigate to Chat using CommonActions - works across all navigators
+                const navigateAction = CommonActions.navigate({
+                  name: 'Chat',
+                  params: { matchUser: matchedUser },
+                });
+                if (rootNavigation?.dispatch) {
+                  rootNavigation.dispatch(navigateAction);
+                } else if (navigation?.dispatch) {
+                  navigation.dispatch(navigateAction);
+                } else {
+                  Alert.alert('Fout', 'Navigatie niet beschikbaar');
                 }
               }}
               style={{
@@ -4422,12 +4430,11 @@ function MatchesScreen({ api, theme, navigation }) {
               </TouchableOpacity>
               {/* Chat */}
               <TouchableOpacity onPress={() => {
-                const parentNav = navigation.getParent();
-                if (parentNav) {
-                  parentNav.navigate('Chat', { matchUser: m });
-                } else {
-                  navigation.navigate('Chat', { matchUser: m });
-                }
+                const navigateAction = CommonActions.navigate({
+                  name: 'Chat',
+                  params: { matchUser: m },
+                });
+                navigation.dispatch(navigateAction);
               }} style={{ marginLeft: 12 }}>
                 <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.color.primary} />
               </TouchableOpacity>
