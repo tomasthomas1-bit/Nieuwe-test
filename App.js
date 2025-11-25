@@ -87,6 +87,7 @@ const translations = {
     location: 'Locatie', currentLocation: 'Huidige locatie', getLocation: 'Locatie ophalen',
     locationPermissionDenied: 'Locatietoegang geweigerd', locationPermissionDeniedMessage: 'Je moet locatietoegang toestaan om je huidige locatie op te halen.',
     locationError: 'Locatiefout', locationSaved: 'Locatie opgeslagen!', locationNotAvailable: 'Locatie niet beschikbaar',
+    yourLocation: 'Je locatie', detectingLocation: 'Locatie detecteren...', locationDetected: 'Locatie gedetecteerd', locationDenied: 'Locatietoegang geweigerd',
     stravaLink: 'Koppel Strava', stravaLinked: 'Strava Gekoppeld', stravaUnlink: 'Ontkoppel Strava',
     stravaConnectDescription: 'Koppel je Strava account om automatisch je sportactiviteiten te delen.',
     forgotPassword: 'Wachtwoord vergeten?', enterEmail: 'Voer je e-mailadres in',
@@ -156,6 +157,7 @@ const translations = {
     location: 'Location', currentLocation: 'Current location', getLocation: 'Get location',
     locationPermissionDenied: 'Location permission denied', locationPermissionDeniedMessage: 'You must allow location access to get your current location.',
     locationError: 'Location error', locationSaved: 'Location saved!', locationNotAvailable: 'Location not available',
+    yourLocation: 'Your location', detectingLocation: 'Detecting location...', locationDetected: 'Location detected', locationDenied: 'Location access denied',
     forgotPassword: 'Forgot password?', enterEmail: 'Enter your email address',
     sendResetLink: 'Send reset link', backToLogin: 'Back to login',
     resetLinkSent: 'If this email address is registered with us, you\'ll receive an email with instructions.',
@@ -223,6 +225,7 @@ const translations = {
     location: 'Localisation', currentLocation: 'Localisation actuelle', getLocation: 'Obtenir la localisation',
     locationPermissionDenied: 'Permission de localisation refusée', locationPermissionDeniedMessage: 'Vous devez autoriser l\'accès à la localisation pour obtenir votre position actuelle.',
     locationError: 'Erreur de localisation', locationSaved: 'Localisation enregistrée !', locationNotAvailable: 'Localisation non disponible',
+    yourLocation: 'Votre position', detectingLocation: 'Détection de la position...', locationDetected: 'Position détectée', locationDenied: 'Accès à la position refusé',
     forgotPassword: 'Mot de passe oublié?', enterEmail: 'Entrez votre adresse email',
     sendResetLink: 'Envoyer le lien', backToLogin: 'Retour à la connexion',
     resetLinkSent: 'Si cette adresse email est enregistrée, vous recevrez un email avec des instructions.',
@@ -290,6 +293,7 @@ const translations = {
     location: 'Standort', currentLocation: 'Aktueller Standort', getLocation: 'Standort abrufen',
     locationPermissionDenied: 'Standortzugriff verweigert', locationPermissionDeniedMessage: 'Sie müssen den Standortzugriff zulassen, um Ihren aktuellen Standort abzurufen.',
     locationError: 'Standortfehler', locationSaved: 'Standort gespeichert!', locationNotAvailable: 'Standort nicht verfügbar',
+    yourLocation: 'Dein Standort', detectingLocation: 'Standort wird ermittelt...', locationDetected: 'Standort erkannt', locationDenied: 'Standortzugriff verweigert',
     forgotPassword: 'Passwort vergessen?', enterEmail: 'Geben Sie Ihre E-Mail-Adresse ein',
     sendResetLink: 'Link senden', backToLogin: 'Zurück zur Anmeldung',
     resetLinkSent: 'Wenn diese E-Mail-Adresse bei uns registriert ist, erhalten Sie eine E-Mail mit Anweisungen.',
@@ -357,6 +361,7 @@ const translations = {
     location: 'Ubicación', currentLocation: 'Ubicación actual', getLocation: 'Obtener ubicación',
     locationPermissionDenied: 'Permiso de ubicación denegado', locationPermissionDeniedMessage: 'Debe permitir el acceso a la ubicación para obtener su ubicación actual.',
     locationError: 'Error de ubicación', locationSaved: '¡Ubicación guardada!', locationNotAvailable: 'Ubicación no disponible',
+    yourLocation: 'Tu ubicación', detectingLocation: 'Detectando ubicación...', locationDetected: 'Ubicación detectada', locationDenied: 'Acceso a ubicación denegado',
     forgotPassword: '¿Olvidaste tu contraseña?', enterEmail: 'Ingresa tu correo electrónico',
     sendResetLink: 'Enviar enlace', backToLogin: 'Volver al inicio',
     resetLinkSent: 'Si este correo está registrado, recibirás un correo con instrucciones.',
@@ -424,6 +429,7 @@ const translations = {
     location: 'Posizione', currentLocation: 'Posizione attuale', getLocation: 'Ottieni posizione',
     locationPermissionDenied: 'Permesso di posizione negato', locationPermissionDeniedMessage: 'Devi consentire l\'accesso alla posizione per ottenere la tua posizione attuale.',
     locationError: 'Errore di posizione', locationSaved: 'Posizione salvata!', locationNotAvailable: 'Posizione non disponibile',
+    yourLocation: 'La tua posizione', detectingLocation: 'Rilevamento posizione...', locationDetected: 'Posizione rilevata', locationDenied: 'Accesso alla posizione negato',
     forgotPassword: 'Password dimenticata?', enterEmail: 'Inserisci la tua email',
     sendResetLink: 'Invia link', backToLogin: 'Torna al login',
     resetLinkSent: 'Se questa email è registrata, riceverai un\'email con le istruzioni.',
@@ -491,6 +497,7 @@ const translations = {
     location: 'Localização', currentLocation: 'Localização atual', getLocation: 'Obter localização',
     locationPermissionDenied: 'Permissão de localização negada', locationPermissionDeniedMessage: 'Você deve permitir o acesso à localização para obter sua localização atual.',
     locationError: 'Erro de localização', locationSaved: 'Localização salva!', locationNotAvailable: 'Localização não disponível',
+    yourLocation: 'Sua localização', detectingLocation: 'Detectando localização...', locationDetected: 'Localização detectada', locationDenied: 'Acesso à localização negado',
     forgotPassword: 'Esqueceu a senha?', enterEmail: 'Digite seu email',
     sendResetLink: 'Enviar link', backToLogin: 'Voltar ao login',
     resetLinkSent: 'Se este email estiver registrado, você receberá um email com instruções.',
@@ -1399,6 +1406,50 @@ function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
   const [selectedSports, setSelectedSports] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [location, setLocation] = useState({ latitude: null, longitude: null, city: null });
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationStatus, setLocationStatus] = useState('pending');
+
+  useEffect(() => {
+    const detectLocation = async () => {
+      try {
+        setLocationLoading(true);
+        setLocationStatus('detecting');
+        
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationStatus('denied');
+          return;
+        }
+
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        
+        const { latitude, longitude } = currentLocation.coords;
+        
+        let city = null;
+        try {
+          const addresses = await Location.reverseGeocodeAsync({ latitude, longitude });
+          if (addresses && addresses.length > 0) {
+            city = addresses[0].city || addresses[0].subregion || addresses[0].region;
+          }
+        } catch (e) {
+          if (__DEV__) console.debug('Reverse geocoding failed', e);
+        }
+        
+        setLocation({ latitude, longitude, city });
+        setLocationStatus('success');
+      } catch (e) {
+        if (__DEV__) console.debug('Location detection failed', e);
+        setLocationStatus('error');
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+    
+    detectLocation();
+  }, []);
 
   const toggleSport = (sportId) => {
     setSelectedSports(prev => 
@@ -1416,13 +1467,21 @@ function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
     
     setLoading(true);
     try {
+      const payload = { 
+        sports_interests: selectedSports,
+        profile_setup_complete: true 
+      };
+      
+      if (location.latitude && location.longitude) {
+        payload.latitude = location.latitude;
+        payload.longitude = location.longitude;
+        if (location.city) payload.city = location.city;
+      }
+      
       const res = await api.authFetch(`/users/${api.userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          sports_interests: selectedSports,
-          profile_setup_complete: true 
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (res.ok) {
@@ -1523,6 +1582,81 @@ function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
               </TouchableOpacity>
             );
           })}
+        </View>
+
+        {/* Location Status */}
+        <View style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 16,
+          borderRadius: 12,
+          marginBottom: 24,
+          backgroundColor: locationStatus === 'success' 
+            ? 'rgba(50,215,75,0.1)' 
+            : locationStatus === 'denied' || locationStatus === 'error'
+              ? 'rgba(255,149,0,0.1)'
+              : theme.color.surfaceAlt || '#f5f5f5',
+          borderWidth: 1,
+          borderColor: locationStatus === 'success'
+            ? 'rgba(50,215,75,0.3)'
+            : locationStatus === 'denied' || locationStatus === 'error'
+              ? 'rgba(255,149,0,0.3)'
+              : theme.color.border,
+        }}>
+          <View style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            backgroundColor: locationStatus === 'success'
+              ? 'rgba(50,215,75,0.2)'
+              : locationStatus === 'denied' || locationStatus === 'error'
+                ? 'rgba(255,149,0,0.2)'
+                : `${theme.color.primary}20`,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 12,
+          }}>
+            {locationLoading ? (
+              <ActivityIndicator size="small" color={theme.color.primary} />
+            ) : (
+              <Ionicons 
+                name={locationStatus === 'success' ? 'location' : locationStatus === 'denied' ? 'location-outline' : 'navigate-outline'} 
+                size={20} 
+                color={locationStatus === 'success' ? '#32D74B' : locationStatus === 'denied' || locationStatus === 'error' ? '#FF9500' : theme.color.primary} 
+              />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontFamily: theme.font.bodySemibold,
+              fontSize: 14,
+              color: theme.color.text,
+              marginBottom: 2,
+            }}>
+              {t('yourLocation')}
+            </Text>
+            <Text style={{
+              fontFamily: theme.font.bodyFamily,
+              fontSize: 13,
+              color: theme.color.textSecondary,
+            }}>
+              {locationLoading 
+                ? t('detectingLocation')
+                : locationStatus === 'success' && location.city
+                  ? location.city
+                  : locationStatus === 'success'
+                    ? t('locationDetected')
+                    : locationStatus === 'denied'
+                      ? t('locationDenied')
+                      : locationStatus === 'error'
+                        ? t('locationError')
+                        : t('detectingLocation')
+              }
+            </Text>
+          </View>
+          {locationStatus === 'success' && (
+            <Ionicons name="checkmark-circle" size={24} color="#32D74B" />
+          )}
         </View>
 
         {message.text ? (
