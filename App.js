@@ -1850,47 +1850,15 @@ function DiscoverScreen({ api, theme, user }) {
 
   return (
     <View style={styles.discoverContainer}>
-      <View style={styles.discoverHeader}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={load} disabled={loading}>
-            <Ionicons name="refresh" size={24} color={loading ? "#ccc" : "#FF6B35"} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.headerCenter}>
-          <View style={{ alignItems: 'center' }}>
-            <Ionicons name="heart-circle" size={48} color="#FF6B35" />
-            <Text style={{ 
-              fontSize: 10, 
-              color: theme.color.textSecondary, 
-              marginTop: 2,
-              fontFamily: 'Montserrat_600SemiBold'
-            }}>ATHLO</Text>
-          </View>
-        </View>
-
-        <View style={styles.headerRight}>
-          <View style={styles.matchCounter}>
-            <Ionicons name="heart" size={18} color="#FF6B35" />
-            <Text style={styles.matchCount}>{matchCount}</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.statsRow}>
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>{t('workouts')}</Text>
-          <Text style={styles.statValue}>{stats.workouts}</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>{t('distance')}</Text>
-          <Text style={styles.statValue}>{stats.distance} km</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statLabel}>{t('hours')}</Text>
-          <Text style={styles.statValue}>{stats.hours}</Text>
+      {/* Minimale header met alleen refresh en matches */}
+      <View style={styles.discoverHeaderMinimal}>
+        <TouchableOpacity onPress={load} disabled={loading} style={styles.headerIconBtn}>
+          <Ionicons name="refresh" size={22} color={loading ? "#ccc" : "#FF6B35"} />
+        </TouchableOpacity>
+        
+        <View style={styles.matchCounterMinimal}>
+          <Ionicons name="heart" size={16} color="#FF6B35" />
+          <Text style={styles.matchCountMinimal}>{matchCount}</Text>
         </View>
       </View>
 
@@ -3747,6 +3715,31 @@ const createStyles = (THEME) => StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  discoverHeaderMinimal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingTop: 4,
+  },
+  headerIconBtn: {
+    padding: 8,
+  },
+  matchCounterMinimal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,107,53,0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    gap: 4,
+  },
+  matchCountMinimal: {
+    fontSize: 14,
+    fontFamily: THEME.font.bodyBold,
+    color: '#FF6B35',
+  },
   headerLeft: {
     width: 44,
   },
@@ -3925,9 +3918,8 @@ const createStyles = (THEME) => StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 0,
     paddingBottom: 0,
-    maxHeight: '75%',
   },
   swipeCard: {
     width: '100%',
