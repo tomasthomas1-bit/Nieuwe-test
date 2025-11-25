@@ -21,7 +21,11 @@ The Sports Match App (Athlo) is a **mobile-first social matching platform** desi
 
 ### Complete Onboarding Flow Implementation
 - **VerificationPendingScreen**: New screen shown after registration with resend verification email option
-- **ProfileSetupScreen**: First-time user setup with photo upload, sports selection (running, cycling, swimming, fitness, other), and location detection
+- **ProfileSetupScreen**: First-time user setup with sports selection and **automatic GPS location detection**
+  - Location is automatically detected when the screen loads (iOS/Android)
+  - Shows city name when successful, or warning when permission denied
+  - Location data (latitude, longitude, city) saved to backend with profile
+  - Future premium feature planned: Allow users to manually set location to "fish" in other areas
 - **Navigation Flow**: AuthScreen → VerificationPending → Login → ProfileSetup (if needed) → MainTabs
 - **Backend Updates**:
   - Added `profile_setup_complete` (BOOLEAN) and `sports_interests` (TEXT[]) columns to users table
