@@ -1112,17 +1112,19 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         preferred_gender, max_distance_km = "any", 25
     
     c.execute(
-        "SELECT latitude, longitude FROM users WHERE id = %s",
+        "SELECT latitude, longitude, sports_interests FROM users WHERE id = %s",
         (user_id,)
     )
-    user_location = c.fetchone()
-    user_lat, user_lon = user_location if user_location else (None, None)
+    user_data = c.fetchone()
+    user_lat, user_lon = (user_data[0], user_data[1]) if user_data else (None, None)
+    user_sports = parse_pg_array(user_data[2]) if user_data and user_data[2] else []
     
     query = """
         SELECT
             u.id, u.name, u.age, u.bio, u.gender, u.latitude, u.longitude, u.city,
             prof.photo_url AS profile_photo_url,
-            photos.photos AS photos
+            photos.photos AS photos,
+            u.sports_interests
         FROM users u
         LEFT JOIN LATERAL (
             SELECT up.photo_url
@@ -1138,6 +1140,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         ) photos ON TRUE
         WHERE u.id <> %s
           AND u.deleted_at IS NULL
+          AND COALESCE(u.profile_setup_complete, FALSE) = TRUE
           AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE b.blocker_id = %s AND b.blocked_id = u.id)
           AND NOT EXISTS (SELECT 1 FROM user_blocks b WHERE b.blocker_id = u.id AND b.blocked_id = %s)
           AND NOT EXISTS (SELECT 1 FROM swipes s WHERE s.swiper_id = %s AND s.swipee_id = u.id)
@@ -1224,6 +1227,13 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
         if user_lat and user_lon and r[5] and r[6]:
             distance_km = haversine((user_lat, user_lon), (r[5], r[6]), unit=Unit.KILOMETERS)
             if max_distance_km and distance_km > max_distance_km:
+                continue
+        
+        target_sports = parse_pg_array(r[10]) if r[10] else []
+        
+        if user_sports and target_sports:
+            shared_sports = set(user_sports) & set(target_sports)
+            if not shared_sports:
                 continue
         
         # Mock sportstatistieken met realistische YTD data voor testusers
@@ -1335,6 +1345,7 @@ async def get_suggestions(current_user: dict = Depends(get_current_user), db=Dep
             "activities": mock_activities,
             "ytd_stats": ytd_stats,
             "sport_stats": sport_stats,
+            "sports_interests": target_sports,
         })
     
     logger.info("Suggesties gegenereerd voor gebruiker %s. Aantal: %d", user_id, len(suggestions))
