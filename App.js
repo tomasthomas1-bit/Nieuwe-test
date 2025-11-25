@@ -28,7 +28,16 @@ import {
   Dimensions,
   Linking,
 } from 'react-native';
-import { NavigationContainer, DefaultTheme, useFocusEffect, CommonActions } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, useFocusEffect, CommonActions, createNavigationContainerRef } from '@react-navigation/native';
+
+// Global navigation ref for navigating from anywhere
+const navigationRef = createNavigationContainerRef();
+
+function navigateToChat(matchUser) {
+  if (navigationRef.isReady()) {
+    navigationRef.navigate('Chat', { matchUser });
+  }
+}
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -2323,18 +2332,8 @@ function DiscoverScreen({ api, theme, user, navigation, rootNavigation }) {
             <TouchableOpacity
               onPress={() => {
                 setShowMatchModal(false);
-                // Navigate to Chat using CommonActions - works across all navigators
-                const navigateAction = CommonActions.navigate({
-                  name: 'Chat',
-                  params: { matchUser: matchedUser },
-                });
-                if (rootNavigation?.dispatch) {
-                  rootNavigation.dispatch(navigateAction);
-                } else if (navigation?.dispatch) {
-                  navigation.dispatch(navigateAction);
-                } else {
-                  Alert.alert('Fout', 'Navigatie niet beschikbaar');
-                }
+                // Navigate to Chat using global navigation ref
+                navigateToChat(matchedUser);
               }}
               style={{
                 backgroundColor: '#fff',
@@ -3507,7 +3506,7 @@ function AppContent() {
 
   // Remount navigator wanneer mode/preset veranderen
   return (
-    <NavigationContainer theme={navTheme} key={`nav-${api.isAuthenticated}-${theme.mode}-${theme.preset}`}>
+    <NavigationContainer ref={navigationRef} theme={navTheme} key={`nav-${api.isAuthenticated}-${theme.mode}-${theme.preset}`}>
       <Stack.Navigator screenOptions={headerOptions} key={`stack-${api.isAuthenticated}-${theme.mode}-${theme.preset}`}>
         {!api.isAuthenticated ? (
           <Stack.Screen name="Auth" options={{ title: 'Aanmelden' }}>
@@ -4430,11 +4429,7 @@ function MatchesScreen({ api, theme, navigation }) {
               </TouchableOpacity>
               {/* Chat */}
               <TouchableOpacity onPress={() => {
-                const navigateAction = CommonActions.navigate({
-                  name: 'Chat',
-                  params: { matchUser: m },
-                });
-                navigation.dispatch(navigateAction);
+                navigateToChat(m);
               }} style={{ marginLeft: 12 }}>
                 <Ionicons name="chatbubble-ellipses-outline" size={20} color={theme.color.primary} />
               </TouchableOpacity>
