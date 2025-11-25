@@ -822,8 +822,9 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
             (user_id, token)
         )
 
-        # Mail versturen (email_utils kan zelf subject/body bepalen; zoniet, breid daar uit)
-        send_verification_email(user.username, user.name, token, lang=lang)
+        # Mail versturen naar het email adres van de gebruiker
+        if user.email:
+            send_verification_email(user.email, user.name, token, lang=lang)
 
         logger.info("Nieuwe gebruiker aangemaakt: %s", user.username)
         return {
@@ -840,17 +841,19 @@ async def create_user(user: UserCreate, db=Depends(get_db)):
 @app.post("/resend-verification")
 async def resend_verification(username: str, db=Depends(get_db)):
     conn, c = db
-    c.execute("SELECT id, name, is_verified, COALESCE(language,'nl') FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
+    c.execute("SELECT id, name, email, is_verified, COALESCE(language,'nl') FROM users WHERE username = %s AND deleted_at IS NULL", (username,))
     row = c.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail=t("user_not_found", "en"))
-    user_id, name, is_verified, lang = row
+    user_id, name, email, is_verified, lang = row
     lang = get_lang({"language": lang})
     if is_verified:
         raise HTTPException(status_code=400, detail=t("user_already_verified", lang))
+    if not email:
+        raise HTTPException(status_code=400, detail=t("no_email_address", lang))
     token = generate_verification_token()
     c.execute("INSERT INTO email_verification_tokens (user_id, token) VALUES (%s, %s)", (user_id, token))
-    send_verification_email(username, name, token, lang=lang)
+    send_verification_email(email, name, token, lang=lang)
     return {"status": "success", "message": t("verification_email_sent", lang)}
 
 @app.get("/verify-email")
