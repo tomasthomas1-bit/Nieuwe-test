@@ -71,6 +71,9 @@ def _resend_send(to_email: str, subject: str, text_body: str, html_body: Optiona
         response.raise_for_status()
         logger.info("Email verzonden naar %s via Resend", to_email)
     except requests.exceptions.RequestException as e:
+        # Log de volledige response voor debugging
+        if hasattr(e, 'response') and e.response is not None:
+            logger.error("Resend API response: %s", e.response.text)
         logger.exception("Verzenden van email is mislukt: %s", str(e))
         raise
 
