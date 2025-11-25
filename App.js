@@ -52,7 +52,7 @@ const translations = {
     workouts: 'Workouts', distance: 'Afstand', hours: 'Uren', kmAway: 'km verderop',
     ytdStatsTitle: 'Sportgegevens 2025', ytdComingSoon: 'Sportgegevens binnenkort beschikbaar',
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'Geen profielen meer om te tonen',
-    itsAMatch: 'It\'s a Match!', sendMessage: 'Stuur bericht', keepSwiping: 'Doorgaan met swipen',
+    itsAMatch: 'It\'s a Match!', sendMessage: 'Stuur bericht', keepSwiping: 'Doorgaan met swipen', youAndMatch: 'Jullie hebben elkaar geliket!',
     typeMessage: 'Typ een bericht...', send: 'Verstuur', noMessages: 'Nog geen berichten',
     matchGoal: 'Match-doel', preferredGender: 'Voorkeur geslacht', filterSports: 'Filter op sporten',
     filterSportsDescription: 'Selecteer de sporten waarop je wilt filteren. Laat leeg om alle sporten te zien.',
@@ -122,7 +122,7 @@ const translations = {
     workouts: 'Workouts', distance: 'Distance', hours: 'Hours', kmAway: 'km away',
     ytdStatsTitle: 'Sports Data 2025', ytdComingSoon: 'Sports data coming soon',
     like: 'Like', dislike: 'Dislike', noMoreProfiles: 'No more profiles to show',
-    itsAMatch: 'It\'s a Match!', sendMessage: 'Send Message', keepSwiping: 'Keep Swiping',
+    itsAMatch: 'It\'s a Match!', sendMessage: 'Send Message', keepSwiping: 'Keep Swiping', youAndMatch: 'You both liked each other!',
     typeMessage: 'Type a message...', send: 'Send', noMessages: 'No messages yet',
     matchGoal: 'Match goal', preferredGender: 'Preferred gender', filterSports: 'Filter by sports',
     filterSportsDescription: 'Select the sports you want to filter on. Leave empty to see all sports.',
@@ -190,7 +190,7 @@ const translations = {
     workouts: 'Entraînements', distance: 'Distance', hours: 'Heures', kmAway: 'km',
     ytdStatsTitle: 'Données sportives 2025', ytdComingSoon: 'Données sportives bientôt disponibles',
     like: 'J\'aime', dislike: 'Je n\'aime pas', noMoreProfiles: 'Plus de profils à afficher',
-    itsAMatch: 'C\'est un Match!', sendMessage: 'Envoyer un message', keepSwiping: 'Continuer',
+    itsAMatch: 'C\'est un Match!', sendMessage: 'Envoyer un message', keepSwiping: 'Continuer', youAndMatch: 'Vous vous êtes mutuellement aimés!',
     typeMessage: 'Tapez un message...', send: 'Envoyer', noMessages: 'Pas encore de messages',
     matchGoal: 'Objectif de match', preferredGender: 'Genre préféré', filterSports: 'Filtrer par sports',
     filterSportsDescription: 'Sélectionnez les sports sur lesquels vous voulez filtrer. Laissez vide pour voir tous les sports.',
@@ -258,7 +258,7 @@ const translations = {
     workouts: 'Workouts', distance: 'Entfernung', hours: 'Stunden', kmAway: 'km entfernt',
     ytdStatsTitle: 'Sportdaten 2025', ytdComingSoon: 'Sportdaten bald verfügbar',
     like: 'Gefällt mir', dislike: 'Gefällt nicht', noMoreProfiles: 'Keine Profile mehr',
-    itsAMatch: 'Es ist ein Match!', sendMessage: 'Nachricht senden', keepSwiping: 'Weiter swipen',
+    itsAMatch: 'Es ist ein Match!', sendMessage: 'Nachricht senden', keepSwiping: 'Weiter swipen', youAndMatch: 'Ihr habt euch gegenseitig geliket!',
     typeMessage: 'Nachricht eingeben...', send: 'Senden', noMessages: 'Noch keine Nachrichten',
     matchGoal: 'Match-Ziel', preferredGender: 'Bevorzugtes Geschlecht', filterSports: 'Nach Sportarten filtern',
     filterSportsDescription: 'Wählen Sie die Sportarten aus, nach denen Sie filtern möchten. Leer lassen, um alle zu sehen.',
@@ -326,7 +326,7 @@ const translations = {
     workouts: 'Entrenamientos', distance: 'Distancia', hours: 'Horas', kmAway: 'km',
     ytdStatsTitle: 'Datos deportivos 2025', ytdComingSoon: 'Datos deportivos próximamente',
     like: 'Me gusta', dislike: 'No me gusta', noMoreProfiles: 'No hay más perfiles',
-    itsAMatch: '¡Es un Match!', sendMessage: 'Enviar mensaje', keepSwiping: 'Seguir deslizando',
+    itsAMatch: '¡Es un Match!', sendMessage: 'Enviar mensaje', keepSwiping: 'Seguir deslizando', youAndMatch: '¡Os habéis gustado mutuamente!',
     typeMessage: 'Escribe un mensaje...', send: 'Enviar', noMessages: 'Sin mensajes aún',
     matchGoal: 'Objetivo de match', preferredGender: 'Género preferido', filterSports: 'Filtrar por deportes',
     filterSportsDescription: 'Selecciona los deportes por los que quieres filtrar. Déjalo vacío para ver todos.',
@@ -394,7 +394,7 @@ const translations = {
     workouts: 'Allenamenti', distance: 'Distanza', hours: 'Ore', kmAway: 'km',
     ytdStatsTitle: 'Dati sportivi 2025', ytdComingSoon: 'Dati sportivi in arrivo',
     like: 'Mi piace', dislike: 'Non mi piace', noMoreProfiles: 'Nessun altro profilo',
-    itsAMatch: 'È un Match!', sendMessage: 'Invia messaggio', keepSwiping: 'Continua a scorrere',
+    itsAMatch: 'È un Match!', sendMessage: 'Invia messaggio', keepSwiping: 'Continua a scorrere', youAndMatch: 'Vi siete piaciuti a vicenda!',
     typeMessage: 'Scrivi un messaggio...', send: 'Invia', noMessages: 'Nessun messaggio ancora',
     matchGoal: 'Obiettivo match', preferredGender: 'Genere preferito', filterSports: 'Filtra per sport',
     filterSportsDescription: 'Seleziona gli sport su cui vuoi filtrare. Lascia vuoto per vedere tutti.',
@@ -462,7 +462,7 @@ const translations = {
     workouts: 'Treinos', distance: 'Distância', hours: 'Horas', kmAway: 'km',
     ytdStatsTitle: 'Dados esportivos 2025', ytdComingSoon: 'Dados esportivos em breve',
     like: 'Curtir', dislike: 'Não curtir', noMoreProfiles: 'Sem mais perfis',
-    itsAMatch: 'É um Match!', sendMessage: 'Enviar mensagem', keepSwiping: 'Continuar deslizando',
+    itsAMatch: 'É um Match!', sendMessage: 'Enviar mensagem', keepSwiping: 'Continuar deslizando', youAndMatch: 'Vocês se curtiram!',
     typeMessage: 'Digite uma mensagem...', send: 'Enviar', noMessages: 'Sem mensagens ainda',
     matchGoal: 'Objetivo de match', preferredGender: 'Gênero preferido', filterSports: 'Filtrar por esportes',
     filterSportsDescription: 'Selecione os esportes pelos quais você quer filtrar. Deixe vazio para ver todos.',
@@ -1708,7 +1708,7 @@ function ProfileSetupScreen({ navigation, api, theme, onComplete }) {
 }
 
 /* ---- DiscoverScreen ---- */
-function DiscoverScreen({ api, theme, user }) {
+function DiscoverScreen({ api, theme, user, navigation }) {
   const { t } = useContext(LanguageContext);
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [suggestions, setSuggestions] = useState([]);
@@ -1724,6 +1724,8 @@ function DiscoverScreen({ api, theme, user }) {
   const galleryScrollRef = useRef(null);
   const suggestionsRef = useRef([]);
   const currentIndexRef = useRef(0);
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchedUser, setMatchedUser] = useState(null);
 
   // Sport types with gradients and icons
   const sportTypes = [
@@ -1801,7 +1803,8 @@ function DiscoverScreen({ api, theme, user }) {
       if (!res.ok) throw new Error(data?.detail || 'Fout');
       
       if (data.match) {
-        Alert.alert(t('itsAMatch'), `${currentUser.name}!`);
+        setMatchedUser(currentUser);
+        setShowMatchModal(true);
       }
       
       const nextIndex = idx + 1;
@@ -2167,6 +2170,202 @@ function DiscoverScreen({ api, theme, user }) {
             {currentIndex + 1} / {suggestions.length}
           </Text>
         </>
+      )}
+
+      {/* MATCH MODAL - Celebratory overlay when mutual match */}
+      {showMatchModal && matchedUser && (
+        <View style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        }}>
+          <LinearGradient
+            colors={['#FF6B6B', '#FF8E53', '#FEC163']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              width: '90%',
+              maxWidth: 360,
+              borderRadius: 24,
+              padding: 32,
+              alignItems: 'center',
+            }}
+          >
+            {/* Hearts decoration */}
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              <Ionicons name="heart" size={28} color="#fff" style={{ opacity: 0.6, marginHorizontal: 4 }} />
+              <Ionicons name="heart" size={36} color="#fff" style={{ marginHorizontal: 4 }} />
+              <Ionicons name="heart" size={28} color="#fff" style={{ opacity: 0.6, marginHorizontal: 4 }} />
+            </View>
+
+            {/* It's a Match! */}
+            <Text style={{
+              fontSize: 32,
+              fontFamily: 'Montserrat_700Bold',
+              color: '#fff',
+              textAlign: 'center',
+              textShadowColor: 'rgba(0, 0, 0, 0.3)',
+              textShadowOffset: { width: 0, height: 2 },
+              textShadowRadius: 4,
+              marginBottom: 8,
+            }}>
+              {t('itsAMatch')}
+            </Text>
+
+            <Text style={{
+              fontSize: 16,
+              fontFamily: 'Montserrat_400Regular',
+              color: 'rgba(255, 255, 255, 0.9)',
+              textAlign: 'center',
+              marginBottom: 24,
+            }}>
+              {t('youAndMatch') || `Jij en ${matchedUser.name} hebben elkaar geliket!`}
+            </Text>
+
+            {/* Both photos */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+              {/* Your photo - use user prop or placeholder */}
+              {user?.profile_photo_url ? (
+                <Image
+                  source={{ uri: user.profile_photo_url.startsWith('http') ? user.profile_photo_url : `${BASE_URL}${user.profile_photo_url}` }}
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 50,
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                  }}
+                />
+              ) : (
+                <View style={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 3,
+                  borderColor: '#fff',
+                }}>
+                  <Ionicons name="person" size={50} color="#fff" />
+                </View>
+              )}
+
+              {/* Heart in middle */}
+              <View style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: '#FF6B6B',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginHorizontal: -15,
+                zIndex: 10,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+              }}>
+                <Ionicons name="heart" size={28} color="#fff" />
+              </View>
+
+              {/* Match photo - use profile_photo_url or first photo from photos array */}
+              {(() => {
+                const matchPhoto = matchedUser.profile_photo_url || (matchedUser.photos && matchedUser.photos[0]);
+                if (matchPhoto) {
+                  return (
+                    <Image
+                      source={{ uri: matchPhoto.startsWith('http') ? matchPhoto : `${BASE_URL}${matchPhoto}` }}
+                      style={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: 50,
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                      }}
+                    />
+                  );
+                }
+                return (
+                  <View style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: 50,
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                  }}>
+                    <Text style={{ fontSize: 40, color: '#fff' }}>
+                      {matchedUser.name?.charAt(0)?.toUpperCase() || '?'}
+                    </Text>
+                  </View>
+                );
+              })()}
+            </View>
+
+            {/* Match name */}
+            <Text style={{
+              fontSize: 24,
+              fontFamily: 'Montserrat_600SemiBold',
+              color: '#fff',
+              marginBottom: 24,
+            }}>
+              {matchedUser.name}, {matchedUser.age}
+            </Text>
+
+            {/* Buttons */}
+            <TouchableOpacity
+              onPress={() => {
+                setShowMatchModal(false);
+                navigation.navigate('Chat', { matchUser: matchedUser });
+              }}
+              style={{
+                backgroundColor: '#fff',
+                paddingVertical: 14,
+                paddingHorizontal: 40,
+                borderRadius: 30,
+                marginBottom: 12,
+                width: '100%',
+                alignItems: 'center',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 4,
+              }}
+            >
+              <Text style={{
+                fontSize: 16,
+                fontFamily: 'Montserrat_600SemiBold',
+                color: '#FF6B6B',
+              }}>
+                {t('sendMessage')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowMatchModal(false)}
+              style={{
+                paddingVertical: 12,
+                paddingHorizontal: 24,
+              }}
+            >
+              <Text style={{
+                fontSize: 14,
+                fontFamily: 'Montserrat_400Regular',
+                color: 'rgba(255, 255, 255, 0.9)',
+              }}>
+                {t('keepSwiping')}
+              </Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
       )}
     </View>
   );

@@ -1406,6 +1406,39 @@ async def swipe(
         logger.exception("Databasefout bij het swipen.")
         raise HTTPException(status_code=500, detail=t("db_error", lang))
 
+@app.post("/dev/seed-likes-for-me")
+async def seed_likes_for_testing(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
+    """
+    DEV ONLY: Maak alle andere users like de ingelogde user (voor testen van match modal).
+    SECURITY: 
+    - Alleen beschikbaar in development mode (REPLIT_DEV_DOMAIN moet gezet zijn)
+    - Kan alleen likes seeden voor jezelf (niet voor andere users)
+    """
+    if not REPLIT_DEV_DOMAIN:
+        raise HTTPException(status_code=403, detail="This endpoint is only available in development mode")
+    
+    conn, c = db
+    user_id = current_user["id"]
+    
+    c.execute("SELECT id FROM users WHERE id != %s AND deleted_at IS NULL AND profile_setup_complete = TRUE", (user_id,))
+    other_users = c.fetchall()
+    
+    count = 0
+    for (other_id,) in other_users:
+        c.execute(
+            """
+            INSERT INTO swipes (swiper_id, swipee_id, liked, deleted_at)
+            VALUES (%s, %s, TRUE, NULL)
+            ON CONFLICT (swiper_id, swipee_id)
+            DO UPDATE SET liked = TRUE, deleted_at = NULL
+            """,
+            (other_id, user_id),
+        )
+        count += 1
+    
+    logger.info("DEV: %d users liken nu user %s", count, user_id)
+    return {"status": "success", "message": f"{count} users now like you! Swipe right on anyone to trigger a match.", "count": count}
+
 @app.get("/matches")
 async def get_matches(current_user: dict = Depends(get_current_user), db=Depends(get_db)):
     conn, c = db
