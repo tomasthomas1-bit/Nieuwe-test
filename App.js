@@ -3513,6 +3513,7 @@ function AppContent() {
                   {...props}
                   api={api}
                   theme={theme}
+                  navigation={props.navigation}
                 />
               )}
             </Stack.Screen>
